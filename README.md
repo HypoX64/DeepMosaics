@@ -12,7 +12,7 @@ The code do not include the part of training, I will finish it in my free time.
 - ffmpeg
 - Pytroch 0.4, (I will update to 1.0)
 - CPU or NVIDIA GPU + CUDA CuDNN
-<br>
+
 ## Getting Started
 ### Clone this repo:
 ```bash
