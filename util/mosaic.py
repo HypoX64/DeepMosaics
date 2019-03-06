@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import os
 import random
-from .image_processing import resize,channel_one2three
+from .image_processing import resize,ch_one2three
 
 
 def addmosaic(img,mask,n,out_size = 0,model = 'squa_avg'):
@@ -29,7 +29,8 @@ def addmosaic(img,mask,n,out_size = 0,model = 'squa_avg'):
         for i in range(int(h/n)):
             for j in range(int(w/n)):
                 img_mosaic[i*n:(i+1)*n,j*n:(j+1)*n,:]=img[i*n:(i+1)*n,j*n:(j+1)*n,:].mean(0).mean(0)
-        mask = channel_one2three(mask)
+        mask = cv2.threshold(mask,127,255,cv2.THRESH_BINARY)[1]
+        mask = ch_one2three(mask)
         mask_inv = cv2.bitwise_not(mask)
         imgroi1 = cv2.bitwise_and(mask,img_mosaic)
         imgroi2 = cv2.bitwise_and(mask_inv,img)
