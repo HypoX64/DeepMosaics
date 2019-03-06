@@ -12,10 +12,10 @@ def resize(img,size):
         res = cv2.resize(img,(size, int(size*h/w)))
     return res
 
-def channel_one2three(img):
+def ch_one2three(img):
     #zeros = np.zeros(img.shape[:2], dtype = "uint8")
-    ret,thresh = cv2.threshold(img,127,255,cv2.THRESH_BINARY)
-    res = cv2.merge([thresh, thresh, thresh])
+    # ret,thresh = cv2.threshold(img,127,255,cv2.THRESH_BINARY)
+    res = cv2.merge([img, img, img])
     return res
 
 def makedataset(target_image,orgin_image):
@@ -113,3 +113,14 @@ def mask_area(mask):
     except:
         area = 0
     return area
+
+# def eclosion_add(img_fg,img_bg,mask,eclosion_num,Type = 'inside'):
+
+#         mask = (cv2.blur(mask, (eclosion, eclosion)))
+#         mask = ch_one2three(mask)
+#         mask = mask/255.0
+
+#         # img_tmp = np.zeros(img_bg.shape, dtype='uint8')
+#         # img_tmp[y-size:y+size,x-size:x+size]=img_fake
+#         img_result = img_origin.copy()
+#         img_result = img_origin*(1-mask)+img_tmp*mask

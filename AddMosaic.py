@@ -11,7 +11,6 @@ from util import mosaic,util,ffmpeg
 from util import image_processing as impro
 from options.addmosaic_options import AddOptions
 
-
 opt = AddOptions().getparse()
 
 #find mosaic position in image and add mosaic to this image
@@ -34,7 +33,7 @@ for path in filepaths:
         util.clean_tempfiles()
         fps = ffmpeg.get_video_infos(path)[0]
         ffmpeg.video2voice(path,'./tmp/voice_tmp.mp3')
-        ffmpeg.video2image(path,'./tmp/video2image/output_%05d.png')
+        ffmpeg.video2image(path,'./tmp/video2image/output_%05d.'+opt.tempimage_type)
         for imagepath in os.listdir('./tmp/video2image'):
             imagepath = os.path.join('./tmp/video2image',imagepath)
             print(imagepath)
@@ -42,7 +41,7 @@ for path in filepaths:
             cv2.imwrite(os.path.join('./tmp/addmosaic_image',
                                         os.path.basename(imagepath)),img)
         ffmpeg.image2video( fps,
-                            './tmp/addmosaic_image/output_%05d.png',
+                            './tmp/addmosaic_image/output_%05d.'+opt.tempimage_type,
                             './tmp/voice_tmp.mp3',
                              os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_AddMosaic.mp4'))
 
