@@ -23,7 +23,7 @@ You can download pre_trained models and test video and replace the files in the 
 [[Google Drive]](https://drive.google.com/open?id=1PXt3dE9Eez2xUqpemLJutwTCC0tW-D2g)
  [[百度云,提取码z8vz]](https://pan.baidu.com/s/1Wi8T6PE4ExTjrHVQhv3rJA) 
 ### Dependencies
-This code depends on numpy, scipy, cv2, torchvision, available via pip install.
+This code depends on numpy, scipy, opencv-python, torchvision, available via pip install.
 ### AddMosaic
 ```bash
 python3 AddMosaic.py
