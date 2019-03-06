@@ -21,7 +21,7 @@ git clone https://github.com/HypoX64/DeepMosaics
 ### Get pre_trained models and test video
 You can download pre_trained models and test video and replace the files in the project.
 [[Google Drive]](https://drive.google.com/open?id=1PXt3dE9Eez2xUqpemLJutwTCC0tW-D2g)
-  [[百度云,提取码z8vz]](https://pan.baidu.com/s/1Wi8T6PE4ExTjrHVQhv3rJA) 
+ [[百度云,提取码z8vz]](https://pan.baidu.com/s/1Wi8T6PE4ExTjrHVQhv3rJA) 
 ### Dependencies
 This code depends on numpy, scipy, cv2, torchvision, available via pip install.
 ### AddMosaic
@@ -34,7 +34,7 @@ copy the AddMosaic video from './result' to './video_or_image'
 python3 CleanMosaic.py
 ```
 ### More parameters
-[addmosaic_options](https://github.com/HypoX64/DeepMosaics/blob/master/options/addmosaic_options.py)[cleanmosaic_options](https://github.com/HypoX64/DeepMosaics/blob/master/options/cleanmosaic_options.py)
+[[addmosaic_options]](https://github.com/HypoX64/DeepMosaics/blob/master/options/addmosaic_options.py)  [[cleanmosaic_options]](https://github.com/HypoX64/DeepMosaics/blob/master/options/cleanmosaic_options.py)
 <br>
 ## Acknowledgments
 This code borrows heavily from [[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet).
