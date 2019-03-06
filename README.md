@@ -17,6 +17,7 @@ The code do not include the part of training, I will finish it in my free time.
 ### Clone this repo:
 ```bash
 git clone https://github.com/HypoX64/DeepMosaics
+cd DeepMosaics
 ```
 ### Get pre_trained models and test video
 You can download pre_trained models and test video and replace the files in the project.<br>
