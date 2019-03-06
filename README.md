@@ -19,7 +19,7 @@ The code do not include the part of training, I will finish it in my free time.
 git clone https://github.com/HypoX64/DeepMosaics
 ```
 ### Get pre_trained models and test video
-You can download pre_trained models and test video and replace the files in the project.
+You can download pre_trained models and test video and replace the files in the project.<br>
 [[Google Drive]](https://drive.google.com/open?id=1PXt3dE9Eez2xUqpemLJutwTCC0tW-D2g)
  [[百度云,提取码z8vz]](https://pan.baidu.com/s/1Wi8T6PE4ExTjrHVQhv3rJA) 
 ### Dependencies
