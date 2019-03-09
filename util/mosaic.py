@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import os
 import random
-from .image_processing import resize,ch_one2three
+from .image_processing import resize,ch_one2three,mask_area
 
 
 def addmosaic(img,mask,n,out_size = 0,model = 'squa_avg'):
@@ -10,7 +10,6 @@ def addmosaic(img,mask,n,out_size = 0,model = 'squa_avg'):
         img = resize(img,out_size)      
     h, w = img.shape[:2]
     mask = cv2.resize(mask,(w,h))
-
     img_mosaic=img.copy()
 
     if model=='squa_avg':
@@ -64,9 +63,8 @@ def random_mosaic(img,mask):
     h,w = img.shape[:2]
     mask = cv2.resize(mask,(w,h))
     #area_avg=5925*4
-    image, contours, hierarchy = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     try:
-        area = cv2.contourArea(contours[0])
+        area = mask_area(mask)
     except:
         area = 0
     if area>50000:

@@ -107,20 +107,11 @@ def mask_threshold(mask,blur,threshold):
     return mask
 
 def mask_area(mask):
-    contours= cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)[1]
+    mask = cv2.threshold(mask,127,255,0)[1]
+    # contours= cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)[1] #for opencv 3.4
+    contours= cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)[0]#updata to opencv 4.0
     try:
         area = cv2.contourArea(contours[0])
     except:
         area = 0
     return area
-
-# def eclosion_add(img_fg,img_bg,mask,eclosion_num,Type = 'inside'):
-
-#         mask = (cv2.blur(mask, (eclosion, eclosion)))
-#         mask = ch_one2three(mask)
-#         mask = mask/255.0
-
-#         # img_tmp = np.zeros(img_bg.shape, dtype='uint8')
-#         # img_tmp[y-size:y+size,x-size:x+size]=img_fake
-#         img_result = img_origin.copy()
-#         img_result = img_origin*(1-mask)+img_tmp*mask
