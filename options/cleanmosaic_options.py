@@ -18,7 +18,7 @@ class CleanOptions():
                                 help='name of model use to find mosaic position')
         self.parser.add_argument('--no_feather', action='store_true', help='if true, no edge feather,but run faster')
         self.parser.add_argument('--medfilt_num', type=int, default=11,help='medfilt window of mosaic movement in the video')
-        self.parser.add_argument('--tempimage_type', type=str, default='jpg',help='type of temp image, png | jpg, png is better but occupy more storage space')
+        self.parser.add_argument('--tempimage_type', type=str, default='png',help='type of temp image, png | jpg, png is better but occupy more storage space')
 #       self.parser.add_argument('--zoom_multiple', type=float, default=1.0,help='zoom video')
         self.initialized = True
 

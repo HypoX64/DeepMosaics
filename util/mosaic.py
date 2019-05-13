@@ -6,6 +6,7 @@ from .image_processing import resize,ch_one2three,mask_area
 
 
 def addmosaic(img,mask,n,out_size = 0,model = 'squa_avg'):
+    n = int(n)
     if out_size:
         img = resize(img,out_size)      
     h, w = img.shape[:2]
@@ -59,22 +60,24 @@ def random_mosaic_mod(img,mask,n):
     return img
 
 def random_mosaic(img,mask):
-    img = resize(img,512)
+    # img = resize(img,512)
     h,w = img.shape[:2]
     mask = cv2.resize(mask,(w,h))
+    alpha = np.min((w,h))/512
     #area_avg=5925*4
     try:
         area = mask_area(mask)
     except:
         area = 0
+    area = area/(alpha*alpha)
     if area>50000:
-        img_mosaic = random_mosaic_mod(img,mask,random.randint(14,26))
+        img_mosaic = random_mosaic_mod(img,mask,alpha*random.uniform(16,28))
     elif 20000<area<=50000:
-        img_mosaic = random_mosaic_mod(img,mask,random.randint(10,18))
+        img_mosaic = random_mosaic_mod(img,mask,alpha*random.uniform(12,20))
     elif 5000<area<=20000:
-        img_mosaic = random_mosaic_mod(img,mask,random.randint(8,14))
+        img_mosaic = random_mosaic_mod(img,mask,alpha*random.uniform(8,15))
     elif 0<=area<=5000:
-        img_mosaic = random_mosaic_mod(img,mask,random.randint(4,8))
+        img_mosaic = random_mosaic_mod(img,mask,alpha*random.uniform(4,10))
     else:
         pass
     return img_mosaic

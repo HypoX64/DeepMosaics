@@ -4,7 +4,7 @@ import numpy as np
 
 def resize(img,size):
     h, w = img.shape[:2]
-    if min(h, w) ==size:
+    if np.min((w,h)) ==size:
         return img
     if w >= h:
         res = cv2.resize(img,(int(size*w/h), size))
@@ -62,7 +62,7 @@ def mergeimage(img1,img2,orgin_image):
     result_img = cv2.add(new_img1,new_img2)
     return result_img
 
-def boundingSquare(mask,threshold,Ex_mul):
+def boundingSquare(mask,Ex_mul):
     # thresh = mask_threshold(mask,10,threshold)
     area = mask_area(mask)
     if area == 0 :

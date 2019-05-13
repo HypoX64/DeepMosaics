@@ -18,7 +18,7 @@ class AddOptions():
         self.parser.add_argument('--mask_extend', type=int, default=20,help='more mosaic area')
         self.parser.add_argument('--mask_threshold', type=int, default=64,help='threshold of recognize mosaic position 0~255')
         self.parser.add_argument('--output_size', type=int, default=0,help='size of output file,if 0 -> origin')
-        self.parser.add_argument('--tempimage_type', type=str, default='jpg',help='type of temp image, png | jpg, png is better but occupy more storage space')
+        self.parser.add_argument('--tempimage_type', type=str, default='png',help='type of temp image, png | jpg, png is better but occupy more storage space')
         self.initialized = True
 
     def getparse(self):

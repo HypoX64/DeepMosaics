@@ -45,7 +45,14 @@ class down(nn.Module):
         x = self.mpconv(x)
         return x
 
+class Upsample(nn.Module):
+    def __init__(self,  scale_factor):
+        super(Upsample, self).__init__()
+        self.scale_factor = scale_factor
+    def forward(self, x):
+        return F.interpolate(x, scale_factor=self.scale_factor,mode='bilinear', align_corners=True)
 
+F.interpolate
 class up(nn.Module):
     def __init__(self, in_ch, out_ch, bilinear=True):
         super(up, self).__init__()
@@ -53,7 +60,7 @@ class up(nn.Module):
         #  would be a nice idea if the upsampling could be learned too,
         #  but my machine do not have enough memory to handle all those weights
         if bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+            self.up = Upsample(scale_factor=2)
         else:
             self.up = nn.ConvTranspose2d(in_ch//2, in_ch//2, 2, stride=2)
 

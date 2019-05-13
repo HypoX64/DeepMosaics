@@ -10,9 +10,9 @@ The code do not include the part of training, I will finish it in my free time.
 
 ## Prerequisites
 - Linux, (I didn't try this code on Windows or Mac OS)
-- Python 3.5+
+- Python 3.6+
 - ffmpeg
-- Pytorch 0.4   [(Pytorch 1.0+ is available)](https://github.com/HypoX64/DeepMosaics)
+- Pytorch 1.0+  [(Old version codes)](https://github.com/HypoX64/DeepMosaics/tree/Pytorch0.4)
 - CPU or NVIDIA GPU + CUDA CuDNN
 
 ## Getting Started
@@ -23,8 +23,8 @@ cd DeepMosaics
 ```
 ### Get pre_trained models and test video
 You can download pre_trained models and test video and replace the files in the project.<br>
-[[Google Drive]](https://drive.google.com/open?id=1PXt3dE9Eez2xUqpemLJutwTCC0tW-D2g)
- [[百度云,提取码z8vz]](https://pan.baidu.com/s/1Wi8T6PE4ExTjrHVQhv3rJA) 
+[[Google Drive]](https://drive.google.com/open?id=10nARsiZoZGcaKw40nQu9fJuRp1oeabPs)
+ [[百度云,提取码7thu]](https://pan.baidu.com/s/1IG4bdIiIC9PH9-oEyae5Sg) 
 
 ### Dependencies
 This code depends on numpy, scipy, opencv-python, torchvision, available via pip install.
