@@ -1,5 +1,7 @@
-# sub-parts of the U-Net model
+# This code clone from https://github.com/milesial/Pytorch-UNet
+# LICENSE file : https://github.com/milesial/Pytorch-UNet/blob/master/LICENSE
 
+# sub-parts of the U-Net model
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

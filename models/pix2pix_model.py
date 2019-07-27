@@ -1,3 +1,6 @@
+# This code clone from https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix
+# LICENSE file : https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/LICENSE
+
 import torch
 import torch.nn as nn
 from torch.nn import init

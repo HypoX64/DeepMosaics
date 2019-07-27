@@ -1,7 +1,9 @@
+# This code clone from https://github.com/milesial/Pytorch-UNet
+# LICENSE file : https://github.com/milesial/Pytorch-UNet/blob/master/LICENSE
+
 # full assembly of the sub-parts to form the complete net
 
 import torch.nn.functional as F
-
 from .unet_parts import *
 
 class UNet(nn.Module):
