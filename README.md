@@ -28,17 +28,19 @@ You can download pre_trained models and test video and replace the files in the 
 
 ### Dependencies
 This code depends on opencv-python, available via pip install.
-### Add Mosaic
+### Simple example
+* Add Mosaic (output video will save in './result')
 ```bash
 python3 deepmosaic.py
 ```
-### Clean Mosaic
-copy the AddMosaic video from './result' to './video_or_image'
+* Clean Mosaic (output video will save in './result')
 ```bash
-python3 CleanMosaic.py
+python3 deepmosaic.py --mode clean --model_path ./pretrained_models/clean_hands_unet_128.pth --media_path ./result/hands_test_AddMosaic.mp4
 ```
 ### More parameters
-[[addmosaic_options]](https://github.com/HypoX64/DeepMosaics/blob/master/options/addmosaic_options.py)  [[cleanmosaic_options]](https://github.com/HypoX64/DeepMosaics/blob/master/options/cleanmosaic_options.py)
+If you want to test other image or video, please refer to this file.
+[[options.py]](https://github.com/HypoX64/DeepMosaics/blob/master/options.py) 
 <br>
+
 ## Acknowledgments
 This code borrows heavily from [[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet).
