@@ -1,6 +1,7 @@
 import sys
 sys.path.append("..")
 import util.image_processing as impro
+from util import mosaic
 from util import data
 import torch
 
@@ -30,3 +31,20 @@ def run_pix2pix(img,net,size = 128,use_gpu = True):
     img_fake = net(img)
     img_fake = data.tensor2im(img_fake)
     return img_fake
+
+
+#find mosaic position in image and add mosaic to this image
+def add_mosaic_to_image(img,net,opt):
+    mask = run_unet_rectim(img,net,use_gpu = opt.use_gpu)
+    mask = impro.mask_threshold(mask,opt.mask_extend,opt.mask_threshold)
+    img = mosaic.addmosaic(img,mask,opt.mosaic_size,opt.output_size,model = opt.mosaic_mod)
+    return img
+
+
+def get_mosaic_position(img_origin,net_mosaic_pos,opt):
+    mask = run_unet_rectim(img_origin,net_mosaic_pos,use_gpu = opt.use_gpu)
+    mask = impro.mask_threshold(mask,10,128)
+    x,y,size,area = impro.boundingSquare(mask,Ex_mul=1.5)
+    rat = min(img_origin.shape[:2])/128.0
+    x,y,size = int(rat*x),int(rat*y),int(rat*size)
+    return x,y,size

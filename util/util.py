@@ -25,6 +25,11 @@ def is_video(path):
     else:
         return False
 
+def init(opt):
+    if not os.path.isdir(opt.result_dir):
+        os.makedirs(opt.result_dir)
+        print('makedir:',opt.result_dir)
+        
 def  writelog(path,log):
     f = open(path,'a+')
     f.write(log+'\n')

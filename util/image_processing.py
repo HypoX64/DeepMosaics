@@ -12,6 +12,19 @@ def resize(img,size):
         res = cv2.resize(img,(size, int(size*h/w)))
     return res
 
+
+def medfilt(data,window):
+    if window%2 == 0 or window < 0:
+        print('Error: the medfilt window must be even number')
+        exit(0)
+    pad = int((window-1)/2)
+    pad_data = np.zeros(len(data)+window-1, dtype = type(data[0]))
+    result = np.zeros(len(data),dtype = type(data[0]))
+    pad_data[pad:pad+len(data)]=data[:]
+    for i in range(len(data)):
+        result[i] = np.median(pad_data[i:i+window])
+    return result
+
 def ch_one2three(img):
     #zeros = np.zeros(img.shape[:2], dtype = "uint8")
     # ret,thresh = cv2.threshold(img,127,255,cv2.THRESH_BINARY)
@@ -115,3 +128,24 @@ def mask_area(mask):
     except:
         area = 0
     return area
+
+
+def replace_mosaic(img_origin,img_fake,x,y,size,no_father):
+    img_fake = resize(img_fake,size*2)
+
+    if no_father:
+        img_origin[y-size:y+size,x-size:x+size]=img_fake
+        img_result = img_origin
+    else:
+        eclosion_num = int(size/5)
+        entad = int(eclosion_num/2+2)
+        mask = np.zeros(img_origin.shape, dtype='uint8')
+        mask = cv2.rectangle(mask,(x-size+entad,y-size+entad),(x+size-entad,y+size-entad),(255,255,255),-1)
+        mask = (cv2.blur(mask, (eclosion_num, eclosion_num)))
+        mask = mask/255.0
+
+        img_tmp = np.zeros(img_origin.shape)
+        img_tmp[y-size:y+size,x-size:x+size]=img_fake
+        img_result = img_origin.copy()
+        img_result = (img_origin*(1-mask)+img_tmp*mask).astype('uint8')
+    return img_result

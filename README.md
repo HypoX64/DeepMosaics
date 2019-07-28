@@ -27,12 +27,12 @@ You can download pre_trained models and test video and replace the files in the 
  [[百度云,提取码7thu]](https://pan.baidu.com/s/1IG4bdIiIC9PH9-oEyae5Sg) 
 
 ### Dependencies
-This code depends on numpy, scipy, opencv-python, torchvision, available via pip install.
-### AddMosaic
+This code depends on opencv-python, available via pip install.
+### Add Mosaic
 ```bash
-python3 AddMosaic.py
+python3 deepmosaic.py
 ```
-### CleanMosaic
+### Clean Mosaic
 copy the AddMosaic video from './result' to './video_or_image'
 ```bash
 python3 CleanMosaic.py
