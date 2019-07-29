@@ -7,7 +7,8 @@ def video2voice(videopath,voicepath):
     os.system('ffmpeg -i '+videopath+' -f mp3 '+voicepath)
 
 def image2video(fps,imagepath,voicepath,videopath):
-    os.system('ffmpeg -y -r '+str(fps)+' -i '+imagepath+' -vcodec libx264 '+'./tmp/video_tmp.mp4')
+    #os.system('ffmpeg -y -r '+str(fps)+' -i '+imagepath+' -vcodec libx264 '+'./tmp/video_tmp.mp4')
+    os.system('ffmpeg -f image2 -i '+imagepath+' -vcodec libx264 -r '+str(fps)+' ./tmp/video_tmp.mp4')
     os.system('ffmpeg -i ./tmp/video_tmp.mp4 -i '+voicepath+' -vcodec copy -acodec copy '+videopath)
 
 def get_video_infos(videopath):

@@ -1,5 +1,5 @@
 import os
-
+import shutil
 def Traversal(filedir):
     file_list=[]
     for root,dirs,files in os.walk(filedir): 
@@ -24,21 +24,29 @@ def is_video(path):
         return True
     else:
         return False
-
-def init(opt):
-    if not os.path.isdir(opt.result_dir):
-        os.makedirs(opt.result_dir)
-        print('makedir:',opt.result_dir)
         
 def  writelog(path,log):
     f = open(path,'a+')
     f.write(log+'\n')
 
-def clean_tempfiles():
+# def del_all(dir_path):
+#     files = Traversal(dir_path)
+#     for file in files:
+#         os.remove(file)
+#     os.removedirs(dir_path)
+
+def clean_tempfiles(tmp_init=True):
     if os.path.isdir('./tmp'):   
-        os.system('rm -rf ./tmp')
-    os.makedirs('./tmp')
-    os.makedirs('./tmp/video2image')
-    os.makedirs('./tmp/addmosaic_image')
-    os.makedirs('./tmp/mosaic_crop')
-    os.makedirs('./tmp/replace_mosaic')
+        shutil.rmtree('./tmp')
+    if tmp_init:
+        os.makedirs('./tmp')
+        os.makedirs('./tmp/video2image')
+        os.makedirs('./tmp/addmosaic_image')
+        os.makedirs('./tmp/mosaic_crop')
+        os.makedirs('./tmp/replace_mosaic')
+
+def file_init(opt):
+    if not os.path.isdir(opt.result_dir):
+        os.makedirs(opt.result_dir)
+        print('makedir:',opt.result_dir)
+    clean_tempfiles()

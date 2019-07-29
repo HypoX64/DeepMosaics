@@ -13,7 +13,7 @@ from options import Options
 
 
 opt = Options().getparse()
-util.init(opt)
+util.file_init(opt)
 
 if opt.mode == 'add':
 
@@ -29,7 +29,9 @@ if opt.mode == 'add':
         fps = ffmpeg.get_video_infos(path)[0]
         ffmpeg.video2voice(path,'./tmp/voice_tmp.mp3')
         ffmpeg.video2image(path,'./tmp/video2image/output_%05d.'+opt.tempimage_type)
-        for imagepath in os.listdir('./tmp/video2image'):
+        imagepaths=os.listdir('./tmp/video2image')
+        imagepaths.sort()
+        for imagepath in imagepaths:
             imagepath = os.path.join('./tmp/video2image',imagepath)
             print('Add Mosaic:',imagepath)
             img = cv2.imread(imagepath)
@@ -90,4 +92,4 @@ elif opt.mode == 'clean':
                     './tmp/voice_tmp.mp3',
                      os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_CleanMosaic.mp4'))                      
 
-util.clean_tempfiles()
+util.clean_tempfiles(tmp_init = False)
