@@ -1,7 +1,7 @@
 ![image](https://github.com/HypoX64/DeepMosaics/blob/master/hand.gif)
 # DeepMosaics
 You can use it to automatically remove the mosaics in images and videos, or add mosaics to them.<br>
-This porject based on semantic segmentation and pix2pix.
+This porject based on ‘semantic segmentation’ and ‘Image-to-Image Translation’.
 <br>
 
 ## Notice
@@ -9,10 +9,10 @@ The code do not include the part of training, I will finish it in my free time.
 <br>
 
 ## Prerequisites
-- Linux, (I didn't try this code on Windows or Mac OS)
+- Linux, Mac OS, Windows
 - Python 3.6+
-- ffmpeg
-- Pytorch 1.0+  [(Old version codes)](https://github.com/HypoX64/DeepMosaics/tree/Pytorch0.4)
+- [ffmpeg 3.4](http://ffmpeg.org/)
+- [Pytorch 1.0+](https://pytorch.org/)  [(Old version codes)](https://github.com/HypoX64/DeepMosaics/tree/Pytorch0.4)
 - CPU or NVIDIA GPU + CUDA CuDNN
 
 ## Getting Started

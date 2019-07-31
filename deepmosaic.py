@@ -21,7 +21,7 @@ if opt.mode == 'add':
     path = opt.media_path
     if util.is_img(path):
         print('Add Mosaic:',path)
-        img = cv2.imread(path)
+        img = impro.imread(path)
         img = runmodel.add_mosaic_to_image(img,net,opt)
         cv2.imwrite(os.path.join(opt.result_dir,os.path.basename(path)),img)
     elif util.is_video(path):
@@ -34,7 +34,7 @@ if opt.mode == 'add':
         for imagepath in imagepaths:
             imagepath = os.path.join('./tmp/video2image',imagepath)
             print('Add Mosaic:',imagepath)
-            img = cv2.imread(imagepath)
+            img = impro.imread(imagepath)
             img = runmodel.add_mosaic_to_image(img,net,opt)
             cv2.imwrite(os.path.join('./tmp/addmosaic_image',
                                         os.path.basename(imagepath)),img)
@@ -49,7 +49,7 @@ elif opt.mode == 'clean':
     path = opt.media_path
     if util.is_img(path):
         print('Clean Mosaic:',path)
-        img_origin = cv2.imread(path)
+        img_origin = impro.imread(path)
         x,y,size = runmodel.get_mosaic_position(img_origin,net_mosaic_pos,opt)
         img_result = img_origin.copy()
         if size != 0 :
@@ -68,7 +68,7 @@ elif opt.mode == 'clean':
         imagepaths.sort()
         for imagepath in imagepaths:
             imagepath=os.path.join('./tmp/video2image',imagepath)
-            img_origin = cv2.imread(imagepath)
+            img_origin = impro.imread(imagepath)
             x,y,size = runmodel.get_mosaic_position(img_origin,net_mosaic_pos,opt)
             positions.append([x,y,size])
             print('Find Positions:',imagepath)
@@ -79,7 +79,7 @@ elif opt.mode == 'clean':
         for i,imagepath in enumerate(imagepaths,0):
             imagepath=os.path.join('./tmp/video2image',imagepath)
             x,y,size = positions[i][0],positions[i][1],positions[i][2]
-            img_origin = cv2.imread(imagepath)
+            img_origin = impro.imread(imagepath)
             img_result = img_origin.copy()
             if size != 0:
                 img_mosaic = img_origin[y-size:y+size,x-size:x+size]

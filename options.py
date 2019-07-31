@@ -25,8 +25,7 @@ class Options():
         
         #AddMosaic
         self.parser.add_argument('--netG', type=str, default='auto',help='select model to use for netG(clean mosaic) -> auto | unet_128 | resnet_9blocks')
-        self.parser.add_argument('--mosaic_position_model_path', type=str, default='./pretrained_models/mosaic_position.pth',
-                                help='name of model use to find mosaic position')
+        self.parser.add_argument('--mosaic_position_model_path', type=str, default='auto',help='name of model use to find mosaic position')
         self.parser.add_argument('--no_feather', action='store_true', help='if true, no edge feather,but run faster')
         self.parser.add_argument('--medfilt_num', type=int, default=11,help='medfilt window of mosaic movement in the video')
         self.initialized = True
@@ -42,5 +41,10 @@ class Options():
                 self.opt.netG = 'unet_128'
             elif 'resnet_9blocks' in self.opt.model_path:
                 self.opt.netG = 'resnet_9blocks'
+
+        if self.opt.mosaic_position_model_path == 'auto':
+            _path = os.path.join(os.path.split(self.opt.model_path)[0],'mosaic_position.pth')
+            self.opt.mosaic_position_model_path = _path
+            print(self.opt.mosaic_position_model_path)
 
         return self.opt

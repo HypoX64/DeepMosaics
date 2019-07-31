@@ -29,11 +29,6 @@ def  writelog(path,log):
     f = open(path,'a+')
     f.write(log+'\n')
 
-# def del_all(dir_path):
-#     files = Traversal(dir_path)
-#     for file in files:
-#         os.remove(file)
-#     os.removedirs(dir_path)
 
 def clean_tempfiles(tmp_init=True):
     if os.path.isdir('./tmp'):   

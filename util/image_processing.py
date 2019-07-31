@@ -2,6 +2,11 @@ import cv2
 import numpy as np
 
 
+# imread for chinese path in windows
+def imread(file_path):
+    cv_img = cv2.imdecode(np.fromfile(file_path,dtype=np.uint8),-1)
+    return cv_img
+
 def resize(img,size):
     h, w = img.shape[:2]
     if np.min((w,h)) ==size:
