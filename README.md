@@ -1,4 +1,4 @@
-![image](https://github.com/HypoX64/DeepMosaics/blob/master/hand.gif)
+![image](https://github.com/HypoX64/DeepMosaics/blob/master/imgs/hand.gif)
 # DeepMosaics
 You can use it to automatically remove the mosaics in images and videos, or add mosaics to them.<br>
 This porject based on ‘semantic segmentation’ and ‘Image-to-Image Translation’.
@@ -13,13 +13,14 @@ You can either run DeepMosaics via pre-built binary package or from source.<br>
 
 ### Pre-built binary package
 For windows, we bulid a GUI version for easy test.<br>
-![image](https://github.com/HypoX64/DeepMosaics/blob/master/exe_GUI.png)<br>
+![image](https://github.com/HypoX64/DeepMosaics/blob/master/imgs/exe_GUI.png)<br>
 Download this version via [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ) <br>
 Attentions:<br>
-1.Require Windows_x86_64, Windows10 is better.<br>
-2.File path cannot contain spaces (" ").<br>
-3.Run time depends on computer performance.<br>
-4.If output video cannot be played, you can try it with [potplayer](https://daumpotplayer.com/download/).<br>
+
+- Require Windows_x86_64, Windows10 is better.<br>
+- File path cannot contain spaces (" ").<br>
+- Run time depends on computer performance.<br>
+- If output video cannot be played, you can try it with [potplayer](https://daumpotplayer.com/download/).<br>
 
 ### Run from source
 #### Prerequisites
