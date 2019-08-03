@@ -13,14 +13,15 @@ You can either run DeepMosaics via pre-built binary package or from source.<br>
 
 ### Pre-built binary package
 For windows, we bulid a GUI version for easy test.<br>
-![image](https://github.com/HypoX64/DeepMosaics/blob/master/imgs/exe_GUI.png)<br>
 Download this version via [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ) <br>
-Attentions:<br>
 
+![image](https://github.com/HypoX64/DeepMosaics/blob/master/imgs/GUI.png)<br>
+
+Attentions:<br>
 - Require Windows_x86_64, Windows10 is better.<br>
 - File path cannot contain spaces (" ").<br>
 - Run time depends on computer performance.<br>
-- If output video cannot be played, you can try it with [potplayer](https://daumpotplayer.com/download/).<br>
+- If output video cannot be played, you can try it with [potplayer](https://daumpotplayer.com/download/).
 
 ### Run from source
 #### Prerequisites
