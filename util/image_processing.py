@@ -17,19 +17,6 @@ def resize(img,size):
         res = cv2.resize(img,(size, int(size*h/w)))
     return res
 
-
-def medfilt(data,window):
-    if window%2 == 0 or window < 0:
-        print('Error: the medfilt window must be even number')
-        exit(0)
-    pad = int((window-1)/2)
-    pad_data = np.zeros(len(data)+window-1, dtype = type(data[0]))
-    result = np.zeros(len(data),dtype = type(data[0]))
-    pad_data[pad:pad+len(data)]=data[:]
-    for i in range(len(data)):
-        result[i] = np.median(pad_data[i:i+window])
-    return result
-
 def ch_one2three(img):
     #zeros = np.zeros(img.shape[:2], dtype = "uint8")
     # ret,thresh = cv2.threshold(img,127,255,cv2.THRESH_BINARY)

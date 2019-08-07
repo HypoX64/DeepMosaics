@@ -29,7 +29,6 @@ def  writelog(path,log):
     f = open(path,'a+')
     f.write(log+'\n')
 
-
 def clean_tempfiles(tmp_init=True):
     if os.path.isdir('./tmp'):   
         shutil.rmtree('./tmp')
@@ -39,6 +38,7 @@ def clean_tempfiles(tmp_init=True):
         os.makedirs('./tmp/addmosaic_image')
         os.makedirs('./tmp/mosaic_crop')
         os.makedirs('./tmp/replace_mosaic')
+        os.makedirs('./tmp/ROI_mask')
 
 def file_init(opt):
     if not os.path.isdir(opt.result_dir):

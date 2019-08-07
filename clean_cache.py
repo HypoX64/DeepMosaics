@@ -18,6 +18,7 @@ def Traversal(filedir):
             dir_list.append(os.path.join(root,dir))
             Traversal(dir)
     return file_list,dir_list
+
 def is_img(path):
     ext = os.path.splitext(path)[1]
     ext = ext.lower()
@@ -38,13 +39,12 @@ file_list,dir_list = Traversal('./')
 for file in file_list:
     if ('tmp' in file) | ('pth' in file)|('pycache' in file) | is_video(file) | is_img(file):
         if os.path.exists(file):
-            os.remove(file)
-            print('remove file:',file)
+            if 'imgs' not in file:
+                os.remove(file)
+                print('remove file:',file)
 
 for dir in dir_list:
     if ('tmp'in dir)|('pycache'in dir):
         if os.path.exists(dir):
             shutil.rmtree(dir)
-
-            # os.rmdir(dir)
             print('remove dir:',dir)

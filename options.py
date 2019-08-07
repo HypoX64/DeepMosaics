@@ -17,9 +17,9 @@ class Options():
         self.parser.add_argument('--tempimage_type', type=str, default='png',help='type of temp image, png | jpg, png is better but occupy more storage space')
 
         #AddMosaic
-        self.parser.add_argument('--mosaic_mod', type=str, default='squa_avg',help='type of mosaic -> squa_avg | squa_random | squa_avg_circle_edge | rect_avg')
-        self.parser.add_argument('--mosaic_size', type=int, default=30,help='mosaic size')
-        self.parser.add_argument('--mask_extend', type=int, default=20,help='more mosaic area')
+        self.parser.add_argument('--mosaic_mod', type=str, default='squa_avg',help='type of mosaic -> squa_avg | squa_random | squa_avg_circle_edge | rect_avg | random')
+        self.parser.add_argument('--mosaic_size', type=int, default=0,help='mosaic size,if 0 auto size')
+        self.parser.add_argument('--mask_extend', type=int, default=10,help='more mosaic area')
         self.parser.add_argument('--mask_threshold', type=int, default=64,help='threshold of recognize mosaic position 0~255')
         self.parser.add_argument('--output_size', type=int, default=0,help='size of output file,if 0 -> origin')
         
@@ -45,6 +45,6 @@ class Options():
         if self.opt.mosaic_position_model_path == 'auto':
             _path = os.path.join(os.path.split(self.opt.model_path)[0],'mosaic_position.pth')
             self.opt.mosaic_position_model_path = _path
-            print(self.opt.mosaic_position_model_path)
+            # print(self.opt.mosaic_position_model_path)
 
         return self.opt

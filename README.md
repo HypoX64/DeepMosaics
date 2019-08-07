@@ -19,9 +19,8 @@ Download this version via [[Google Drive]](https://drive.google.com/open?id=1LTE
 
 Attentions:<br>
 - Require Windows_x86_64, Windows10 is better.<br>
-- File path cannot contain spaces (" ").<br>
 - Run time depends on computer performance.<br>
-- If output video cannot be played, you can try it with [potplayer](https://daumpotplayer.com/download/).
+- If output video cannot be played, you can try with [potplayer](https://daumpotplayer.com/download/).
 
 ### Run from source
 #### Prerequisites

@@ -32,13 +32,11 @@ def run_pix2pix(img,net,size = 128,use_gpu = True):
     img_fake = data.tensor2im(img_fake)
     return img_fake
 
-
-#find mosaic position in image and add mosaic to this image
-def add_mosaic_to_image(img,net,opt):
+def get_ROI_position(img,net,opt):
     mask = run_unet_rectim(img,net,use_gpu = opt.use_gpu)
     mask = impro.mask_threshold(mask,opt.mask_extend,opt.mask_threshold)
-    img = mosaic.addmosaic(img,mask,opt.mosaic_size,opt.output_size,model = opt.mosaic_mod)
-    return img
+    x,y,halfsize,area = impro.boundingSquare(mask, 1)
+    return mask,x,y,area
 
 
 def get_mosaic_position(img_origin,net_mosaic_pos,opt):
