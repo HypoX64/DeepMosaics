@@ -1,12 +1,11 @@
-![image](https://github.com/HypoX64/DeepMosaics/blob/master/imgs/hand.gif)
-# DeepMosaics
+![image](./imgs/hand.gif)
+# <img src="./imgs/icon.jpg" width="48">DeepMosaics
 You can use it to automatically remove the mosaics in images and videos, or add mosaics to them.<br>
-This porject based on ‘semantic segmentation’ and ‘Image-to-Image Translation’.
-<br>
+This porject based on ‘semantic segmentation’ and ‘Image-to-Image Translation’.<br>
+* [中文版](./README_CN.md)<br>
 
 ## Notice
-The code do not include the part of training, I will finish it in my free time.
-<br>
+The code do not include the part of training, I will finish it in my free time.<br>
 
 ## Run DeepMosaics
 You can either run DeepMosaics via pre-built binary package or from source.<br>
@@ -15,10 +14,11 @@ You can either run DeepMosaics via pre-built binary package or from source.<br>
 For windows, we bulid a GUI version for easy test.<br>
 Download this version via [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ) <br>
 
-![image](https://github.com/HypoX64/DeepMosaics/blob/master/imgs/GUI.png)<br>
+![image](./imgs/GUI.png)<br>
 
 Attentions:<br>
 - Require Windows_x86_64, Windows10 is better.<br>
+- Different pre-trained models are suitable for different effects.<br>
 - Run time depends on computer performance.<br>
 - If output video cannot be played, you can try with [potplayer](https://daumpotplayer.com/download/).
 
@@ -55,4 +55,4 @@ If you want to test other image or video, please refer to this file.
 <br>
 
 ## Acknowledgments
-This code borrows heavily from [[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet).
+This code borrows heavily from [[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet)[[pix2pixHD]](https://github.com/NVIDIA/pix2pixHD).
