@@ -42,7 +42,7 @@ if opt.mode == 'add':
             positions.append([x,y,area])      
             cv2.imwrite(os.path.join('./tmp/ROI_mask',
                                       os.path.basename(imagepath)),mask)
-        print('Optimized ROI locations...')
+        print('Optimize ROI locations...')
         mask_index = filt.position_medfilt(np.array(positions), 7)
 
         # add mosaic
@@ -71,7 +71,7 @@ elif opt.mode == 'clean':
         img_result = img_origin.copy()
         if size != 0 :
             img_mosaic = img_origin[y-size:y+size,x-size:x+size]
-            img_fake=runmodel.run_pix2pix(img_mosaic,netG,use_gpu = opt.use_gpu)
+            img_fake=runmodel.run_pix2pix(img_mosaic,netG,opt)
             img_result = impro.replace_mosaic(img_origin,img_fake,x,y,size,opt.no_feather)
         cv2.imwrite(os.path.join(opt.result_dir,os.path.basename(path)),img_result)
 
@@ -90,7 +90,8 @@ elif opt.mode == 'clean':
             img_origin = impro.imread(imagepath)
             x,y,size = runmodel.get_mosaic_position(img_origin,net_mosaic_pos,opt)
             positions.append([x,y,size])
-            print('Find Positions:',imagepath)
+            print('Find mosaic location:',imagepath)
+        print('Optimize mosaic locations...')
         positions =np.array(positions)
         for i in range(3):positions[:,i] = filt.medfilt(positions[:,i],opt.medfilt_num)
 
@@ -102,7 +103,7 @@ elif opt.mode == 'clean':
             img_result = img_origin.copy()
             if size != 0:
                 img_mosaic = img_origin[y-size:y+size,x-size:x+size]
-                img_fake = runmodel.run_pix2pix(img_mosaic,netG,use_gpu = opt.use_gpu)
+                img_fake = runmodel.run_pix2pix(img_mosaic,netG,opt)
                 img_result = impro.replace_mosaic(img_origin,img_fake,x,y,size,opt.no_feather)
             cv2.imwrite(os.path.join('./tmp/replace_mosaic',os.path.basename(imagepath)),img_result)
             print('Clean Mosaic:',imagepath)

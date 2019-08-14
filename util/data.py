@@ -20,11 +20,12 @@ def tensor2im(image_tensor, imtype=np.uint8, rgb2bgr = True):
 
 
 def im2tensor(image_numpy, imtype=np.uint8, bgr2rgb = True, reshape = True, use_gpu = True):
+    h, w = image_numpy.shape[:2]
     if bgr2rgb:
         image_numpy = image_numpy[...,::-1]-np.zeros_like(image_numpy)
     image_tensor = transform(image_numpy)
     if reshape:
-        image_tensor=image_tensor.reshape(1,3,128,128)
+        image_tensor=image_tensor.reshape(1,3,h,w)
     if use_gpu:
         image_tensor = image_tensor.cuda()
     return image_tensor

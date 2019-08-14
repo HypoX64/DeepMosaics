@@ -5,7 +5,6 @@ from util import mosaic
 from util import data
 import torch
 
-
 def run_unet(img,net,size = 128,use_gpu = True):
     img=impro.image2folat(img,3)
     img=img.reshape(1,3,size,size)
@@ -25,9 +24,12 @@ def run_unet_rectim(img,net,size = 128,use_gpu = True):
     mask = impro.mergeimage(mask1,mask2,img)
     return mask
 
-def run_pix2pix(img,net,size = 128,use_gpu = True):
-    img = impro.resize(img,size)
-    img = data.im2tensor(img,use_gpu=use_gpu)
+def run_pix2pix(img,net,opt):
+    if opt.netG == 'HD':
+        img = impro.resize(img,512)
+    else:
+        img = impro.resize(img,128)
+    img = data.im2tensor(img,use_gpu=opt.use_gpu)
     img_fake = net(img)
     img_fake = data.tensor2im(img_fake)
     return img_fake
@@ -37,7 +39,6 @@ def get_ROI_position(img,net,opt):
     mask = impro.mask_threshold(mask,opt.mask_extend,opt.mask_threshold)
     x,y,halfsize,area = impro.boundingSquare(mask, 1)
     return mask,x,y,area
-
 
 def get_mosaic_position(img_origin,net_mosaic_pos,opt):
     mask = run_unet_rectim(img_origin,net_mosaic_pos,use_gpu = opt.use_gpu)

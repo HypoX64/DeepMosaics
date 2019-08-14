@@ -23,8 +23,8 @@ class Options():
         self.parser.add_argument('--mask_threshold', type=int, default=64,help='threshold of recognize mosaic position 0~255')
         self.parser.add_argument('--output_size', type=int, default=0,help='size of output file,if 0 -> origin')
         
-        #AddMosaic
-        self.parser.add_argument('--netG', type=str, default='auto',help='select model to use for netG(clean mosaic) -> auto | unet_128 | resnet_9blocks')
+        #CleanMosaic
+        self.parser.add_argument('--netG', type=str, default='auto',help='select model to use for netG(clean mosaic) -> auto | unet_128 | resnet_9blocks | HD')
         self.parser.add_argument('--mosaic_position_model_path', type=str, default='auto',help='name of model use to find mosaic position')
         self.parser.add_argument('--no_feather', action='store_true', help='if true, no edge feather,but run faster')
         self.parser.add_argument('--medfilt_num', type=int, default=11,help='medfilt window of mosaic movement in the video')
@@ -36,11 +36,16 @@ class Options():
             self.initialize()
         self.opt = self.parser.parse_args()
 
-        if self.opt.netG == 'auto':
+        if self.opt.netG == 'auto' and self.opt.mode =='clean':
             if 'unet_128' in self.opt.model_path:
                 self.opt.netG = 'unet_128'
             elif 'resnet_9blocks' in self.opt.model_path:
                 self.opt.netG = 'resnet_9blocks'
+            elif 'HD' in self.opt.model_path:
+                self.opt.netG = 'HD'
+            else:
+                print('Type of Generator error!')
+
 
         if self.opt.mosaic_position_model_path == 'auto':
             _path = os.path.join(os.path.split(self.opt.model_path)[0],'mosaic_position.pth')

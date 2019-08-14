@@ -1,5 +1,6 @@
 import os
 import shutil
+
 def Traversal(filedir):
     file_list=[]
     for root,dirs,files in os.walk(filedir): 
@@ -28,6 +29,13 @@ def is_video(path):
 def  writelog(path,log):
     f = open(path,'a+')
     f.write(log+'\n')
+
+def makedirs(path):
+    if os.path.isdir(path):
+        print(path,'existed')
+    else:
+        os.makedirs(path)
+        print('makedir:',path)
 
 def clean_tempfiles(tmp_init=True):
     if os.path.isdir('./tmp'):   
