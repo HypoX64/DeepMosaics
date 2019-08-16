@@ -17,21 +17,21 @@ Download this version via [[Google Drive]](https://drive.google.com/open?id=1LTE
 ![image](./imgs/GUI.png)<br>
 
 Attentions:<br>
-- Require Windows_x86_64, Windows10 is better.<br>
-- Different pre-trained models are suitable for different effects.<br>
-- Run time depends on computer performance.<br>
-- If output video cannot be played, you can try with [potplayer](https://daumpotplayer.com/download/).
+  - Require Windows_x86_64, Windows10 is better.<br>
+  - Different pre-trained models are suitable for different effects.<br>
+  - Run time depends on computer performance.<br>
+  - If output video cannot be played, you can try with [potplayer](https://daumpotplayer.com/download/).
 
 ### Run from source
 #### Prerequisites
-- Linux, Mac OS, Windows
-- Python 3.6+
-- [ffmpeg 3.4](http://ffmpeg.org/)
-- [Pytorch 1.0+](https://pytorch.org/)  [(Old version codes)](https://github.com/HypoX64/DeepMosaics/tree/Pytorch0.4)
-- CPU or NVIDIA GPU + CUDA CuDNN<br>
+  - Linux, Mac OS, Windows
+  - Python 3.6+
+  - [ffmpeg 3.4](http://ffmpeg.org/)
+  - [Pytorch 1.0+](https://pytorch.org/)  [(Old version codes)](https://github.com/HypoX64/DeepMosaics/tree/Pytorch0.4)
+  - CPU or NVIDIA GPU + CUDA CuDNN<br>
 #### Dependencies
 This code depends on opencv-python, torchvision available via pip install.
-#### Clone this repo:
+#### Clone this repo
 ```bash
 git clone https://github.com/HypoX64/DeepMosaics
 cd DeepMosaics

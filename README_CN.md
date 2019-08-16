@@ -16,21 +16,21 @@
 ![image](./imgs/GUI.png)<br>
 
 注意事项:<br>
-- 程序的运行要求在64位Windows操作系统,我仅在Windows10下运行过,其他版本暂未经过测试<br>
-- 请根据需求选择合适的预训练模型进行测试<br>
-- 运行时间取决于电脑性能,对于视频文件,我们建议可以先使用截图进行测试.<br>
-- 如果输出的视频无法播放,这边建议您可以尝试[potplayer](https://daumpotplayer.com/download/).
+  - 程序的运行要求在64位Windows操作系统,我仅在Windows10运行过,其他版本暂未经过测试<br>
+  - 请根据需求选择合适的预训练模型进行测试<br>
+  - 运行时间取决于电脑性能,对于视频文件,我们建议可以先使用截图进行测试.<br>
+  - 如果输出的视频无法播放,这边建议您尝试[potplayer](https://daumpotplayer.com/download/).
 
 ### 通过源代码运行
 #### 前提要求
-- Linux, Mac OS, Windows
-- Python 3.6+
-- [ffmpeg 3.4](http://ffmpeg.org/)
-- [Pytorch 1.0+](https://pytorch.org/)  [(Old version codes)](https://github.com/HypoX64/DeepMosaics/tree/Pytorch0.4)
-- CPU or NVIDIA GPU + CUDA CuDNN<br>
+  - Linux, Mac OS, Windows
+  - Python 3.6+
+  - [ffmpeg 3.4](http://ffmpeg.org/)
+  - [Pytorch 1.0+](https://pytorch.org/)  [(Old version codes)](https://github.com/HypoX64/DeepMosaics/tree/Pytorch0.4)
+  - CPU or NVIDIA GPU + CUDA CuDNN<br>
 #### Python依赖项
 代码依赖于opencv-python以及 torchvision,可有通过pip install 进行安装.
-#### 克隆源代码:
+#### 克隆源代码
 ```bash
 git clone https://github.com/HypoX64/DeepMosaics
 cd DeepMosaics

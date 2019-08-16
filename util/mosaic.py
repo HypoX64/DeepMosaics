@@ -69,13 +69,13 @@ def addmosaic_autosize(img,mask,model,area_type = 'normal'):
         area = 0
     area = area/(alpha*alpha)
     if area>50000:
-        img_mosaic = addmosaic_normal(img,mask,alpha*((area-50000)/50000+16),model = model)
+        img_mosaic = addmosaic_normal(img,mask,alpha*((area-50000)/50000+12),model = model)
     elif 20000<area<=50000:
-        img_mosaic = addmosaic_normal(img,mask,alpha*((area-20000)/30000+12),model = model)
+        img_mosaic = addmosaic_normal(img,mask,alpha*((area-20000)/30000+8),model = model)
     elif 5000<area<=20000:
-        img_mosaic = addmosaic_normal(img,mask,alpha*((area-5000)/20000+8),model = model)
+        img_mosaic = addmosaic_normal(img,mask,alpha*((area-5000)/20000+7),model = model)
     elif 0<=area<=5000:
-        img_mosaic = addmosaic_normal(img,mask,alpha*((area-0)/5000+4),model = model)
+        img_mosaic = addmosaic_normal(img,mask,alpha*((area-0)/5000+6),model = model)
     else:
         pass
     return img_mosaic
