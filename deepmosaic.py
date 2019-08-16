@@ -68,7 +68,7 @@ def main():
             img_result = img_origin.copy()
             if size != 0 :
                 img_mosaic = img_origin[y-size:y+size,x-size:x+size]
-                img_fake=runmodel.run_pix2pix(img_mosaic,netG,opt)
+                img_fake = runmodel.run_pix2pix(img_mosaic,netG,opt)
                 img_result = impro.replace_mosaic(img_origin,img_fake,x,y,size,opt.no_feather)
             cv2.imwrite(os.path.join(opt.result_dir,os.path.basename(path)),img_result)
 

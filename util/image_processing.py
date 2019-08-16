@@ -124,11 +124,15 @@ def mask_area(mask):
 
 def replace_mosaic(img_origin,img_fake,x,y,size,no_father):
     img_fake = resize(img_fake,size*2)
-
     if no_father:
         img_origin[y-size:y+size,x-size:x+size]=img_fake
         img_result = img_origin
     else:
+        #color correction
+        RGB_origin = img_origin[y-size:y+size,x-size:x+size].mean(0).mean(0)
+        RGB_fake = img_fake.mean(0).mean(0)
+        for i in range(3):img_fake[:,:,i] = np.clip(img_fake[:,:,i]+RGB_origin[i]-RGB_fake[i],0,255)      
+        #eclosion
         eclosion_num = int(size/5)
         entad = int(eclosion_num/2+2)
         mask = np.zeros(img_origin.shape, dtype='uint8')

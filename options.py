@@ -11,7 +11,7 @@ class Options():
         #base
         self.parser.add_argument('--use_gpu', action='store_true', help='if input it, use gpu')
         self.parser.add_argument('--media_path', type=str, default='./hands_test.mp4',help='your videos or images path')
-        self.parser.add_argument('--mode', type=str, default='add',help='add or clean mosaic into your media  add | clean')
+        self.parser.add_argument('--mode', type=str, default='auto',help='add or clean mosaic into your media  auto | add | clean')
         self.parser.add_argument('--model_path', type=str, default='./pretrained_models/add_hands_128.pth',help='pretrained model path')
         self.parser.add_argument('--result_dir', type=str, default='./result',help='output result will be saved here')
         self.parser.add_argument('--tempimage_type', type=str, default='png',help='type of temp image, png | jpg, png is better but occupy more storage space')
@@ -26,7 +26,7 @@ class Options():
         #CleanMosaic
         self.parser.add_argument('--netG', type=str, default='auto',help='select model to use for netG(clean mosaic) -> auto | unet_128 | resnet_9blocks | HD')
         self.parser.add_argument('--mosaic_position_model_path', type=str, default='auto',help='name of model use to find mosaic position')
-        self.parser.add_argument('--no_feather', action='store_true', help='if true, no edge feather,but run faster')
+        self.parser.add_argument('--no_feather', action='store_true', help='if true, no edge feather and color correction, but run faster')
         self.parser.add_argument('--medfilt_num', type=int, default=11,help='medfilt window of mosaic movement in the video')
         self.initialized = True
 
@@ -35,6 +35,14 @@ class Options():
         if not self.initialized:
             self.initialize()
         self.opt = self.parser.parse_args()
+
+        if self.opt.mode == 'auto':
+            if 'add' in self.opt.model_path:
+                self.opt.mode = 'add'
+            elif 'clean' in self.opt.model_path:
+                self.opt.mode = 'clean'
+            else:
+                print('Please input running mode!')
 
         if self.opt.netG == 'auto' and self.opt.mode =='clean':
             if 'unet_128' in self.opt.model_path:
