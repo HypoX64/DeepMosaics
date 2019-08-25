@@ -2,6 +2,17 @@
 # <img src="./imgs/icon.jpg" width="48">DeepMosaics
 这是一个通过深度学习自动的为图片/视频添加马赛克,或消除马赛克的项目.<br>它基于“语义分割”以及“图像翻译”.<br>
 
+### 更多例子
+原始 | 自动打码 |  自动去码  
+:-:|:-:|:-:
+![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/lena.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/lena_add.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/lena_clean.jpg) 
+![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/youknow.png)  | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/youknow_add.png) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/youknow_clean.png) 
+* 与 [DeepCreamPy](https://github.com/deeppomf/DeepCreamPy)相比较
+马赛克图片 | DeepCreamPy | ours  
+:-:|:-:|:-:
+![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_a_mosaic.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/a_dcp.png) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_a_clean.jpg) 
+![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_b_mosaic.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/b_dcp.png) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_b_clean.jpg) 
+
 ## 一些说明
 代码暂不包含训练部分,训练方法我将在空闲时间给出.<br>
 现在,代码已经支持基于[pix2pixHD](https://github.com/NVIDIA/pix2pixHD)训练出的模型,但网络仍在训练中,这将使得输出结果看起来更加清晰,"真实".<br>
@@ -19,7 +30,8 @@
   - 程序的运行要求在64位Windows操作系统,我仅在Windows10运行过,其他版本暂未经过测试<br>
   - 请根据需求选择合适的预训练模型进行测试<br>
   - 运行时间取决于电脑性能,对于视频文件,我们建议可以先使用截图进行测试.<br>
-  - 如果输出的视频无法播放,这边建议您尝试[potplayer](https://daumpotplayer.com/download/).
+  - 如果输出的视频无法播放,这边建议您尝试[potplayer](https://daumpotplayer.com/download/).<br>
+  - 相比于源码,该版本的更新将会延后.
 
 ### 通过源代码运行
 #### 前提要求

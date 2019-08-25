@@ -4,6 +4,17 @@ You can use it to automatically remove the mosaics in images and videos, or add 
 This porject based on ‘semantic segmentation’ and ‘Image-to-Image Translation’.<br>
 * [中文版](./README_CN.md)<br>
 
+### More example
+origin | auto add mosaic |  auto clean mosaic  
+:-:|:-:|:-:
+![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/lena.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/lena_add.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/lena_clean.jpg) 
+![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/youknow.png)  | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/youknow_add.png) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/youknow_clean.png) 
+* Compared with [DeepCreamPy](https://github.com/deeppomf/DeepCreamPy)
+mosaic image | DeepCreamPy | ours  
+:-:|:-:|:-:
+![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_a_mosaic.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/a_dcp.png) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_a_clean.jpg) 
+![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_b_mosaic.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/b_dcp.png) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_b_clean.jpg) 
+
 ## Notice
 The code do not include the part of training, I will finish it in my free time.<br>
 
@@ -21,6 +32,7 @@ Attentions:<br>
   - Different pre-trained models are suitable for different effects.<br>
   - Run time depends on computer performance.<br>
   - If output video cannot be played, you can try with [potplayer](https://daumpotplayer.com/download/).
+  - GUI version update slower than source.
 
 ### Run from source
 #### Prerequisites
