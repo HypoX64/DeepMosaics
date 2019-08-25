@@ -8,6 +8,7 @@
 ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/lena.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/lena_add.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/lena_clean.jpg) 
 ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/youknow.png)  | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/youknow_add.png) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/youknow_clean.png) 
 * 与 [DeepCreamPy](https://github.com/deeppomf/DeepCreamPy)相比较
+
 马赛克图片 | DeepCreamPy | ours  
 :-:|:-:|:-:
 ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_a_mosaic.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/a_dcp.png) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_a_clean.jpg) 
