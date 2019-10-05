@@ -29,6 +29,7 @@ def is_video(path):
 def  writelog(path,log):
     f = open(path,'a+')
     f.write(log+'\n')
+    f.close()
 
 def makedirs(path):
     if os.path.isdir(path):
@@ -46,7 +47,9 @@ def clean_tempfiles(tmp_init=True):
         os.makedirs('./tmp/addmosaic_image')
         os.makedirs('./tmp/mosaic_crop')
         os.makedirs('./tmp/replace_mosaic')
+        os.makedirs('./tmp/mosaic_mask')
         os.makedirs('./tmp/ROI_mask')
+        os.makedirs('./tmp/ROI_mask_check')
 
 def file_init(opt):
     if not os.path.isdir(opt.result_dir):

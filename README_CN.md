@@ -15,8 +15,9 @@
 ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_b_mosaic.jpg) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/b_dcp.png) | ![image](https://github.com/HypoX64/DeepMosaics_example/blob/master/face_b_clean.jpg) 
 
 ## 一些说明
-代码暂不包含训练部分,训练方法我将在空闲时间给出.<br>
-现在,代码已经支持基于[pix2pixHD](https://github.com/NVIDIA/pix2pixHD)训练出的模型,但网络仍在训练中,这将使得输出结果看起来更加清晰,"真实".<br>
+* 训练部分并不完全<br>
+* 现在,代码已经支持基于[pix2pixHD](https://github.com/NVIDIA/pix2pixHD)训练出的模型,但网络仍在训练中,这将使得输出结果看起来更加清晰,"真实".<br>
+* 新的模型,可根据视频帧间关系进行马赛克恢复,在pretrained model 中被命名为*_video.pth<br>
 
 ## 如何运行
 可以通过我们预编译好的二进制包或源代码运行.<br>
@@ -38,7 +39,7 @@
 #### 前提要求
   - Linux, Mac OS, Windows
   - Python 3.6+
-  - [ffmpeg 3.4](http://ffmpeg.org/)
+  - [ffmpeg 3.4.6](http://ffmpeg.org/)
   - [Pytorch 1.0+](https://pytorch.org/)  [(Old version codes)](https://github.com/HypoX64/DeepMosaics/tree/Pytorch0.4)
   - CPU or NVIDIA GPU + CUDA CuDNN<br>
 #### Python依赖项
@@ -50,7 +51,7 @@ cd DeepMosaics
 ```
 #### 下载测试视频以及预训练模型
 可以通过以下两种方法下载测试视频以及预训练模型,并将他们置于项目文件夹中.<br>
-[[Google Drive]](https://drive.google.com/open?id=10nARsiZoZGcaKw40nQu9fJuRp1oeabPs)   [[百度云,提取码7thu]](https://pan.baidu.com/s/1IG4bdIiIC9PH9-oEyae5Sg) 
+[[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ) <br>
 
 #### 简单的例子
 * 为视频添加马赛克,例子中认为手是需要打码的区域 ,可以通过切换预训练模型切换自动打码区域(输出结果将储存到 './result')
@@ -63,7 +64,7 @@ python3 deepmosaic.py --mode clean --model_path ./pretrained_models/clean_hands_
 ```
 #### 更多的参数
 如果想要测试其他的图片或视频,请参照以下文件输入参数.
-[[options.py]](https://github.com/HypoX64/DeepMosaics/blob/master/options.py) <br>
+[[options.py]](./cores/options.py) <br>
 
 ## 鸣谢
 代码大量的参考了以下项目:[[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet)[[pix2pixHD]](https://github.com/NVIDIA/pix2pixHD)..

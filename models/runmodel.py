@@ -40,10 +40,10 @@ def get_ROI_position(img,net,opt):
     x,y,halfsize,area = impro.boundingSquare(mask, 1)
     return mask,x,y,area
 
-def get_mosaic_position(img_origin,net_mosaic_pos,opt):
+def get_mosaic_position(img_origin,net_mosaic_pos,opt,threshold = 128 ):
     mask = run_unet_rectim(img_origin,net_mosaic_pos,use_gpu = opt.use_gpu)
-    mask = impro.mask_threshold(mask,10,128)
+    mask = impro.mask_threshold(mask,10,threshold)
     x,y,size,area = impro.boundingSquare(mask,Ex_mul=1.5)
     rat = min(img_origin.shape[:2])/128.0
     x,y,size = int(rat*x),int(rat*y),int(rat*size)
-    return x,y,size
+    return x,y,size,mask

@@ -7,6 +7,8 @@ def pix2pix(opt):
     # print(opt.model_path,opt.netG)
     if opt.netG == 'HD':
         netG = define_G_HD(3, 3, 64, 'global' ,4)
+    elif opt.netG == 'video':
+        netG = define_G(3*25+1, 3, 128, 'unet_128', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
     else:
         netG = define_G(3, 3, 64, opt.netG, norm='batch',use_dropout=True, init_type='normal', gpu_ids=[])
 

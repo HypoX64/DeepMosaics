@@ -19,13 +19,28 @@ def tensor2im(image_tensor, imtype=np.uint8, rgb2bgr = True):
     return image_numpy.astype(imtype)
 
 
-def im2tensor(image_numpy, imtype=np.uint8, bgr2rgb = True, reshape = True, use_gpu = True):
-    h, w = image_numpy.shape[:2]
+def im2tensor(image_numpy, imtype=np.uint8, bgr2rgb = True, reshape = True, use_gpu = True,  use_transform = True):
+    h, w ,ch = image_numpy.shape
     if bgr2rgb:
         image_numpy = image_numpy[...,::-1]-np.zeros_like(image_numpy)
-    image_tensor = transform(image_numpy)
+    if use_transform:
+        image_tensor = transform(image_numpy)
+    else:
+        image_numpy = image_numpy/255.0
+        image_numpy = image_numpy.transpose((2, 0, 1))
+        image_tensor = torch.from_numpy(image_numpy).float()
     if reshape:
-        image_tensor=image_tensor.reshape(1,3,h,w)
+        image_tensor=image_tensor.reshape(1,ch,h,w)
     if use_gpu:
         image_tensor = image_tensor.cuda()
     return image_tensor
+
+# def im2tensor(image_numpy, use_gpu=False):
+#     h, w ,ch = image_numpy.shape
+#     image_numpy = image_numpy/255.0
+#     image_numpy = image_numpy.transpose((2, 0, 1))
+#     image_numpy = image_numpy.reshape(-1,ch,h,w)
+#     img_tensor = torch.from_numpy(image_numpy).float()
+#     if use_gpu:
+#         img_tensor = img_tensor.cuda()
+#     return img_tensor

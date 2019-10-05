@@ -1,5 +1,6 @@
 import argparse
 import os
+import torch
 
 class Options():
     def __init__(self):
@@ -9,7 +10,8 @@ class Options():
     def initialize(self):
 
         #base
-        self.parser.add_argument('--use_gpu', action='store_true', help='if input it, use gpu')
+        self.parser.add_argument('--use_gpu',type=bool,default=True, help='if True, use gpu')
+        # self.parser.add_argument('--use_gpu', action='store_true', help='if input it, use gpu')
         self.parser.add_argument('--media_path', type=str, default='./hands_test.mp4',help='your videos or images path')
         self.parser.add_argument('--mode', type=str, default='auto',help='add or clean mosaic into your media  auto | add | clean')
         self.parser.add_argument('--model_path', type=str, default='./pretrained_models/add_hands_128.pth',help='pretrained model path')
@@ -24,7 +26,7 @@ class Options():
         self.parser.add_argument('--output_size', type=int, default=0,help='size of output file,if 0 -> origin')
         
         #CleanMosaic
-        self.parser.add_argument('--netG', type=str, default='auto',help='select model to use for netG(clean mosaic) -> auto | unet_128 | resnet_9blocks | HD')
+        self.parser.add_argument('--netG', type=str, default='auto',help='select model to use for netG(clean mosaic) -> auto | unet_128 | resnet_9blocks | HD | video')
         self.parser.add_argument('--mosaic_position_model_path', type=str, default='auto',help='name of model use to find mosaic position')
         self.parser.add_argument('--no_feather', action='store_true', help='if true, no edge feather and color correction, but run faster')
         self.parser.add_argument('--medfilt_num', type=int, default=11,help='medfilt window of mosaic movement in the video')
@@ -35,6 +37,12 @@ class Options():
         if not self.initialized:
             self.initialize()
         self.opt = self.parser.parse_args()
+
+        if torch.cuda.is_available() and self.opt.use_gpu:
+            self.opt.use_gpu = True
+        else:
+            self.opt.use_gpu = False
+
 
         if self.opt.mode == 'auto':
             if 'add' in self.opt.model_path:
@@ -51,6 +59,8 @@ class Options():
                 self.opt.netG = 'resnet_9blocks'
             elif 'HD' in self.opt.model_path:
                 self.opt.netG = 'HD'
+            elif 'video' in self.opt.model_path:
+                self.opt.netG = 'video'
             else:
                 print('Type of Generator error!')
 
