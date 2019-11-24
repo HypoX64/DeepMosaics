@@ -11,18 +11,19 @@ from util import util,mosaic
 import datetime
 
 ir_mask_path = './Irregular_Holes_mask'
-# img_path = 'D:/MyProject_new/face_512'
-img_path ='/media/hypo/Hypoyun/Hypoyun/手机摄影/20190219'
-output_dir = './datasets'
+img_path ='/home/hypo/桌面/FaceRankSample' 
+output_dir = './datasets_img'
 util.makedirs(output_dir)
-HD = True #if false make dataset for pix2pix, if Ture for pix2pix_HD
-MASK = True
-if HD:
+MOD = 'HD' #HD | pix2pix | mosaic
+MASK = False # if True, output mask,too
+BOUNDING = False # if true the mosaic size will be more big
+
+if MOD='HD':
     train_A_path = os.path.join(output_dir,'train_A')
     train_B_path = os.path.join(output_dir,'train_B')
     util.makedirs(train_A_path)
     util.makedirs(train_B_path)
-else:
+elif MOD='pix2pix':
     train_path = os.path.join(output_dir,'train')
     util.makedirs(train_path)
 if MASK:
@@ -51,19 +52,30 @@ for i,img_name in enumerate(img_names,1):
         img = np.array(img)
         img = img[...,::-1]
 
-        mask = Image.open(os.path.join(ir_mask_path,random.choices(mask_names)[0]))
-        mask = transform_mask(mask)
-        mask = np.array(mask)
-
-        mosaic_img = mosaic.addmosaic_random(img, mask)          
-        if HD:
-            cv2.imwrite(os.path.join(train_A_path,'%05d' % i+'.jpg'), mosaic_img)
-            cv2.imwrite(os.path.join(train_B_path,'%05d' % i+'.jpg'), img)
+        if BOUNDING:
+            mosaic_area = 0
+            while mosaic_area < 16384:
+                mask = Image.open(os.path.join(ir_mask_path,random.choices(mask_names)[0]))
+                mask = transform_mask(mask)
+                mask = np.array(mask)
+                mosaic_area = impro.mask_area(mask)
+            mosaic_img = mosaic.addmosaic_random(img, mask,'bounding') 
+            BOUNDING_flag = '_bound'
+        else:
+            mask = Image.open(os.path.join(ir_mask_path,random.choices(mask_names)[0]))
+            mask = transform_mask(mask)
+            mask = np.array(mask)
+            mosaic_img = mosaic.addmosaic_random(img, mask)
+            BOUNDING_flag = ''    
+        
+        if HD:#[128:384,128:384,:] --->256
+            cv2.imwrite(os.path.join(train_A_path,'%05d' % i+BOUNDING_flag+'.jpg'), mosaic_img)
+            cv2.imwrite(os.path.join(train_B_path,'%05d' % i+BOUNDING_flag+'.jpg'), img)
         else:
             merge_img = impro.makedataset(mosaic_img, img)
-            cv2.imwrite(os.path.join(train_path,'%05d' % i+'.jpg'), merge_img)
+            cv2.imwrite(os.path.join(train_path,'%05d' % i+BOUNDING_flag+'.jpg'), merge_img)
         if MASK:
-            cv2.imwrite(os.path.join(mask_path,'%05d' % i+'.png'), mask)
+            cv2.imwrite(os.path.join(mask_path,'%05d' % i+BOUNDING_flag+'.png'), mask)
         print("Processing:",img_name," ","Remain:",len(img_names)-i)
     except Exception as e:
         print(img_name,e)

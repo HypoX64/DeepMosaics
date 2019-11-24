@@ -1,10 +1,17 @@
 import cv2
 import numpy as np
 
+def imread(file_path,mod = 'normal'):
 
-# imread for chinese path in windows
-def imread(file_path):
-    cv_img = cv2.imdecode(np.fromfile(file_path,dtype=np.uint8),-1)
+    if mod == 'normal':
+        cv_img = cv2.imread(file_path)
+    elif mod == 'gray':
+        cv_img = cv2.imread(file_path,0)
+    elif mod == 'all':
+        cv_img = cv2.imread(file_path,-1)
+
+    # # imread for chinese path in windows but no EXIF
+    # cv_img = cv2.imdecode(np.fromfile(file_path,dtype=np.uint8),-1)
     return cv_img
 
 def resize(img,size):
@@ -16,6 +23,11 @@ def resize(img,size):
     else:
         res = cv2.resize(img,(size, int(size*h/w)))
     return res
+
+def resize_like(img,img_like):
+    h, w = img_like.shape[:2]
+    img = cv2.resize(img, (w,h))
+    return img
 
 def ch_one2three(img):
     #zeros = np.zeros(img.shape[:2], dtype = "uint8")

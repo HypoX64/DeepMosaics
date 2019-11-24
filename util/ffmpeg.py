@@ -1,5 +1,7 @@
 import os,json
 
+# ffmpeg 3.4.6
+
 def video2image(videopath,imagepath):
     os.system('ffmpeg -i "'+videopath+'" -f image2 '+imagepath)
 
@@ -15,9 +17,26 @@ def get_video_infos(videopath):
     cmd_str =  'ffprobe -v quiet -print_format json -show_format -show_streams -i "' + videopath + '"'  
     out_string = os.popen(cmd_str).read()
     infos = json.loads(out_string)
-    fps = eval(infos['streams'][0]['avg_frame_rate'])
-    endtime = float(infos['format']['duration'])
-    width = int(infos['streams'][0]['width'])
-    height = int(infos['streams'][0]['height'])
+    try:
+        fps = eval(infos['streams'][0]['avg_frame_rate'])
+        endtime = float(infos['format']['duration'])
+        width = int(infos['streams'][0]['width'])
+        height = int(infos['streams'][0]['height'])
+    except Exception as e:
+        fps = eval(infos['streams'][1]['r_frame_rate'])
+        endtime = float(infos['format']['duration'])
+        width = int(infos['streams'][1]['width'])
+        height = int(infos['streams'][1]['height'])
+
     return fps,endtime,width,height
 
+def cut_video(in_path,start_time,last_time,out_path,vcodec='h265'):
+    if vcodec == 'copy':
+        os.system('ffmpeg -ss '+start_time+' -t '+last_time+' -i "'+in_path+'" -vcodec copy -acodec copy '+out_path)
+    elif vcodec == 'h264':    
+        os.system('ffmpeg -ss '+start_time+' -t '+last_time+' -i "'+in_path+'" -vcodec libx264 -b 12M '+out_path)
+    elif vcodec == 'h265':
+        os.system('ffmpeg -ss '+start_time+' -t '+last_time+' -i "'+in_path+'" -vcodec libx265 -b 12M '+out_path)
+
+def continuous_screenshot(videopath,savedir,fps):
+    os.system('ffmpeg -i '+videopath+' -vf fps='+str(fps)+' '+savedir+'/'+'%05d.jpg')

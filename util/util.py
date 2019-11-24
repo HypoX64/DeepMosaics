@@ -21,11 +21,25 @@ def is_img(path):
 def is_video(path):
     ext = os.path.splitext(path)[1]
     ext = ext.lower()
-    if ext in ['.mp4','.flv','.avi','.mov','.mkv','.wmv','.rmvb']:
+    if ext in ['.mp4','.flv','.avi','.mov','.mkv','.wmv','.rmvb','.mts']:
         return True
     else:
         return False
-        
+
+def is_imgs(paths):
+    tmp = []
+    for path in paths:
+        if is_img(path):
+            tmp.append(path)
+    return tmp
+
+def is_videos(paths):
+    tmp = []
+    for path in paths:
+        if is_video(path):
+            tmp.append(path)
+    return tmp  
+
 def  writelog(path,log):
     f = open(path,'a+')
     f.write(log+'\n')

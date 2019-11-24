@@ -126,9 +126,9 @@ def addmosaic_random(img,mask,area_type = 'normal'):
         area = 0
     area = area/(alpha*alpha)
     if area>50000:
-        img_mosaic = random_mod(img,mask,alpha*random.uniform(16,30))
+        img_mosaic = random_mod(img,mask,alpha*random.uniform(8,30)) #16,30
     elif 20000<area<=50000:
-        img_mosaic = random_mod(img,mask,alpha*random.uniform(12,20))
+        img_mosaic = random_mod(img,mask,alpha*random.uniform(8,20)) #12,20
     elif 5000<area<=20000:
         img_mosaic = random_mod(img,mask,alpha*random.uniform(8,15))
     elif 0<=area<=5000:
@@ -139,11 +139,11 @@ def addmosaic_random(img,mask,area_type = 'normal'):
 
 def random_mod(img,mask,n):
     ran=random.random()
-    if ran < 0.2:
+    if ran < 0.3:
         img = addmosaic_normal(img,mask,n,model = 'squa_mid')
-    if 0.2 <= ran < 0.4:
+    if 0.3 <= ran < 0.5:
         img = addmosaic_normal(img,mask,n,model = 'squa_avg')
-    elif 0.4 <= ran <0.6:
+    elif 0.5 <= ran <0.6:
         img = addmosaic_normal(img,mask,n,model = 'squa_avg_circle_edge')
     else:
         img = addmosaic_normal(img,mask,n,model = 'rect_avg')
