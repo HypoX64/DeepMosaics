@@ -2,7 +2,9 @@ import cv2
 import numpy as np
 
 def imread(file_path,mod = 'normal'):
-
+    '''
+    mod = 'normal' | 'gray' | 'all'
+    '''
     if mod == 'normal':
         cv_img = cv2.imread(file_path)
     elif mod == 'gray':

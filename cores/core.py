@@ -104,10 +104,11 @@ def cleanmosaic_video_byframe(opt):
                  os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.mp4'))  
 
 def cleanmosaic_video_fusion(opt):
-    net = loadmodel.pix2pix(opt)
+    net = loadmodel.video(opt)
     net_mosaic_pos = loadmodel.unet_clean(opt)
     path = opt.media_path
     N = 25
+    INPUT_SIZE = 128
 
     util.clean_tempfiles()
     fps = ffmpeg.get_video_infos(path)[0]
@@ -140,15 +141,15 @@ def cleanmosaic_video_fusion(opt):
         if size==0:
             cv2.imwrite(os.path.join('./tmp/replace_mosaic',imagepath),img_origin)
         else:
-            mosaic_input = np.zeros((256,256,3*N+1), dtype='uint8')
+            mosaic_input = np.zeros((INPUT_SIZE,INPUT_SIZE,3*N+1), dtype='uint8')
             for j in range(0,N):
                 img = impro.imread(os.path.join('./tmp/video2image',imagepaths[np.clip(i+j-12,0,len(imagepaths)-1)]))
                 img = img[y-size:y+size,x-size:x+size]
-                img = impro.resize(img,256)
+                img = impro.resize(img,INPUT_SIZE)
                 mosaic_input[:,:,j*3:(j+1)*3] = img
             mask = impro.resize(mask,np.min(img_origin.shape[:2]))
             mask = mask[y-size:y+size,x-size:x+size]
-            mask = impro.resize(mask, 256)
+            mask = impro.resize(mask, INPUT_SIZE)
             mosaic_input[:,:,-1] = mask
             mosaic_input = data.im2tensor(mosaic_input,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False)
             unmosaic_pred = net(mosaic_input)
