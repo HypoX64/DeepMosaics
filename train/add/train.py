@@ -192,12 +192,6 @@ if use_gpu:
     net.cuda()
 
 
-
-# optimizer = optim.SGD(net.parameters(),
-#                       lr=LR,
-#                       momentum=0.9,
-#                       weight_decay=0.0005)
-
 optimizer = torch.optim.Adam(net.parameters(), lr=LR, betas=(0.9, 0.99))
 
 criterion = nn.BCELoss()
