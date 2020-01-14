@@ -70,3 +70,13 @@ def file_init(opt):
         os.makedirs(opt.result_dir)
         print('makedir:',opt.result_dir)
     clean_tempfiles()
+
+def get_bar(percent,num = 25):
+    bar = '['
+    for i in range(num):
+        if i < round(percent/(100/num)):
+            bar += '#'
+        else:
+            bar += '-'
+    bar += ']'
+    return bar+' '+str(round(percent,2))+'%'

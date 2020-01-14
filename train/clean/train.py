@@ -9,11 +9,10 @@ import time
 import sys
 sys.path.append("..")
 sys.path.append("../..")
-from models import runmodel,loadmodel
 from util import mosaic,util,ffmpeg,filt,data
 from util import image_processing as impro
 from cores import Options
-from models import pix2pix_model,video_model,unet_model
+from models import pix2pix_model,video_model,unet_model,loadmodel
 from matplotlib import pyplot as plt
 import torch.backends.cudnn as cudnn
 
@@ -32,8 +31,8 @@ SAVE_FRE = 10000
 start_iter = 0
 finesize = 128
 loadsize = int(finesize*1.1)
-
-savename = 'MosaicNet_test'
+perload_num = 32
+savename = 'MosaicNet_noL2'
 dir_checkpoint = 'checkpoints/'+savename
 util.makedirs(dir_checkpoint)
 
@@ -51,7 +50,8 @@ for video in videos:
 #unet_128
 #resnet_9blocks
 #netG = pix2pix_model.define_G(3*N+1, 3, 128, 'resnet_6blocks', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
-netG = video_model.HypoNet(3*N+1, 3)
+netG = video_model.MosaicNet(3*N+1, 3)
+loadmodel.show_paramsnumber(netG,'netG')
 # netG = unet_model.UNet(3*N+1, 3)
 if use_gan:
     netD = pix2pix_model.define_D(3*2+1, 64, 'basic', n_layers_D=3, norm='instance', init_type='normal', init_gain=0.02, gpu_ids=[])
@@ -77,43 +77,6 @@ if use_gan:
     optimizer_D = torch.optim.Adam(netG.parameters(), lr=LR,betas=(beta1, 0.999))
     criterionGAN = pix2pix_model.GANLoss(gan_mode='lsgan').cuda()
 
-def random_transform(src,target,finesize):
-
-    #random crop
-    h,w = target.shape[:2]
-    h_move = int((h-finesize)*random.random())
-    w_move = int((w-finesize)*random.random())
-    # print(h,w,h_move,w_move)
-    target = target[h_move:h_move+finesize,w_move:w_move+finesize,:]
-    src = src[h_move:h_move+finesize,w_move:w_move+finesize,:]
-
-    #random flip
-    if random.random()<0.5:
-        src = src[:,::-1,:]
-        target = target[:,::-1,:]
-
-    #random color
-    random_num = 15
-    bright = random.randint(-random_num*2,random_num*2)
-    for i in range(N*3): src[:,:,i]=np.clip(src[:,:,i].astype('int')+bright,0,255).astype('uint8')
-    for i in range(3): target[:,:,i]=np.clip(target[:,:,i].astype('int')+bright,0,255).astype('uint8')
-
-    return src,target
-
-
-def showresult(img1,img2,img3,name):
-    img1 = (img1.cpu().detach().numpy()*255)
-    img2 = (img2.cpu().detach().numpy()*255)
-    img3 = (img3.cpu().detach().numpy()*255)
-    batchsize = img1.shape[0]
-    size = img1.shape[3]
-    ran =int(batchsize*random.random())
-    showimg=np.zeros((size,size*3,3))
-    showimg[0:size,0:size] =img1[ran].transpose((1, 2, 0))
-    showimg[0:size,size:size*2] = img2[ran].transpose((1, 2, 0))
-    showimg[0:size,size*2:size*3] = img3[ran].transpose((1, 2, 0))
-    cv2.imwrite(os.path.join(dir_checkpoint,name), showimg)
-
 
 def loaddata():
     video_index = random.randint(0,len(videos)-1)
@@ -121,7 +84,7 @@ def loaddata():
     img_index = random.randint(N,lengths[video_index]- N)
     input_img = np.zeros((loadsize,loadsize,3*N+1), dtype='uint8')
     for i in range(0,N):
-        # print('./dataset/'+video+'/mosaic/output_'+'%05d'%(img_index+i-int(N/2))+'.png')
+    
         img = cv2.imread('./dataset/'+video+'/mosaic/output_'+'%05d'%(img_index+i-int(N/2))+'.png')
         img = impro.resize(img,loadsize)
         input_img[:,:,i*3:(i+1)*3] = img
@@ -133,7 +96,7 @@ def loaddata():
     ground_true = cv2.imread('./dataset/'+video+'/ori/output_'+'%05d'%(img_index)+'.png')
     ground_true = impro.resize(ground_true,loadsize)
 
-    input_img,ground_true = random_transform(input_img,ground_true,finesize)
+    input_img,ground_true = data.random_transform_video(input_img,ground_true,finesize,N)
     input_img = data.im2tensor(input_img,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False)
     ground_true = data.im2tensor(ground_true,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False)
     
@@ -150,7 +113,7 @@ def preload():
             input_img,ground_true = loaddata()
             input_imgs.append(input_img)
             ground_trues.append(ground_true)
-            if len(input_imgs)>10:
+            if len(input_imgs)>perload_num:
                 del(input_imgs[0])
                 del(ground_trues[0])
             load_cnt += 1
@@ -162,7 +125,7 @@ import threading
 t = threading.Thread(target=preload,args=())  #t为新创建的线程
 t.daemon = True
 t.start()
-while load_cnt < 10:
+while load_cnt < perload_num:
     time.sleep(0.1)
 
 netG.train()
@@ -171,7 +134,7 @@ print("Begin training...")
 for iter in range(start_iter+1,ITER):
 
     # input_img,ground_true = loaddata()
-    ran = random.randint(1, 8)
+    ran = random.randint(1, perload_num-2)
     input_img = input_imgs[ran]
     ground_true = ground_trues[ran]
 
@@ -231,7 +194,8 @@ for iter in range(start_iter+1,ITER):
 
     if (iter+1)%100 == 0:
         try:
-            showresult(input_img[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], ground_true, pred,'result_train.png')
+            data.showresult(input_img[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:],
+             ground_true, pred,os.path.join(dir_checkpoint,'result_train.png'))
         except Exception as e:
             print(e)
      
@@ -266,7 +230,6 @@ for iter in range(start_iter+1,ITER):
         time_start=time.time()
 
 
-
     if (iter+1)%SAVE_FRE == 0:
         if iter+1 != SAVE_FRE:
             os.rename(os.path.join(dir_checkpoint,'last_G.pth'),os.path.join(dir_checkpoint,str(iter+1-SAVE_FRE)+'G.pth'))
@@ -282,7 +245,6 @@ for iter in range(start_iter+1,ITER):
         f = open(os.path.join(dir_checkpoint,'iter'),'w+')
         f.write(str(iter+1))
         f.close()
-        # torch.save(netG.cpu().state_dict(),dir_checkpoint+'iter'+str(iter+1)+'.pth')
         print('network saved.')
 
         #test
@@ -292,6 +254,7 @@ for iter in range(start_iter+1,ITER):
 
         for cnt,test_name in enumerate(test_names,0):
             img_names = os.listdir(os.path.join('./test',test_name,'image'))
+            img_names.sort()
             input_img = np.zeros((finesize,finesize,3*N+1), dtype='uint8')
             img_names.sort()
             for i in range(0,N):
@@ -307,7 +270,7 @@ for iter in range(start_iter+1,ITER):
             input_img = data.im2tensor(input_img,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False)
             pred = netG(input_img)
  
-            pred = (pred.cpu().detach().numpy()*255)[0].transpose((1, 2, 0))
+            pred = data.tensor2im(pred,rgb2bgr = False, is0_1 = True)
             result[finesize:finesize*2,finesize*cnt:finesize*(cnt+1),:] = pred
 
         cv2.imwrite(os.path.join(dir_checkpoint,str(iter+1)+'_test.png'), result)

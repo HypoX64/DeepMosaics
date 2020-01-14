@@ -22,7 +22,7 @@ Area_Type  = 'normal'
 suffix = ''
 
 net = loadmodel.unet(opt)
-for path in videos:
+for i,path in enumerate(videos,0):
     try:
         path = os.path.join('./video',path)
         util.clean_tempfiles()
@@ -37,14 +37,14 @@ for path in videos:
         mask_avg = np.zeros((impro.resize(img_ori_example, 128)).shape[:2])
         for imagepath in imagepaths:
             imagepath = os.path.join('./tmp/video2image',imagepath)
-            print('Find ROI location:',imagepath)
+            #print('Find ROI location:',imagepath)
             img = impro.imread(imagepath)
-            x,y,size,mask = runmodel.get_mosaic_position(img,net,opt,threshold = 64)
+            x,y,size,mask = runmodel.get_mosaic_position(img,net,opt,threshold = 80)
             cv2.imwrite(os.path.join('./tmp/ROI_mask',
                               os.path.basename(imagepath)),mask)
             positions.append([x,y,size])
             mask_avg = mask_avg + mask
-        print('Optimize ROI locations...')
+        #print('Optimize ROI locations...')
         mask_index = filt.position_medfilt(np.array(positions), 13)
 
         mask = np.clip(mask_avg/len(imagepaths),0,255).astype('uint8')
@@ -62,7 +62,7 @@ for path in videos:
             os.makedirs(mask_path)
             os.makedirs(ori_path)
             os.makedirs(mosaic_path)
-            print('Add mosaic to images...')
+            #print('Add mosaic to images...')
             mosaic_size = mosaic.get_autosize(img_ori_example,mask,area_type = Area_Type)*random.uniform(1,2)
             models = ['squa_avg','rect_avg','squa_mid']
             mosaic_type = random.randint(0,len(models)-1)
@@ -82,3 +82,5 @@ for path in videos:
                 cv2.imwrite(os.path.join(mask_path,os.path.basename(imagepaths[i])),mask_crop)
     except Exception as e:
         print(e)
+
+    print(util.get_bar(100*i/len(videos),num=50))

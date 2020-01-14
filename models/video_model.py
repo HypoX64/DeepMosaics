@@ -151,9 +151,9 @@ class encoder_3d(nn.Module):
 
 
 
-class HypoNet(nn.Module):
+class MosaicNet(nn.Module):
     def __init__(self, in_channel, out_channel):
-        super(HypoNet, self).__init__()
+        super(MosaicNet, self).__init__()
 
         self.encoder_2d = encoder_2d(4,-1,64,n_blocks=9)
         self.encoder_3d = encoder_3d(in_channel)

@@ -1,7 +1,7 @@
 ![image](./imgs/hand.gif)
 # <img src="./imgs/icon.jpg" width="48">DeepMosaics
 这是一个通过深度学习自动的为图片/视频添加马赛克,或消除马赛克的项目.<br>它基于“语义分割”以及“图像翻译”.<br>
-
+主分支并不稳定,请移步[稳定版本](https://github.com/HypoX64/DeepMosaics/tree/stable)<br>
 ### 更多例子
 原始 | 自动打码 |  自动去码  
 :-:|:-:|:-:

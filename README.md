@@ -2,7 +2,7 @@
 # <img src="./imgs/icon.jpg" width="48">DeepMosaics
 You can use it to automatically remove the mosaics in images and videos, or add mosaics to them.<br>
 This porject based on ‘semantic segmentation’ and ‘Image-to-Image Translation’.<br>
-
+Master is not stable. Please use a [stable version](https://github.com/HypoX64/DeepMosaics/tree/stable)<br>
 * [中文版](./README_CN.md)<br>
 
 ### More example
