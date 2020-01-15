@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 import cv2
+from .image_processing import color_adjust
 
 transform = transforms.Compose([  
     transforms.ToTensor(),  
@@ -29,7 +30,7 @@ def tensor2im(image_tensor, imtype=np.uint8, gray=False, rgb2bgr = True ,is0_1 =
     return image_numpy.astype(imtype)
 
 
-def im2tensor(image_numpy, imtype=np.uint8, gray=False,bgr2rgb = True, reshape = True, use_gpu = True,  use_transform = True):
+def im2tensor(image_numpy, imtype=np.uint8, gray=False,bgr2rgb = True, reshape = True, use_gpu = True,  use_transform = True,is0_1 = True):
     
     if gray:
         h, w = image_numpy.shape
@@ -44,7 +45,10 @@ def im2tensor(image_numpy, imtype=np.uint8, gray=False,bgr2rgb = True, reshape =
         if use_transform:
             image_tensor = transform(image_numpy)
         else:
-            image_numpy = image_numpy/255.0
+            if is0_1:
+                image_numpy = image_numpy/255.0
+            else:
+                image_numpy = (image_numpy/255.0-0.5)/0.5
             image_numpy = image_numpy.transpose((2, 0, 1))
             image_tensor = torch.from_numpy(image_numpy).float()
         if reshape:
@@ -70,10 +74,19 @@ def random_transform_video(src,target,finesize,N):
         target = target[:,::-1,:]
 
     #random color
-    random_num = 15
-    bright = random.randint(-random_num*2,random_num*2)
-    for i in range(N*3): src[:,:,i]=np.clip(src[:,:,i].astype('int')+bright,0,255).astype('uint8')
-    for i in range(3): target[:,:,i]=np.clip(target[:,:,i].astype('int')+bright,0,255).astype('uint8')
+    alpha = random.uniform(-0.2,0.2)
+    beta  = random.uniform(-0.2,0.2)
+    b     = random.uniform(-0.1,0.1)
+    g     = random.uniform(-0.1,0.1)
+    r     = random.uniform(-0.1,0.1)
+    for i in range(N):
+        src[:,:,i*3:(i+1)*3] = color_adjust(src[:,:,i*3:(i+1)*3],alpha,beta,b,g,r)
+    target = color_adjust(target,alpha,beta,b,g,r)
+
+    # random_num = 15
+    # bright = random.randint(-random_num*2,random_num*2)
+    # for i in range(N*3): src[:,:,i]=np.clip(src[:,:,i].astype('int')+bright,0,255).astype('uint8')
+    # for i in range(3): target[:,:,i]=np.clip(target[:,:,i].astype('int')+bright,0,255).astype('uint8')
 
     return src,target
 
@@ -116,10 +129,11 @@ def random_transform_image(img,mask,finesize):
         img,mask = img_crop,mask_crop
 
     #random color
-    random_num = 15
-    for i in range(3): img[:,:,i]=np.clip(img[:,:,i].astype('int')+random.randint(-random_num,random_num),0,255).astype('uint8')
-    bright = random.randint(-random_num*2,random_num*2)
-    for i in range(3): img[:,:,i]=np.clip(img[:,:,i].astype('int')+bright,0,255).astype('uint8')
+    img = color_adjust(img,ran=True)
+    # random_num = 15
+    # for i in range(3): img[:,:,i]=np.clip(img[:,:,i].astype('int')+random.randint(-random_num,random_num),0,255).astype('uint8')
+    # bright = random.randint(-random_num*2,random_num*2)
+    # for i in range(3): img[:,:,i]=np.clip(img[:,:,i].astype('int')+bright,0,255).astype('uint8')
 
     #random flip
     if random.random()<0.5:
@@ -134,7 +148,7 @@ def random_transform_image(img,mask,finesize):
 def showresult(img1,img2,img3,name):
     size = img1.shape[3]
     showimg=np.zeros((size,size*3,3))
-    showimg[0:size,0:size] = tensor2im(img1,rgb2bgr = False, is0_1 = True)
-    showimg[0:size,size:size*2] = tensor2im(img2,rgb2bgr = False, is0_1 = True)
-    showimg[0:size,size*2:size*3] = tensor2im(img3,rgb2bgr = False, is0_1 = True)
+    showimg[0:size,0:size] = tensor2im(img1,rgb2bgr = False, is0_1 = False)
+    showimg[0:size,size:size*2] = tensor2im(img2,rgb2bgr = False, is0_1 = False)
+    showimg[0:size,size*2:size*3] = tensor2im(img3,rgb2bgr = False, is0_1 = False)
     cv2.imwrite(name, showimg)

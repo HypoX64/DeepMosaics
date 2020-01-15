@@ -4,14 +4,20 @@ import datetime
 import os
 import random
 
-def resize(img,size):
-    h, w = img.shape[:2]
-    if w >= h:
-        res = cv2.resize(img,(int(size*w/h), size))
-    else:
-        res = cv2.resize(img,(size, int(size*h/w)))
-   
-    return res
+import sys
+sys.path.append("..")
+from util import util
+from util import image_processing as impro
+
+image_dir = './datasets_img/v2im'
+mask_dir = './datasets_img/v2im_mask'
+util.makedirs(mask_dir)
+
+files = os.listdir(image_dir)
+files_new =files.copy()
+print('find image:',len(files))
+masks = os.listdir(mask_dir)
+print('mask:',len(masks))
 
 # mouse callback function
 drawing = False # true if mouse is pressed
@@ -46,11 +52,7 @@ def makemask(img):
     # print('Cost time:',(endtime-starttime))
     return mask
 
-files = os.listdir('./origin_image')
-files_new =files.copy()
-print('find image:',len(files))
-masks = os.listdir('./mask')
-print('mask:',len(masks))
+
 for i in range(len(masks)):
     masks[i]=masks[i].replace('.png','.jpg')
 for file in files:
@@ -59,14 +61,14 @@ for file in files:
 files = files_new
 # files = list(set(files)) #Distinct 
 print('remain:',len(files))
-random.shuffle (files)
+random.shuffle(files)
 # files.sort()
 cnt = 0
 
 for file in files:
     cnt += 1
-    img = cv2.imread('./origin_image/'+file)
-    img = resize(img,512)
+    img = cv2.imread(os.path.join(image_dir,file))
+    img = impro.resize(img,512)
     cv2.namedWindow('image')
     cv2.setMouseCallback('image',draw_circle) #MouseCallback
     while(1):
@@ -74,10 +76,10 @@ for file in files:
         cv2.imshow('image',img)
         k = cv2.waitKey(1) & 0xFF
         if k == ord(' '):
-            img = resize(img,256)
+            img = impro.resize(img,256)
             mask = makemask(img)
-            cv2.imwrite('./mask/'+os.path.splitext(file)[0]+'.png',mask)
-            print('./mask/'+os.path.splitext(file)[0]+'.png')
+            cv2.imwrite(os.path.join(mask_dir,os.path.splitext(file)[0]+'.png'),mask)
+            print(os.path.join(mask_dir,os.path.splitext(file)[0]+'.png'))
             # cv2.destroyAllWindows()
             print('remain:',len(files)-cnt)
             brushsize = 20

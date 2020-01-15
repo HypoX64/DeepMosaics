@@ -16,7 +16,7 @@ MOD = 'HD' #HD | pix2pix | mosaic
 MASK = False # if True, output mask,too
 BOUNDING = True # if true the mosaic size will be more big
 suffix = ''
-output_dir = os.path.join('./dataset_img',MOD)
+output_dir = os.path.join('./datasets_img',MOD)
 util.makedirs(output_dir)
 
 if MOD == 'HD':

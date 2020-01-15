@@ -9,9 +9,10 @@ sys.path.append("..")
 from util import util,ffmpeg
 from util import image_processing as impro
 
-files = util.Traversal('/media/hypo/Media/download')
+files = util.Traversal('./videos')
 videos = util.is_videos(files)
-output_dir = './dataset/v2im'
+output_dir = './datasets_img/v2im'
+util.makedirs(output_dir)
 FPS = 1
 util.makedirs(output_dir)
 for video in videos:

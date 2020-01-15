@@ -18,12 +18,12 @@ import torch.backends.cudnn as cudnn
 
 N = 25
 ITER = 10000000
-LR = 0.0002
+LR = 0.001
 beta1 = 0.5
 use_gpu = True
 use_gan = False
-use_L2 = False
-CONTINUE =  False
+use_L2 = True
+CONTINUE =  True
 lambda_L1 = 1.0#100.0
 lambda_gan = 1.0
 
@@ -31,8 +31,9 @@ SAVE_FRE = 10000
 start_iter = 0
 finesize = 128
 loadsize = int(finesize*1.1)
+batchsize = 8
 perload_num = 32
-savename = 'MosaicNet_noL2'
+savename = 'MosaicNet_test'
 dir_checkpoint = 'checkpoints/'+savename
 util.makedirs(dir_checkpoint)
 
@@ -97,25 +98,32 @@ def loaddata():
     ground_true = impro.resize(ground_true,loadsize)
 
     input_img,ground_true = data.random_transform_video(input_img,ground_true,finesize,N)
-    input_img = data.im2tensor(input_img,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False)
-    ground_true = data.im2tensor(ground_true,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False)
+    input_img = data.im2tensor(input_img,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False,is0_1=False)
+    ground_true = data.im2tensor(ground_true,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False,is0_1=False)
     
     return input_img,ground_true
 
 print('preloading data, please wait 5s...')
-input_imgs=[]
-ground_trues=[]
+# input_imgs=[]
+# ground_trues=[]
+input_imgs = torch.rand(batchsize,N*3+1,finesize,finesize).cuda()
+ground_trues = torch.rand(batchsize,3,finesize,finesize).cuda()
 load_cnt = 0
+
 def preload():
     global load_cnt   
     while 1:
         try:
-            input_img,ground_true = loaddata()
-            input_imgs.append(input_img)
-            ground_trues.append(ground_true)
-            if len(input_imgs)>perload_num:
-                del(input_imgs[0])
-                del(ground_trues[0])
+            # input_img,ground_true = loaddata()
+            # input_imgs.append(input_img)
+            # ground_trues.append(ground_true)
+            ran = random.randint(0, batchsize-1)
+            input_imgs[ran],ground_trues[ran] = loaddata()
+
+
+            # if len(input_imgs)>perload_num:
+            #     del(input_imgs[0])
+            #     del(ground_trues[0])
             load_cnt += 1
             # time.sleep(0.1)
         except Exception as e:
@@ -125,7 +133,7 @@ import threading
 t = threading.Thread(target=preload,args=())  #t为新创建的线程
 t.daemon = True
 t.start()
-while load_cnt < perload_num:
+while load_cnt < batchsize*2:
     time.sleep(0.1)
 
 netG.train()
@@ -133,23 +141,26 @@ time_start=time.time()
 print("Begin training...")
 for iter in range(start_iter+1,ITER):
 
-    # input_img,ground_true = loaddata()
-    ran = random.randint(1, perload_num-2)
-    input_img = input_imgs[ran]
-    ground_true = ground_trues[ran]
+    # inputdata,target = loaddata()
+    # ran = random.randint(1, perload_num-2)
+    # inputdata = inputdatas[ran]
+    # target = targets[ran]
 
-    pred = netG(input_img)
+    inputdata = input_imgs.clone()
+    target = ground_trues.clone()
+
+    pred = netG(inputdata)
 
     if use_gan:
         netD.train()
-        # print(input_img[0,3*N,:,:].size())
-        # print((input_img[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:]).size())
-        real_A = torch.cat((input_img[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], input_img[:,-1,:,:].reshape(-1,1,finesize,finesize)), 1)
+        # print(inputdata[0,3*N,:,:].size())
+        # print((inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:]).size())
+        real_A = torch.cat((inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], inputdata[:,-1,:,:].reshape(-1,1,finesize,finesize)), 1)
         fake_AB = torch.cat((real_A, pred), 1)
         pred_fake = netD(fake_AB.detach())
         loss_D_fake = criterionGAN(pred_fake, False)
 
-        real_AB = torch.cat((real_A, ground_true), 1)
+        real_AB = torch.cat((real_A, target), 1)
         pred_real = netD(real_AB)
         loss_D_real = criterionGAN(pred_real, True)
         loss_D = (loss_D_fake + loss_D_real) * 0.5
@@ -161,16 +172,16 @@ for iter in range(start_iter+1,ITER):
         optimizer_D.step()
         netD.eval()
 
-        # fake_AB = torch.cat((input_img[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], pred), 1)
-        real_A = torch.cat((input_img[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], input_img[:,-1,:,:].reshape(-1,1,finesize,finesize)), 1)
+        # fake_AB = torch.cat((inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], pred), 1)
+        real_A = torch.cat((inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], inputdata[:,-1,:,:].reshape(-1,1,finesize,finesize)), 1)
         fake_AB = torch.cat((real_A, pred), 1)
         pred_fake = netD(fake_AB)
         loss_G_GAN = criterionGAN(pred_fake, True)*lambda_gan
         # Second, G(A) = B
         if use_L2:
-            loss_G_L1 = (criterion_L1(pred, ground_true)+criterion_L2(pred, ground_true)) * lambda_L1
+            loss_G_L1 = (criterion_L1(pred, target)+criterion_L2(pred, target)) * lambda_L1
         else:
-            loss_G_L1 = criterion_L1(pred, ground_true) * lambda_L1
+            loss_G_L1 = criterion_L1(pred, target) * lambda_L1
         # combine loss and calculate gradients
         loss_G = loss_G_GAN + loss_G_L1
         loss_sum[0] += loss_G_L1.item()
@@ -182,9 +193,9 @@ for iter in range(start_iter+1,ITER):
 
     else:
         if use_L2:
-            loss_G_L1 = (criterion_L1(pred, ground_true)+criterion_L2(pred, ground_true)) * lambda_L1
+            loss_G_L1 = (criterion_L1(pred, target)+criterion_L2(pred, target)) * lambda_L1
         else:
-            loss_G_L1 = criterion_L1(pred, ground_true) * lambda_L1
+            loss_G_L1 = criterion_L1(pred, target) * lambda_L1
         loss_sum[0] += loss_G_L1.item()
 
         optimizer_G.zero_grad()
@@ -194,8 +205,8 @@ for iter in range(start_iter+1,ITER):
 
     if (iter+1)%100 == 0:
         try:
-            data.showresult(input_img[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:],
-             ground_true, pred,os.path.join(dir_checkpoint,'result_train.png'))
+            data.showresult(inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:],
+             target, pred,os.path.join(dir_checkpoint,'result_train.png'))
         except Exception as e:
             print(e)
      
@@ -249,28 +260,29 @@ for iter in range(start_iter+1,ITER):
 
         #test
         netG.eval()
-        result = np.zeros((finesize*2,finesize*4,3), dtype='uint8')
+        
         test_names = os.listdir('./test')
+        result = np.zeros((finesize*2,finesize*len(test_names),3), dtype='uint8')
 
         for cnt,test_name in enumerate(test_names,0):
             img_names = os.listdir(os.path.join('./test',test_name,'image'))
             img_names.sort()
-            input_img = np.zeros((finesize,finesize,3*N+1), dtype='uint8')
+            inputdata = np.zeros((finesize,finesize,3*N+1), dtype='uint8')
             img_names.sort()
             for i in range(0,N):
                 img = impro.imread(os.path.join('./test',test_name,'image',img_names[i]))
                 img = impro.resize(img,finesize)
-                input_img[:,:,i*3:(i+1)*3] = img
+                inputdata[:,:,i*3:(i+1)*3] = img
 
             mask = impro.imread(os.path.join('./test',test_name,'mask.png'),'gray')
             mask = impro.resize(mask,finesize)
             mask = impro.mask_threshold(mask,15,128)
-            input_img[:,:,-1] = mask
-            result[0:finesize,finesize*cnt:finesize*(cnt+1),:] = input_img[:,:,int((N-1)/2)*3:(int((N-1)/2)+1)*3]
-            input_img = data.im2tensor(input_img,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False)
-            pred = netG(input_img)
+            inputdata[:,:,-1] = mask
+            result[0:finesize,finesize*cnt:finesize*(cnt+1),:] = inputdata[:,:,int((N-1)/2)*3:(int((N-1)/2)+1)*3]
+            inputdata = data.im2tensor(inputdata,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False,is0_1 = False)
+            pred = netG(inputdata)
  
-            pred = data.tensor2im(pred,rgb2bgr = False, is0_1 = True)
+            pred = data.tensor2im(pred,rgb2bgr = False, is0_1 = False)
             result[finesize:finesize*2,finesize*cnt:finesize*(cnt+1),:] = pred
 
         cv2.imwrite(os.path.join(dir_checkpoint,str(iter+1)+'_test.png'), result)

@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import random
 
 def imread(file_path,mod = 'normal'):
     '''
@@ -36,6 +37,35 @@ def ch_one2three(img):
     # ret,thresh = cv2.threshold(img,127,255,cv2.THRESH_BINARY)
     res = cv2.merge([img, img, img])
     return res
+
+def color_adjust(img,alpha=1,beta=0,b=0,g=0,r=0,ran = False):
+    '''
+    g(x) = (1+α)g(x)+255*β, 
+    g(x) = g(x[:+b*255,:+g*255,:+r*255])
+    
+    Args:
+        img   : input image
+        alpha : contrast
+        beta  : brightness
+        b     : blue hue
+        g     : green hue
+        r     : red hue
+        ran   : if True, randomly generated color correction parameters
+    Retuens:
+        img   : output image
+    '''
+    img = img.astype('float')
+    if ran:
+        alpha = random.uniform(-0.2,0.2)
+        beta  = random.uniform(-0.2,0.2)
+        b     = random.uniform(-0.1,0.1)
+        g     = random.uniform(-0.1,0.1)
+        r     = random.uniform(-0.1,0.1)
+    img = (1+alpha)*img+255.0*beta
+    bgr = [b*255.0,g*255.0,r*255.0]
+    for i in range(3): img[:,:,i]=img[:,:,i]+bgr[i]
+    
+    return (np.clip(img,0,255)).astype('uint8')
 
 def makedataset(target_image,orgin_image):
     target_image = resize(target_image,256)

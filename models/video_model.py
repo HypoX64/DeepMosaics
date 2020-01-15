@@ -97,8 +97,8 @@ class decoder_2d(nn.Module):
                         nn.Conv2d(ngf * mult, int(ngf * mult / 2),kernel_size=3, stride=1, padding=0),
                         norm_layer(int(ngf * mult / 2)),
                         nn.ReLU(True)]
-        model += [nn.ReflectionPad2d(3)]
-        model += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
+        # model += [nn.ReflectionPad2d(3)]
+        # model += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
         # model += [nn.Tanh()]
         # model += [nn.Sigmoid()]
 
@@ -123,6 +123,20 @@ class conv_3d(nn.Module):
         x = self.conv(x)
         return x
 
+class conv_2d(nn.Module):
+    def __init__(self,inchannel,outchannel,kernel_size=3,stride=1,padding=1):
+        super(conv_2d, self).__init__()
+        self.conv = nn.Sequential(
+            nn.ReflectionPad2d(padding),
+            nn.Conv2d(inchannel, outchannel, kernel_size=kernel_size, stride=stride, padding=0, bias=False),
+            nn.BatchNorm2d(outchannel),
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, x):
+        x = self.conv(x)
+        return x
+
 
 class encoder_3d(nn.Module):
     def __init__(self,in_channel):
@@ -131,21 +145,22 @@ class encoder_3d(nn.Module):
         self.down2 = conv_3d(64, 128, 3, 2, 1)
         self.down3 = conv_3d(128, 256, 3, 1, 1)
         self.conver2d = nn.Sequential(
-            nn.Conv2d(int(in_channel/4), 1, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(1),
+            nn.Conv2d(256*int(in_channel/4), 256, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
         )
 
 
     def forward(self, x):
+
         x = x.view(x.size(0),1,x.size(1),x.size(2),x.size(3))
         x = self.down1(x)
         x = self.down2(x)
         x = self.down3(x)
 
-        x = x.view(x.size(1),x.size(2),x.size(3),x.size(4))
+        x = x.view(x.size(0),x.size(1)*x.size(2),x.size(3),x.size(4))
+
         x = self.conver2d(x)
-        x = x.view(x.size(1),x.size(0),x.size(2),x.size(3))
 
         return x
 
@@ -158,30 +173,29 @@ class MosaicNet(nn.Module):
         self.encoder_2d = encoder_2d(4,-1,64,n_blocks=9)
         self.encoder_3d = encoder_3d(in_channel)
         self.decoder_2d = decoder_2d(4,3,64,n_blocks=9)
-        self.merge1 = nn.Sequential(
-            nn.ReflectionPad2d(1),
-            nn.Conv2d(512, 256, 3, 1, 0, bias=False),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
-        )
+        self.shortcut_cov = conv_2d(3,64,7,1,3)
+        self.merge1 = conv_2d(512,256,3,1,1)
         self.merge2 = nn.Sequential(
+            conv_2d(128,64,3,1,1),
             nn.ReflectionPad2d(3),
-            nn.Conv2d(6, out_channel, kernel_size=7, padding=0),
-            nn.Sigmoid()
+            nn.Conv2d(64, out_channel, kernel_size=7, padding=0),
+            nn.Tanh()
         )
 
     def forward(self, x):
 
         N = int((x.size()[1])/3)
         x_2d = torch.cat((x[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], x[:,N-1:N,:,:]), 1)
-        shortcat_2d = x[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:]
+        shortcut_2d = x[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:]
 
         x_2d = self.encoder_2d(x_2d)
+
         x_3d = self.encoder_3d(x)
         x = torch.cat((x_2d,x_3d),1)
         x = self.merge1(x)
         x = self.decoder_2d(x)
-        x = torch.cat((x,shortcat_2d),1)
+        shortcut_2d = self.shortcut_cov(shortcut_2d)
+        x = torch.cat((x,shortcut_2d),1)
         x = self.merge2(x)
 
         return x
