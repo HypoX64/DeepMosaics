@@ -18,21 +18,21 @@ import torch.backends.cudnn as cudnn
 
 N = 25
 ITER = 10000000
-LR = 0.001
+LR = 0.0002
 beta1 = 0.5
 use_gpu = True
 use_gan = False
 use_L2 = True
-CONTINUE =  True
-lambda_L1 = 1.0#100.0
-lambda_gan = 1.0
+CONTINUE =  False
+lambda_L1 = 100.0
+lambda_gan = 1
 
 SAVE_FRE = 10000
 start_iter = 0
 finesize = 128
 loadsize = int(finesize*1.1)
-batchsize = 8
-perload_num = 32
+batchsize = 1
+perload_num = 16
 savename = 'MosaicNet_test'
 dir_checkpoint = 'checkpoints/'+savename
 util.makedirs(dir_checkpoint)
@@ -45,6 +45,7 @@ opt = Options().getparse()
 videos = os.listdir('./dataset')
 videos.sort()
 lengths = []
+print('check dataset...')
 for video in videos:
     video_images = os.listdir('./dataset/'+video+'/ori')
     lengths.append(len(video_images))
@@ -55,7 +56,8 @@ netG = video_model.MosaicNet(3*N+1, 3)
 loadmodel.show_paramsnumber(netG,'netG')
 # netG = unet_model.UNet(3*N+1, 3)
 if use_gan:
-    netD = pix2pix_model.define_D(3*2+1, 64, 'basic', n_layers_D=3, norm='instance', init_type='normal', init_gain=0.02, gpu_ids=[])
+    #netD = pix2pix_model.define_D(3*2+1, 64, 'pixel', norm='instance')
+    netD = pix2pix_model.define_D(3*2+1, 64, 'basic', norm='instance')
     #netD = pix2pix_model.define_D(3*2+1, 64, 'n_layers', n_layers_D=5, norm='instance', init_type='normal', init_gain=0.02, gpu_ids=[])
 
 if CONTINUE:
@@ -104,26 +106,19 @@ def loaddata():
     return input_img,ground_true
 
 print('preloading data, please wait 5s...')
-# input_imgs=[]
-# ground_trues=[]
-input_imgs = torch.rand(batchsize,N*3+1,finesize,finesize).cuda()
-ground_trues = torch.rand(batchsize,3,finesize,finesize).cuda()
+
+if perload_num <= batchsize:
+    perload_num = batchsize*2
+input_imgs = torch.rand(perload_num,N*3+1,finesize,finesize).cuda()
+ground_trues = torch.rand(perload_num,3,finesize,finesize).cuda()
 load_cnt = 0
 
 def preload():
     global load_cnt   
     while 1:
         try:
-            # input_img,ground_true = loaddata()
-            # input_imgs.append(input_img)
-            # ground_trues.append(ground_true)
-            ran = random.randint(0, batchsize-1)
+            ran = random.randint(0, perload_num-1)
             input_imgs[ran],ground_trues[ran] = loaddata()
-
-
-            # if len(input_imgs)>perload_num:
-            #     del(input_imgs[0])
-            #     del(ground_trues[0])
             load_cnt += 1
             # time.sleep(0.1)
         except Exception as e:
@@ -133,21 +128,24 @@ import threading
 t = threading.Thread(target=preload,args=())  #t为新创建的线程
 t.daemon = True
 t.start()
-while load_cnt < batchsize*2:
-    time.sleep(0.1)
 
+time_start=time.time()
+while load_cnt < perload_num:
+    time.sleep(0.1)
+time_end=time.time()
+print('load speed:',round((time_end-time_start)/perload_num,3),'s/it')
+
+
+util.copyfile('./train.py', os.path.join(dir_checkpoint,'train.py'))
+util.copyfile('../../models/video_model.py', os.path.join(dir_checkpoint,'model.py'))
 netG.train()
 time_start=time.time()
 print("Begin training...")
 for iter in range(start_iter+1,ITER):
 
-    # inputdata,target = loaddata()
-    # ran = random.randint(1, perload_num-2)
-    # inputdata = inputdatas[ran]
-    # target = targets[ran]
-
-    inputdata = input_imgs.clone()
-    target = ground_trues.clone()
+    ran = random.randint(0, perload_num-batchsize-1)
+    inputdata = input_imgs[ran:ran+batchsize].clone()
+    target = ground_trues[ran:ran+batchsize].clone()
 
     pred = netG(inputdata)
 
@@ -262,13 +260,13 @@ for iter in range(start_iter+1,ITER):
         netG.eval()
         
         test_names = os.listdir('./test')
+        test_names.sort()
         result = np.zeros((finesize*2,finesize*len(test_names),3), dtype='uint8')
 
         for cnt,test_name in enumerate(test_names,0):
             img_names = os.listdir(os.path.join('./test',test_name,'image'))
             img_names.sort()
             inputdata = np.zeros((finesize,finesize,3*N+1), dtype='uint8')
-            img_names.sort()
             for i in range(0,N):
                 img = impro.imread(os.path.join('./test',test_name,'image',img_names[i]))
                 img = impro.resize(img,finesize)

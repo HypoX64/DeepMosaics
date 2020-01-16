@@ -141,6 +141,7 @@ test*/
 video_tmp/
 result/
 #./
+/pix2pix
 /pix2pixHD
 /tmp
 /to_make_show

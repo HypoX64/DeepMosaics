@@ -50,8 +50,8 @@ def Toinputshape(imgs,masks,finesize):
         # print(imgs[i].shape,masks[i].shape)
         img,mask = data.random_transform_image(imgs[i], masks[i], finesize)
         # print(img.shape,mask.shape)
-        mask = mask.reshape(1,finesize,finesize)/255.0
-        img = img.transpose((2, 0, 1))/255.0
+        mask = (mask.reshape(1,finesize,finesize)/255.0-0.5)/0.5
+        img = (img.transpose((2, 0, 1))/255.0-0.5)/0.5
         result_imgs.append(img)
         result_masks.append(mask)
     result_imgs = np.array(result_imgs)

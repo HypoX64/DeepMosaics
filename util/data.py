@@ -74,11 +74,11 @@ def random_transform_video(src,target,finesize,N):
         target = target[:,::-1,:]
 
     #random color
-    alpha = random.uniform(-0.2,0.2)
+    alpha = random.uniform(-0.3,0.3)
     beta  = random.uniform(-0.2,0.2)
-    b     = random.uniform(-0.1,0.1)
-    g     = random.uniform(-0.1,0.1)
-    r     = random.uniform(-0.1,0.1)
+    b     = random.uniform(-0.05,0.05)
+    g     = random.uniform(-0.05,0.05)
+    r     = random.uniform(-0.05,0.05)
     for i in range(N):
         src[:,:,i*3:(i+1)*3] = color_adjust(src[:,:,i*3:(i+1)*3],alpha,beta,b,g,r)
     target = color_adjust(target,alpha,beta,b,g,r)

@@ -4,13 +4,23 @@ import torch.nn.functional as F
 from .unet_parts import *
 from .pix2pix_model import *
 
+Norm = 'batch'
+if Norm == 'instance':
+    NormLayer_2d = nn.InstanceNorm2d
+    NormLayer_3d = nn.InstanceNorm3d
+    use_bias = False
+else:
+    NormLayer_2d = nn.BatchNorm2d
+    NormLayer_3d = nn.BatchNorm3d
+    use_bias = True
+
 class encoder_2d(nn.Module):
     """Resnet-based generator that consists of Resnet blocks between a few downsampling/upsampling operations.
 
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=NormLayer_2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -55,7 +65,7 @@ class decoder_2d(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=NormLayer_2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -114,8 +124,8 @@ class conv_3d(nn.Module):
     def __init__(self,inchannel,outchannel,kernel_size=3,stride=2,padding=1):
         super(conv_3d, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv3d(inchannel, outchannel, kernel_size=kernel_size, stride=stride, padding=padding, bias=False),
-            nn.BatchNorm3d(outchannel),
+            nn.Conv3d(inchannel, outchannel, kernel_size=kernel_size, stride=stride, padding=padding, bias=use_bias),
+            NormLayer_3d(outchannel),
             nn.ReLU(inplace=True),
         )
 
@@ -128,8 +138,8 @@ class conv_2d(nn.Module):
         super(conv_2d, self).__init__()
         self.conv = nn.Sequential(
             nn.ReflectionPad2d(padding),
-            nn.Conv2d(inchannel, outchannel, kernel_size=kernel_size, stride=stride, padding=0, bias=False),
-            nn.BatchNorm2d(outchannel),
+            nn.Conv2d(inchannel, outchannel, kernel_size=kernel_size, stride=stride, padding=0, bias=use_bias),
+            NormLayer_2d(outchannel),
             nn.ReLU(inplace=True),
         )
 
@@ -145,8 +155,8 @@ class encoder_3d(nn.Module):
         self.down2 = conv_3d(64, 128, 3, 2, 1)
         self.down3 = conv_3d(128, 256, 3, 1, 1)
         self.conver2d = nn.Sequential(
-            nn.Conv2d(256*int(in_channel/4), 256, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(256*int(in_channel/4), 256, kernel_size=3, stride=1, padding=1, bias=use_bias),
+            NormLayer_2d(256),
             nn.ReLU(inplace=True),
         )
 
