@@ -23,7 +23,7 @@ beta1 = 0.5
 use_gpu = True
 use_gan = False
 use_L2 = True
-CONTINUE =  False
+CONTINUE =  True
 lambda_L1 = 100.0
 lambda_gan = 1
 
@@ -31,9 +31,9 @@ SAVE_FRE = 10000
 start_iter = 0
 finesize = 128
 loadsize = int(finesize*1.1)
-batchsize = 1
+batchsize = 8
 perload_num = 16
-savename = 'MosaicNet_test'
+savename = 'MosaicNet_batch'
 dir_checkpoint = 'checkpoints/'+savename
 util.makedirs(dir_checkpoint)
 

@@ -8,11 +8,11 @@ Norm = 'batch'
 if Norm == 'instance':
     NormLayer_2d = nn.InstanceNorm2d
     NormLayer_3d = nn.InstanceNorm3d
-    use_bias = False
+    use_bias = True
 else:
     NormLayer_2d = nn.BatchNorm2d
     NormLayer_3d = nn.BatchNorm3d
-    use_bias = True
+    use_bias = False
 
 class encoder_2d(nn.Module):
     """Resnet-based generator that consists of Resnet blocks between a few downsampling/upsampling operations.

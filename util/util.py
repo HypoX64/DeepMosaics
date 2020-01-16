@@ -81,7 +81,7 @@ def get_bar(percent,num = 25):
     bar += ']'
     return bar+' '+str(round(percent,2))+'%'
 
-def copyfile(scr,dst):
+def copyfile(src,dst):
     try:
         shutil.copyfile(src, dst)
     except Exception as e:
