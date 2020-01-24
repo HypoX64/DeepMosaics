@@ -10,7 +10,7 @@ class Options():
     def initialize(self):
 
         #base
-        self.parser.add_argument('--use_gpu',type=bool,default=True, help='if True, use gpu')
+        self.parser.add_argument('--use_gpu',type=int,default=1, help='if 0, do not use gpu')
         # self.parser.add_argument('--use_gpu', action='store_true', help='if input it, use gpu')
         self.parser.add_argument('--media_path', type=str, default='./hands_test.mp4',help='your videos or images path')
         self.parser.add_argument('--mode', type=str, default='auto',help='add or clean mosaic into your media  auto | add | clean')

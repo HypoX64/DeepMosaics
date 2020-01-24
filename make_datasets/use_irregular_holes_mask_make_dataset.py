@@ -11,11 +11,11 @@ from util import util,mosaic
 import datetime
 
 ir_mask_path = './Irregular_Holes_mask'
-img_dir ='/home/hypo/MyProject/Haystack/CV/output/all/face' 
-MOD = 'HD' #HD | pix2pix | mosaic
+img_dir ='/media/hypo/Hypoyun/Datasets/other/face512' 
+MOD = 'mosaic' #HD | pix2pix | mosaic
 MASK = False # if True, output mask,too
-BOUNDING = True # if true the mosaic size will be more big
-suffix = ''
+BOUNDING = False # if true the mosaic size will be more big
+suffix = '_1'
 output_dir = os.path.join('./datasets_img',MOD)
 util.makedirs(output_dir)
 
@@ -27,6 +27,13 @@ if MOD == 'HD':
 elif MOD == 'pix2pix':
     train_path = os.path.join(output_dir,'train')
     util.makedirs(train_path)
+elif MOD == 'mosaic':
+    ori_path = os.path.join(output_dir,'ori')
+    mosaic_path = os.path.join(output_dir,'mosaic')
+    mask_path = os.path.join(output_dir,'mask')
+    util.makedirs(ori_path)
+    util.makedirs(mosaic_path)
+    util.makedirs(mask_path)
 if MASK:
     mask_path = os.path.join(output_dir,'mask')
     util.makedirs(mask_path)
@@ -43,12 +50,13 @@ transform_img = transforms.Compose([
  ])
 
 mask_names = os.listdir(ir_mask_path)
-img_names = os.listdir(img_dir)
-print('Find images:',len(img_names))
+img_paths = util.Traversal(img_dir)
+img_paths = util.is_imgs(img_paths)
+print('Find images:',len(img_paths))
 
-for i,img_name in enumerate(img_names,1):
+for i,img_path in enumerate(img_paths,1):
     try:        
-        img = Image.open(os.path.join(img_dir,img_name))
+        img = Image.open(img_path)
         img = transform_img(img)
         img = np.array(img)
         img = img[...,::-1]
@@ -70,11 +78,16 @@ for i,img_name in enumerate(img_names,1):
         if MOD == 'HD':#[128:384,128:384,:] --->256
             cv2.imwrite(os.path.join(train_A_path,'%05d' % i+suffix+'.jpg'), mosaic_img)
             cv2.imwrite(os.path.join(train_B_path,'%05d' % i+suffix+'.jpg'), img)
-        else:
+            if MASK:
+                cv2.imwrite(os.path.join(mask_path,'%05d' % i+suffix+'.png'), mask)
+        elif MOD == 'pix2pix':
             merge_img = impro.makedataset(mosaic_img, img)
             cv2.imwrite(os.path.join(train_path,'%05d' % i+suffix+'.jpg'), merge_img)
-        if MASK:
+        elif MOD == 'mosaic':
+            cv2.imwrite(os.path.join(mosaic_path,'%05d' % i+suffix+'.jpg'), mosaic_img)
+            cv2.imwrite(os.path.join(ori_path,'%05d' % i+suffix+'.jpg'), img)
             cv2.imwrite(os.path.join(mask_path,'%05d' % i+suffix+'.png'), mask)
-        print('\r','Proc/all:'+str(i)+'/'+str(len(img_names)),util.get_bar(100*i/len(img_names),num=40),end='')
+
+        print('\r','Proc/all:'+str(i)+'/'+str(len(img_paths)),util.get_bar(100*i/len(img_paths),num=40),end='')
     except Exception as e:
-        print(img_name,e)
+        print(img_path,e)

@@ -5,7 +5,7 @@ from util import mosaic
 from util import data
 import torch
 
-def run_unet(img,net,size = 128,use_gpu = True):
+def run_unet(img,net,size = 224,use_gpu = True):
     img=impro.image2folat(img,3)
     img=img.reshape(1,3,size,size)
     img = torch.from_numpy(img)
@@ -16,12 +16,12 @@ def run_unet(img,net,size = 128,use_gpu = True):
     pred = pred.reshape(size,size).astype('uint8')
     return pred
 
-def run_unet_rectim(img,net,size = 128,use_gpu = True):
+def run_unet_rectim(img,net,size = 224,use_gpu = True):
     img = impro.resize(img,size)
-    img1,img2 = impro.spiltimage(img)
-    mask1 = run_unet(img1,net,size = 128,use_gpu = use_gpu)
-    mask2 = run_unet(img2,net,size = 128,use_gpu = use_gpu)
-    mask = impro.mergeimage(mask1,mask2,img)
+    img1,img2 = impro.spiltimage(img,size)
+    mask1 = run_unet(img1,net,size,use_gpu = use_gpu)
+    mask2 = run_unet(img2,net,size,use_gpu = use_gpu)
+    mask = impro.mergeimage(mask1,mask2,img,size)
     return mask
 
 def run_pix2pix(img,net,opt):
@@ -42,8 +42,9 @@ def get_ROI_position(img,net,opt):
 
 def get_mosaic_position(img_origin,net_mosaic_pos,opt,threshold = 128 ):
     mask = run_unet_rectim(img_origin,net_mosaic_pos,use_gpu = opt.use_gpu)
-    mask = impro.mask_threshold(mask,10,threshold)
+    mask_1 = mask.copy()
+    mask = impro.mask_threshold(mask,20,threshold)
     x,y,size,area = impro.boundingSquare(mask,Ex_mul=1.5)
-    rat = min(img_origin.shape[:2])/128.0
+    rat = min(img_origin.shape[:2])/224.0
     x,y,size = int(rat*x),int(rat*y),int(rat*size)
-    return x,y,size,mask
+    return x,y,size,mask_1

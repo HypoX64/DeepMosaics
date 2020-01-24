@@ -37,7 +37,7 @@ def im2tensor(image_numpy, imtype=np.uint8, gray=False,bgr2rgb = True, reshape =
         image_numpy = (image_numpy/255.0-0.5)/0.5
         image_tensor = torch.from_numpy(image_numpy).float()
         if reshape:
-            image_tensor=image_tensor.reshape(1,1,h,w)
+            image_tensor = image_tensor.reshape(1,1,h,w)
     else:
         h, w ,ch = image_numpy.shape
         if bgr2rgb:
@@ -52,7 +52,7 @@ def im2tensor(image_numpy, imtype=np.uint8, gray=False,bgr2rgb = True, reshape =
             image_numpy = image_numpy.transpose((2, 0, 1))
             image_tensor = torch.from_numpy(image_numpy).float()
         if reshape:
-            image_tensor=image_tensor.reshape(1,ch,h,w)
+            image_tensor = image_tensor.reshape(1,ch,h,w)
     if use_gpu:
         image_tensor = image_tensor.cuda()
     return image_tensor
@@ -91,7 +91,7 @@ def random_transform_video(src,target,finesize,N):
     return src,target
 
 
-def random_transform_image(img,mask,finesize):
+def random_transform_image(img,mask,finesize,test_flag = False):
 
     # randomsize = int(finesize*(1.2+0.2*random.random())+2)
 
@@ -118,6 +118,9 @@ def random_transform_image(img,mask,finesize):
     # print(h,w,h_move,w_move)
     img_crop = img[h_move:h_move+finesize,w_move:w_move+finesize]
     mask_crop = mask[h_move:h_move+finesize,w_move:w_move+finesize]
+
+    if test_flag:
+        return img_crop,mask_crop
     
     #random rotation
     if random.random()<0.2:
@@ -143,12 +146,19 @@ def random_transform_image(img,mask,finesize):
         else:
             img = img[::-1,:,:]
             mask = mask[::-1,:]
+
+    #random blur
+    if random.random()>0.5:
+        size_ran = random.uniform(0.5,1.5)
+        img = cv2.resize(img, (int(finesize*size_ran),int(finesize*size_ran)))
+        img = cv2.resize(img, (finesize,finesize))
+        #img = cv2.blur(img, (random.randint(1,3), random.randint(1,3)))
     return img,mask
 
-def showresult(img1,img2,img3,name):
+def showresult(img1,img2,img3,name,is0_1 = False):
     size = img1.shape[3]
     showimg=np.zeros((size,size*3,3))
-    showimg[0:size,0:size] = tensor2im(img1,rgb2bgr = False, is0_1 = False)
-    showimg[0:size,size:size*2] = tensor2im(img2,rgb2bgr = False, is0_1 = False)
-    showimg[0:size,size*2:size*3] = tensor2im(img3,rgb2bgr = False, is0_1 = False)
+    showimg[0:size,0:size] = tensor2im(img1,rgb2bgr = False, is0_1 = is0_1)
+    showimg[0:size,size:size*2] = tensor2im(img2,rgb2bgr = False, is0_1 = is0_1)
+    showimg[0:size,size*2:size*3] = tensor2im(img3,rgb2bgr = False, is0_1 = is0_1)
     cv2.imwrite(name, showimg)

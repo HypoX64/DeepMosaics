@@ -84,9 +84,9 @@ def image2folat(img,ch):
         img = (img.transpose((2, 0, 1))/255.0).astype(np.float32)
     return img
 
-def spiltimage(img):
+def spiltimage(img,size = 128):
     h, w = img.shape[:2]
-    size = min(h,w)
+    # size = min(h,w)
     if w >= h:
         img1 = img[:,0:size]
         img2 = img[:,w-size:w]
@@ -96,12 +96,12 @@ def spiltimage(img):
 
     return img1,img2
 
-def mergeimage(img1,img2,orgin_image):
+def mergeimage(img1,img2,orgin_image,size = 128):
     h, w = orgin_image.shape[:2]
     new_img1 = np.zeros((h,w), dtype = "uint8")
     new_img2 = np.zeros((h,w), dtype = "uint8")
 
-    size = min(h,w)
+    # size = min(h,w)
     if w >= h:
         new_img1[:,0:size]=img1
         new_img2[:,w-size:w]=img2

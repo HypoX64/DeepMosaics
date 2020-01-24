@@ -134,6 +134,7 @@ __pycache__/
 tmp/
 checkpoints/
 mask/
+mask_old/
 origin_image/
 datasets/
 dataset/
@@ -149,6 +150,8 @@ result/
 /result
 /reference
 /python_test.py
+/pretrained_models_old
+/deepmosaic_window
 #./make_datasets
 /make_datasets/video
 /make_datasets/tmp

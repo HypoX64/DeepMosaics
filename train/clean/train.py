@@ -21,19 +21,19 @@ ITER = 10000000
 LR = 0.0002
 beta1 = 0.5
 use_gpu = True
-use_gan = False
-use_L2 = True
+use_gan = True
+use_L2 = False
 CONTINUE =  True
 lambda_L1 = 100.0
 lambda_gan = 1
 
 SAVE_FRE = 10000
 start_iter = 0
-finesize = 128
-loadsize = int(finesize*1.1)
-batchsize = 8
+finesize = 256
+loadsize = int(finesize*1.2)
+batchsize = 1
 perload_num = 16
-savename = 'MosaicNet_batch'
+savename = 'MosaicNet_instance_gan_256_D5'
 dir_checkpoint = 'checkpoints/'+savename
 util.makedirs(dir_checkpoint)
 
@@ -57,10 +57,14 @@ loadmodel.show_paramsnumber(netG,'netG')
 # netG = unet_model.UNet(3*N+1, 3)
 if use_gan:
     #netD = pix2pix_model.define_D(3*2+1, 64, 'pixel', norm='instance')
-    netD = pix2pix_model.define_D(3*2+1, 64, 'basic', norm='instance')
-    #netD = pix2pix_model.define_D(3*2+1, 64, 'n_layers', n_layers_D=5, norm='instance', init_type='normal', init_gain=0.02, gpu_ids=[])
+    #netD = pix2pix_model.define_D(3*2+1, 64, 'basic', norm='instance')
+    netD = pix2pix_model.define_D(3*2+1, 64, 'n_layers', n_layers_D=5, norm='instance')
 
 if CONTINUE:
+    if not os.path.isfile(os.path.join(dir_checkpoint,'last_G.pth')):
+        CONTINUE = False
+        print('can not load last_G, training on init weight.')
+if CONTINUE:     
     netG.load_state_dict(torch.load(os.path.join(dir_checkpoint,'last_G.pth')))
     if use_gan:
         netD.load_state_dict(torch.load(os.path.join(dir_checkpoint,'last_D.pth')))

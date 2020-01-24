@@ -22,17 +22,19 @@ import torch.backends.cudnn as cudnn
 
 LR = 0.0002
 EPOCHS = 100
-BATCHSIZE = 16
+BATCHSIZE = 8
 LOADSIZE = 256
 FINESIZE = 224
-CONTINUE = False
+CONTINUE = True
 use_gpu = True
-SAVE_FRE = 5
-cudnn.benchmark = False
+SAVE_FRE = 1
+MAX_LOAD = 35000
+#cudnn.benchmark = True
 
-dir_img = './datasets/av/origin_image/'
-dir_mask = './datasets/av/mask/'
-dir_checkpoint = 'checkpoints/'
+
+dir_img = './datasets/mosaic/mosaic/'
+dir_mask = './datasets/mosaic/mask/'
+dir_checkpoint = 'checkpoints/mosaic/'
 
 
 def Totensor(img,use_gpu=True):
@@ -43,15 +45,15 @@ def Totensor(img,use_gpu=True):
     return img
 
 
-def Toinputshape(imgs,masks,finesize):
+def Toinputshape(imgs,masks,finesize,test_flag = False):
     batchsize = len(imgs)
     result_imgs=[];result_masks=[]
     for i in range(batchsize):
         # print(imgs[i].shape,masks[i].shape)
-        img,mask = data.random_transform_image(imgs[i], masks[i], finesize)
+        img,mask = data.random_transform_image(imgs[i], masks[i], finesize, test_flag)
         # print(img.shape,mask.shape)
-        mask = (mask.reshape(1,finesize,finesize)/255.0-0.5)/0.5
-        img = (img.transpose((2, 0, 1))/255.0-0.5)/0.5
+        mask = (mask.reshape(1,finesize,finesize)/255.0)
+        img = (img.transpose((2, 0, 1))/255.0)
         result_imgs.append(img)
         result_masks.append(mask)
     result_imgs = np.array(result_imgs)
@@ -74,9 +76,10 @@ def batch_generator(images,masks,batchsize):
 def loadimage(dir_img,dir_mask,loadsize,eval_p):
     t1 = datetime.datetime.now()
     imgnames = os.listdir(dir_img)
-    # imgnames = imgnames[:100]
-    print('images num:',len(imgnames))
+    # imgnames = imgnames[:100]   
     random.shuffle(imgnames)
+    imgnames = imgnames[:MAX_LOAD]
+    print('load images:',len(imgnames))
     imgnames = (f[:-4] for f in imgnames)
     images = []
     masks = []
@@ -94,7 +97,7 @@ def loadimage(dir_img,dir_mask,loadsize,eval_p):
     return train_images,train_masks,eval_images,eval_masks
 
 
-
+util.makedirs(dir_checkpoint)
 print('loading data......')
 train_images,train_masks,eval_images,eval_masks = loadimage(dir_img,dir_mask,LOADSIZE,0.2)
 dataset_eval_images,dataset_eval_masks = batch_generator(eval_images,eval_masks,BATCHSIZE)
@@ -104,6 +107,10 @@ dataset_train_images,dataset_train_masks = batch_generator(train_images,train_ma
 net = unet_model.UNet(n_channels = 3, n_classes = 1)
 
 
+if CONTINUE:
+    if not os.path.isfile(os.path.join(dir_checkpoint,'last.pth')):
+        CONTINUE = False
+        print('can not load last.pth, training on init weight.')
 if CONTINUE:
     net.load_state_dict(torch.load(dir_checkpoint+'last.pth'))
 if use_gpu:
@@ -117,6 +124,7 @@ criterion = nn.BCELoss()
 
 print('begin training......')
 for epoch in range(EPOCHS):
+    random_save = random.randint(0, len(dataset_train_images))
 
     starttime = datetime.datetime.now()
     print('Epoch {}/{}.'.format(epoch + 1, EPOCHS))
@@ -139,15 +147,18 @@ for epoch in range(EPOCHS):
         optimizer.step()
 
         if i%100 == 0:
-            data.showresult(img,mask,mask_pred,os.path.join(dir_checkpoint,'result.png'))
+            data.showresult(img,mask,mask_pred,os.path.join(dir_checkpoint,'result.png'),True)
+        if  i == random_save:
+            data.showresult(img,mask,mask_pred,os.path.join(dir_checkpoint,'epoch_'+str(epoch+1)+'.png'),True)
 
     # torch.cuda.empty_cache()
     # # net.eval()
     epoch_loss_eval = 0
     with torch.no_grad():
+    #net.eval()
         for i,(img,mask) in enumerate(zip(dataset_eval_images,dataset_eval_masks)):
             # print(epoch,i,img.shape,mask.shape)
-            img,mask = Toinputshape(img, mask, FINESIZE)
+            img,mask = Toinputshape(img, mask, FINESIZE,test_flag=True)
             img = Totensor(img,use_gpu)
             mask = Totensor(mask,use_gpu)
             mask_pred = net(img)
@@ -164,5 +175,5 @@ for epoch in range(EPOCHS):
 
     if (epoch+1)%SAVE_FRE == 0:
         torch.save(net.cpu().state_dict(),dir_checkpoint+'epoch'+str(epoch+1)+'.pth')
-        data.showresult(img,mask,mask_pred,os.path.join(dir_checkpoint,'epoch_'+str(epoch+1)+'.png'))
+        
         print('network saved.')

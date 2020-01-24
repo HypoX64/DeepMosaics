@@ -6,17 +6,15 @@ from models import runmodel,loadmodel
 from util import mosaic,util,ffmpeg,filt,data
 from util import image_processing as impro
 
-def addmosaic_img(opt):
-    net = loadmodel.unet(opt)
+def addmosaic_img(opt,netS):
     path = opt.media_path
     print('Add Mosaic:',path)
     img = impro.imread(path)
-    mask = runmodel.get_ROI_position(img,net,opt)[0]
+    mask = runmodel.get_ROI_position(img,netS,opt)[0]
     img = mosaic.addmosaic(img,mask,opt)
     cv2.imwrite(os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_add.jpg'),img)
 
-def addmosaic_video(opt):
-    net = loadmodel.unet(opt)
+def addmosaic_video(opt,netS):
     path = opt.media_path
     util.clean_tempfiles()
     fps = ffmpeg.get_video_infos(path)[0]
@@ -30,7 +28,7 @@ def addmosaic_video(opt):
     for imagepath in imagepaths:
         print('Find ROI location:',imagepath)
         img = impro.imread(os.path.join('./tmp/video2image',imagepath))
-        mask,x,y,area = runmodel.get_ROI_position(img,net,opt)
+        mask,x,y,area = runmodel.get_ROI_position(img,netS,opt)
         positions.append([x,y,area])      
         cv2.imwrite(os.path.join('./tmp/ROI_mask',imagepath),mask)
     print('Optimize ROI locations...')
@@ -49,13 +47,13 @@ def addmosaic_video(opt):
                         './tmp/voice_tmp.mp3',
                          os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_add.mp4'))
 
-def cleanmosaic_img(opt):
-    netG = loadmodel.pix2pix(opt)
-    net_mosaic_pos = loadmodel.unet_clean(opt)
+def cleanmosaic_img(opt,netG,netM):
+
     path = opt.media_path
     print('Clean Mosaic:',path)
     img_origin = impro.imread(path)
-    x,y,size = runmodel.get_mosaic_position(img_origin,net_mosaic_pos,opt)[:3]
+    x,y,size,mask = runmodel.get_mosaic_position(img_origin,netM,opt)
+    cv2.imwrite('./mask/'+os.path.basename(path), mask)
     img_result = img_origin.copy()
     if size != 0 :
         img_mosaic = img_origin[y-size:y+size,x-size:x+size]
@@ -65,9 +63,7 @@ def cleanmosaic_img(opt):
         print('Do not find mosaic')
     cv2.imwrite(os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.jpg'),img_result)
 
-def cleanmosaic_video_byframe(opt):
-    netG = loadmodel.pix2pix(opt)
-    net_mosaic_pos = loadmodel.unet_clean(opt)
+def cleanmosaic_video_byframe(opt,netG,netM):
     path = opt.media_path
     util.clean_tempfiles()
     fps = ffmpeg.get_video_infos(path)[0]
@@ -80,7 +76,7 @@ def cleanmosaic_video_byframe(opt):
     # get position
     for imagepath in imagepaths:
         img_origin = impro.imread(os.path.join('./tmp/video2image',imagepath))
-        x,y,size = runmodel.get_mosaic_position(img_origin,net_mosaic_pos,opt)[:3]
+        x,y,size = runmodel.get_mosaic_position(img_origin,netM,opt)[:3]
         positions.append([x,y,size])
         print('Find mosaic location:',imagepath)
     print('Optimize mosaic locations...')
@@ -103,9 +99,7 @@ def cleanmosaic_video_byframe(opt):
                 './tmp/voice_tmp.mp3',
                  os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.mp4'))  
 
-def cleanmosaic_video_fusion(opt):
-    net = loadmodel.video(opt)
-    net_mosaic_pos = loadmodel.unet_clean(opt)
+def cleanmosaic_video_fusion(opt,netG,netM):
     path = opt.media_path
     N = 25
     INPUT_SIZE = 128
@@ -122,7 +116,7 @@ def cleanmosaic_video_fusion(opt):
     for imagepath in imagepaths:
         img_origin = impro.imread(os.path.join('./tmp/video2image',imagepath))
         # x,y,size = runmodel.get_mosaic_position(img_origin,net_mosaic_pos,opt)[:3]
-        x,y,size,mask = runmodel.get_mosaic_position(img_origin,net_mosaic_pos,opt)
+        x,y,size,mask = runmodel.get_mosaic_position(img_origin,netM,opt)
         cv2.imwrite(os.path.join('./tmp/mosaic_mask',imagepath), mask)
         positions.append([x,y,size])
         print('Find mosaic location:',imagepath)
@@ -151,11 +145,12 @@ def cleanmosaic_video_fusion(opt):
             mask = mask[y-size:y+size,x-size:x+size]
             mask = impro.resize(mask, INPUT_SIZE)
             mosaic_input[:,:,-1] = mask
-            mosaic_input = data.im2tensor(mosaic_input,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False)
-            unmosaic_pred = net(mosaic_input)
+            mosaic_input = data.im2tensor(mosaic_input,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False,is0_1 = False)
+            unmosaic_pred = netG(mosaic_input)
             
-            unmosaic_pred = (unmosaic_pred.cpu().detach().numpy()*255)[0]
-            img_fake = unmosaic_pred.transpose((1, 2, 0))
+            #unmosaic_pred = (unmosaic_pred.cpu().detach().numpy()*255)[0]
+            #img_fake = unmosaic_pred.transpose((1, 2, 0))
+            img_fake = data.tensor2im(unmosaic_pred,rgb2bgr = False ,is0_1 = False)
             img_result = impro.replace_mosaic(img_origin,img_fake,x,y,size,opt.no_feather)
             cv2.imwrite(os.path.join('./tmp/replace_mosaic',imagepath),img_result)
 
