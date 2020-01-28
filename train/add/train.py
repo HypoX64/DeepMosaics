@@ -28,7 +28,7 @@ FINESIZE = 224
 CONTINUE = True
 use_gpu = True
 SAVE_FRE = 1
-MAX_LOAD = 35000
+MAX_LOAD = 30000
 #cudnn.benchmark = True
 
 

@@ -34,6 +34,15 @@ def run_pix2pix(img,net,opt):
     img_fake = data.tensor2im(img_fake)
     return img_fake
 
+def run_styletransfer(opt, net, img, outsize = 720):
+    if min(img.shape[:2]) >= outsize:
+        img = impro.resize(img,outsize)
+    img = img[0:4*int(img.shape[0]/4),0:4*int(img.shape[1]/4),:]
+    img = data.im2tensor(img,use_gpu=opt.use_gpu)
+    img = net(img)
+    img = data.tensor2im(img)
+    return img
+
 def get_ROI_position(img,net,opt):
     mask = run_unet_rectim(img,net,use_gpu = opt.use_gpu)
     mask = impro.mask_threshold(mask,opt.mask_extend,opt.mask_threshold)
@@ -42,9 +51,10 @@ def get_ROI_position(img,net,opt):
 
 def get_mosaic_position(img_origin,net_mosaic_pos,opt,threshold = 128 ):
     mask = run_unet_rectim(img_origin,net_mosaic_pos,use_gpu = opt.use_gpu)
-    mask_1 = mask.copy()
-    mask = impro.mask_threshold(mask,20,threshold)
+    #mask_1 = mask.copy()
+    mask = impro.mask_threshold(mask,30,threshold)
+    mask = impro.find_best_ROI(mask)
     x,y,size,area = impro.boundingSquare(mask,Ex_mul=1.5)
     rat = min(img_origin.shape[:2])/224.0
     x,y,size = int(rat*x),int(rat*y),int(rat*size)
-    return x,y,size,mask_1
+    return x,y,size,mask

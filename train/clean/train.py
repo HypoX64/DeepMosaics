@@ -12,7 +12,7 @@ sys.path.append("../..")
 from util import mosaic,util,ffmpeg,filt,data
 from util import image_processing as impro
 from cores import Options
-from models import pix2pix_model,video_model,unet_model,loadmodel
+from models import pix2pix_model,pix2pixHD_model,video_model,unet_model,loadmodel
 from matplotlib import pyplot as plt
 import torch.backends.cudnn as cudnn
 
@@ -21,19 +21,20 @@ ITER = 10000000
 LR = 0.0002
 beta1 = 0.5
 use_gpu = True
-use_gan = True
+use_gan = False
 use_L2 = False
 CONTINUE =  True
 lambda_L1 = 100.0
-lambda_gan = 1
+lambda_gan = 0.5
 
 SAVE_FRE = 10000
 start_iter = 0
 finesize = 256
 loadsize = int(finesize*1.2)
-batchsize = 1
+batchsize = 6
 perload_num = 16
-savename = 'MosaicNet_instance_gan_256_D5'
+# savename = 'MosaicNet_instance_gan_256_hdD'
+savename = 'MosaicNet_instance_test'
 dir_checkpoint = 'checkpoints/'+savename
 util.makedirs(dir_checkpoint)
 
@@ -52,13 +53,14 @@ for video in videos:
 #unet_128
 #resnet_9blocks
 #netG = pix2pix_model.define_G(3*N+1, 3, 128, 'resnet_6blocks', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
-netG = video_model.MosaicNet(3*N+1, 3)
+netG = video_model.MosaicNet(3*N+1, 3, norm='instance')
 loadmodel.show_paramsnumber(netG,'netG')
 # netG = unet_model.UNet(3*N+1, 3)
 if use_gan:
+    netD = pix2pixHD_model.define_D(6, 64, 3, norm='instance', use_sigmoid=False, num_D=2)
     #netD = pix2pix_model.define_D(3*2+1, 64, 'pixel', norm='instance')
-    #netD = pix2pix_model.define_D(3*2+1, 64, 'basic', norm='instance')
-    netD = pix2pix_model.define_D(3*2+1, 64, 'n_layers', n_layers_D=5, norm='instance')
+    #netD = pix2pix_model.define_D(3*2, 64, 'basic', norm='instance')
+    #netD = pix2pix_model.define_D(3*2+1, 64, 'n_layers', n_layers_D=5, norm='instance')
 
 if CONTINUE:
     if not os.path.isfile(os.path.join(dir_checkpoint,'last_G.pth')):
@@ -71,19 +73,22 @@ if CONTINUE:
     f = open(os.path.join(dir_checkpoint,'iter'),'r')
     start_iter = int(f.read())
     f.close()
-if use_gpu:
-    netG.cuda()
-    if use_gan:
-        netD.cuda()
-    cudnn.benchmark = True
 
 optimizer_G = torch.optim.Adam(netG.parameters(), lr=LR,betas=(beta1, 0.999))
 criterion_L1 = nn.L1Loss()
 criterion_L2 = nn.MSELoss()
 if use_gan:
     optimizer_D = torch.optim.Adam(netG.parameters(), lr=LR,betas=(beta1, 0.999))
-    criterionGAN = pix2pix_model.GANLoss(gan_mode='lsgan').cuda()
+    # criterionGAN = pix2pix_model.GANLoss(gan_mode='lsgan').cuda()
+    criterionGAN = pix2pixHD_model.GANLoss(tensor=torch.cuda.FloatTensor)
+    netD.train()
 
+if use_gpu:
+    netG.cuda()
+    if use_gan:
+        netD.cuda()
+        criterionGAN.cuda()
+    cudnn.benchmark = True
 
 def loaddata():
     video_index = random.randint(0,len(videos)-1)
@@ -151,31 +156,34 @@ for iter in range(start_iter+1,ITER):
     inputdata = input_imgs[ran:ran+batchsize].clone()
     target = ground_trues[ran:ran+batchsize].clone()
 
-    pred = netG(inputdata)
-
     if use_gan:
-        netD.train()
-        # print(inputdata[0,3*N,:,:].size())
-        # print((inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:]).size())
-        real_A = torch.cat((inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], inputdata[:,-1,:,:].reshape(-1,1,finesize,finesize)), 1)
+        # compute fake images: G(A)
+        pred = netG(inputdata)
+        # update D
+        pix2pix_model.set_requires_grad(netD,True)
+        optimizer_D.zero_grad()
+        # Fake
+        real_A = inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:]
         fake_AB = torch.cat((real_A, pred), 1)
         pred_fake = netD(fake_AB.detach())
         loss_D_fake = criterionGAN(pred_fake, False)
-
+        # Real
         real_AB = torch.cat((real_A, target), 1)
         pred_real = netD(real_AB)
         loss_D_real = criterionGAN(pred_real, True)
+        # combine loss and calculate gradients
         loss_D = (loss_D_fake + loss_D_real) * 0.5
         loss_sum[2] += loss_D_fake.item()
         loss_sum[3] += loss_D_real.item()
-
-        optimizer_D.zero_grad()
+        # udpate D's weights
         loss_D.backward()
         optimizer_D.step()
-        netD.eval()
 
-        # fake_AB = torch.cat((inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], pred), 1)
-        real_A = torch.cat((inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:], inputdata[:,-1,:,:].reshape(-1,1,finesize,finesize)), 1)
+        # update G
+        pix2pix_model.set_requires_grad(netD,False)
+        optimizer_G.zero_grad()
+        # First, G(A) should fake the discriminator
+        real_A = inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:]
         fake_AB = torch.cat((real_A, pred), 1)
         pred_fake = netD(fake_AB)
         loss_G_GAN = criterionGAN(pred_fake, True)*lambda_gan
@@ -188,12 +196,12 @@ for iter in range(start_iter+1,ITER):
         loss_G = loss_G_GAN + loss_G_L1
         loss_sum[0] += loss_G_L1.item()
         loss_sum[1] += loss_G_GAN.item()
-
-        optimizer_G.zero_grad()
+        # udpate G's weights
         loss_G.backward()
         optimizer_G.step()
 
     else:
+        pred = netG(inputdata)
         if use_L2:
             loss_G_L1 = (criterion_L1(pred, target)+criterion_L2(pred, target)) * lambda_L1
         else:
@@ -203,7 +211,6 @@ for iter in range(start_iter+1,ITER):
         optimizer_G.zero_grad()
         loss_G_L1.backward()
         optimizer_G.step()
-
 
     if (iter+1)%100 == 0:
         try:

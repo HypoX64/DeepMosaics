@@ -4,15 +4,6 @@ import torch.nn.functional as F
 from .unet_parts import *
 from .pix2pix_model import *
 
-Norm = 'batch'
-if Norm == 'instance':
-    NormLayer_2d = nn.InstanceNorm2d
-    NormLayer_3d = nn.InstanceNorm3d
-    use_bias = True
-else:
-    NormLayer_2d = nn.BatchNorm2d
-    NormLayer_3d = nn.BatchNorm3d
-    use_bias = False
 
 class encoder_2d(nn.Module):
     """Resnet-based generator that consists of Resnet blocks between a few downsampling/upsampling operations.
@@ -20,7 +11,7 @@ class encoder_2d(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=NormLayer_2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -65,7 +56,7 @@ class decoder_2d(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=NormLayer_2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -121,11 +112,11 @@ class decoder_2d(nn.Module):
 
 
 class conv_3d(nn.Module):
-    def __init__(self,inchannel,outchannel,kernel_size=3,stride=2,padding=1):
+    def __init__(self,inchannel,outchannel,kernel_size=3,stride=2,padding=1,norm_layer_3d=nn.BatchNorm3d,use_bias=True):
         super(conv_3d, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv3d(inchannel, outchannel, kernel_size=kernel_size, stride=stride, padding=padding, bias=use_bias),
-            NormLayer_3d(outchannel),
+            norm_layer_3d(outchannel),
             nn.ReLU(inplace=True),
         )
 
@@ -134,12 +125,12 @@ class conv_3d(nn.Module):
         return x
 
 class conv_2d(nn.Module):
-    def __init__(self,inchannel,outchannel,kernel_size=3,stride=1,padding=1):
+    def __init__(self,inchannel,outchannel,kernel_size=3,stride=1,padding=1,norm_layer_2d=nn.BatchNorm2d,use_bias=True):
         super(conv_2d, self).__init__()
         self.conv = nn.Sequential(
             nn.ReflectionPad2d(padding),
             nn.Conv2d(inchannel, outchannel, kernel_size=kernel_size, stride=stride, padding=0, bias=use_bias),
-            NormLayer_2d(outchannel),
+            norm_layer_2d(outchannel),
             nn.ReLU(inplace=True),
         )
 
@@ -149,14 +140,14 @@ class conv_2d(nn.Module):
 
 
 class encoder_3d(nn.Module):
-    def __init__(self,in_channel):
+    def __init__(self,in_channel,norm_layer_2d,norm_layer_3d,use_bias):
         super(encoder_3d, self).__init__()
-        self.down1 = conv_3d(1, 64, 3, 2, 1)
-        self.down2 = conv_3d(64, 128, 3, 2, 1)
-        self.down3 = conv_3d(128, 256, 3, 1, 1)
+        self.down1 = conv_3d(1, 64, 3, 2, 1,norm_layer_3d,use_bias)
+        self.down2 = conv_3d(64, 128, 3, 2, 1,norm_layer_3d,use_bias)
+        self.down3 = conv_3d(128, 256, 3, 1, 1,norm_layer_3d,use_bias)
         self.conver2d = nn.Sequential(
             nn.Conv2d(256*int(in_channel/4), 256, kernel_size=3, stride=1, padding=1, bias=use_bias),
-            NormLayer_2d(256),
+            norm_layer_2d(256),
             nn.ReLU(inplace=True),
         )
 
@@ -176,17 +167,17 @@ class encoder_3d(nn.Module):
 
 
 
-class MosaicNet(nn.Module):
-    def __init__(self, in_channel, out_channel):
-        super(MosaicNet, self).__init__()
+class ALL(nn.Module):
+    def __init__(self, in_channel, out_channel,norm_layer_2d,norm_layer_3d,use_bias):
+        super(ALL, self).__init__()
 
-        self.encoder_2d = encoder_2d(4,-1,64,n_blocks=9)
-        self.encoder_3d = encoder_3d(in_channel)
-        self.decoder_2d = decoder_2d(4,3,64,n_blocks=9)
-        self.shortcut_cov = conv_2d(3,64,7,1,3)
-        self.merge1 = conv_2d(512,256,3,1,1)
+        self.encoder_2d = encoder_2d(4,-1,64,norm_layer=norm_layer_2d,n_blocks=9)
+        self.encoder_3d = encoder_3d(in_channel,norm_layer_2d,norm_layer_3d,use_bias)
+        self.decoder_2d = decoder_2d(4,3,64,norm_layer=norm_layer_2d,n_blocks=9)
+        self.shortcut_cov = conv_2d(3,64,7,1,3,norm_layer_2d,use_bias)
+        self.merge1 = conv_2d(512,256,3,1,1,norm_layer_2d,use_bias)
         self.merge2 = nn.Sequential(
-            conv_2d(128,64,3,1,1),
+            conv_2d(128,64,3,1,1,norm_layer_2d,use_bias),
             nn.ReflectionPad2d(3),
             nn.Conv2d(64, out_channel, kernel_size=7, padding=0),
             nn.Tanh()
@@ -210,3 +201,17 @@ class MosaicNet(nn.Module):
 
         return x
 
+def MosaicNet(in_channel, out_channel, norm='batch'):
+
+    if norm == 'batch':
+        # norm_layer_2d = nn.BatchNorm2d
+        # norm_layer_3d = nn.BatchNorm3d
+        norm_layer_2d = functools.partial(nn.BatchNorm2d, affine=True, track_running_stats=True)
+        norm_layer_3d = functools.partial(nn.BatchNorm3d, affine=True, track_running_stats=True)
+        use_bias = False
+    elif norm == 'instance':
+        norm_layer_2d = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
+        norm_layer_3d = functools.partial(nn.InstanceNorm3d, affine=False, track_running_stats=False)
+        use_bias = True
+
+    return ALL(in_channel, out_channel, norm_layer_2d, norm_layer_3d, use_bias)

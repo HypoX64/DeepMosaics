@@ -64,6 +64,7 @@ def clean_tempfiles(tmp_init=True):
         os.makedirs('./tmp/mosaic_mask')
         os.makedirs('./tmp/ROI_mask')
         os.makedirs('./tmp/ROI_mask_check')
+        os.makedirs('./tmp/style_transfer')
 
 def file_init(opt):
     if not os.path.isdir(opt.result_dir):

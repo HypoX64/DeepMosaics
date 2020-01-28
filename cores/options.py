@@ -10,10 +10,10 @@ class Options():
     def initialize(self):
 
         #base
-        self.parser.add_argument('--use_gpu',type=int,default=1, help='if 0, do not use gpu')
+        self.parser.add_argument('--use_gpu',type=int,default=1, help='if 0 or -1, do not use gpu')
         # self.parser.add_argument('--use_gpu', action='store_true', help='if input it, use gpu')
         self.parser.add_argument('--media_path', type=str, default='./hands_test.mp4',help='your videos or images path')
-        self.parser.add_argument('--mode', type=str, default='auto',help='add or clean mosaic into your media  auto | add | clean')
+        self.parser.add_argument('--mode', type=str, default='auto',help='add or clean mosaic into your media  auto | add | clean | style')
         self.parser.add_argument('--model_path', type=str, default='./pretrained_models/add_hands_128.pth',help='pretrained model path')
         self.parser.add_argument('--result_dir', type=str, default='./result',help='output result will be saved here')
         self.parser.add_argument('--tempimage_type', type=str, default='png',help='type of temp image, png | jpg, png is better but occupy more storage space')
@@ -38,7 +38,7 @@ class Options():
             self.initialize()
         self.opt = self.parser.parse_args()
 
-        if torch.cuda.is_available() and self.opt.use_gpu:
+        if torch.cuda.is_available() and self.opt.use_gpu > 0:
             self.opt.use_gpu = True
         else:
             self.opt.use_gpu = False
@@ -49,17 +49,20 @@ class Options():
                 self.opt.mode = 'add'
             elif 'clean' in self.opt.model_path:
                 self.opt.mode = 'clean'
+            elif 'style' in self.opt.model_path:
+                self.opt.mode = 'style'
             else:
                 print('Please input running mode!')
 
         if self.opt.netG == 'auto' and self.opt.mode =='clean':
-            if 'unet_128' in self.opt.model_path:
+            model_name = os.path.basename(self.opt.model_path)
+            if 'unet_128' in model_name:
                 self.opt.netG = 'unet_128'
-            elif 'resnet_9blocks' in self.opt.model_path:
+            elif 'resnet_9blocks' in model_name:
                 self.opt.netG = 'resnet_9blocks'
-            elif 'HD' in self.opt.model_path:
+            elif 'HD' in model_name:
                 self.opt.netG = 'HD'
-            elif 'video' in self.opt.model_path:
+            elif 'video' in model_name:
                 self.opt.netG = 'video'
             else:
                 print('Type of Generator error!')

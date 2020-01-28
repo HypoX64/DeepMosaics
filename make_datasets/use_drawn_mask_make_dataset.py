@@ -19,7 +19,7 @@ HD = True # if false make dataset for pix2pix, if Ture for pix2pix_HD
 MASK = True # if True, output mask,too
 OUT_SIZE = 256
 FOLD_NUM = 2
-Bounding = True
+Bounding = False
 
 if HD:
     train_A_path = os.path.join(output_dir,'train_A')
@@ -48,7 +48,7 @@ for fold in range(FOLD_NUM):
             mask = impro.resize_like(mask, img)
             x,y,size,area = impro.boundingSquare(mask, 1.5)
             if area > 100:
-                if Bounding：
+                if Bounding:
                     img = impro.resize(img[y-size:y+size,x-size:x+size],OUT_SIZE) 
                     mask =  impro.resize(mask[y-size:y+size,x-size:x+size],OUT_SIZE)
                 img_mosaic = mosaic.addmosaic_random(img, mask)

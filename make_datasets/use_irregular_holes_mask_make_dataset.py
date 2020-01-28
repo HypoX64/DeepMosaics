@@ -14,7 +14,7 @@ ir_mask_path = './Irregular_Holes_mask'
 img_dir ='/media/hypo/Hypoyun/Datasets/other/face512' 
 MOD = 'mosaic' #HD | pix2pix | mosaic
 MASK = False # if True, output mask,too
-BOUNDING = False # if true the mosaic size will be more big
+BOUNDING = True # if true the mosaic size will be more big
 suffix = '_1'
 output_dir = os.path.join('./datasets_img',MOD)
 util.makedirs(output_dir)

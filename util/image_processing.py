@@ -17,14 +17,14 @@ def imread(file_path,mod = 'normal'):
     # cv_img = cv2.imdecode(np.fromfile(file_path,dtype=np.uint8),-1)
     return cv_img
 
-def resize(img,size):
+def resize(img,size,interpolation=cv2.INTER_LINEAR):
     h, w = img.shape[:2]
     if np.min((w,h)) ==size:
         return img
     if w >= h:
-        res = cv2.resize(img,(int(size*w/h), size))
+        res = cv2.resize(img,(int(size*w/h), size),interpolation=interpolation)
     else:
-        res = cv2.resize(img,(size, int(size*h/w)))
+        res = cv2.resize(img,(size, int(size*h/w)),interpolation=interpolation)
     return res
 
 def resize_like(img,img_like):
@@ -111,6 +111,17 @@ def mergeimage(img1,img2,orgin_image,size = 128):
     result_img = cv2.add(new_img1,new_img2)
     return result_img
 
+def find_best_ROI(mask):
+    contours,hierarchy=cv2.findContours(mask, cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+    if len(contours)>0:
+        areas = []
+        for contour in contours:
+            areas.append(cv2.contourArea(contour))
+        index = areas.index(max(areas))
+        mask = np.zeros_like(mask)
+        mask = cv2.fillPoly(mask,[contours[index]],(255))
+    return mask
+
 def boundingSquare(mask,Ex_mul):
     # thresh = mask_threshold(mask,10,threshold)
     area = mask_area(mask)
@@ -152,7 +163,7 @@ def boundingSquare(mask,Ex_mul):
 def mask_threshold(mask,blur,threshold):
     mask = cv2.threshold(mask,threshold,255,cv2.THRESH_BINARY)[1]
     mask = cv2.blur(mask, (blur, blur))
-    mask = cv2.threshold(mask,threshold/3,255,cv2.THRESH_BINARY)[1]
+    mask = cv2.threshold(mask,threshold/5,255,cv2.THRESH_BINARY)[1]
     return mask
 
 def mask_area(mask):

@@ -20,7 +20,6 @@ def main():
                 core.addmosaic_img(opt,netS)
             elif util.is_video(file):
                 core.addmosaic_video(opt,netS)
-                util.clean_tempfiles(tmp_init = False)
             else:
                 print('This type of file is not supported')
 
@@ -40,10 +39,22 @@ def main():
                     core.cleanmosaic_video_fusion(opt,netG,netM)
                 else:
                     core.cleanmosaic_video_byframe(opt,netG,netM)
-                util.clean_tempfiles(tmp_init = False)
             else:
                 print('This type of file is not supported')
 
+    elif opt.mode == 'style':
+        netG = loadmodel.cyclegan(opt)
+        for file in files:
+            opt.media_path = file
+            if util.is_img(file):
+                core.styletransfer_img(opt,netG)
+            elif util.is_video(file):
+                core.styletransfer_video(opt,netG)
+
+            else:
+                print('This type of file is not supported')
+
+    util.clean_tempfiles(tmp_init = False)
         
 main()
 # if __name__ == '__main__':
