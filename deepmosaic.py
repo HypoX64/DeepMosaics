@@ -43,7 +43,7 @@ def main():
                 print('This type of file is not supported')
 
     elif opt.mode == 'style':
-        netG = loadmodel.cyclegan(opt)
+        netG = loadmodel.style(opt)
         for file in files:
             opt.media_path = file
             if util.is_img(file):

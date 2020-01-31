@@ -37,9 +37,12 @@ def pix2pix(opt):
     return netG
 
 
-def cyclegan(opt):
-    netG = define_G(3, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=False, init_type='normal', gpu_ids=[])
-    
+def style(opt):
+    if opt.edges:
+        netG = define_G(1, 3, 64, 'unet_256', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
+    else:
+        netG = define_G(3, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=False, init_type='normal', gpu_ids=[])
+
     #in other to load old pretrain model
     #https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/models/base_model.py
     if isinstance(netG, torch.nn.DataParallel):

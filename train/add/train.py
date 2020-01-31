@@ -22,19 +22,19 @@ import torch.backends.cudnn as cudnn
 
 LR = 0.0002
 EPOCHS = 100
-BATCHSIZE = 8
+BATCHSIZE = 16
 LOADSIZE = 256
 FINESIZE = 224
 CONTINUE = True
 use_gpu = True
 SAVE_FRE = 1
 MAX_LOAD = 30000
-#cudnn.benchmark = True
 
 
-dir_img = './datasets/mosaic/mosaic/'
-dir_mask = './datasets/mosaic/mask/'
-dir_checkpoint = 'checkpoints/mosaic/'
+
+dir_img = './datasets/face/origin_image/'
+dir_mask = './datasets/face/mask/'
+dir_checkpoint = 'checkpoints/face/'
 
 
 def Totensor(img,use_gpu=True):
@@ -115,6 +115,7 @@ if CONTINUE:
     net.load_state_dict(torch.load(dir_checkpoint+'last.pth'))
 if use_gpu:
     net.cuda()
+    cudnn.benchmark = True
 
 
 optimizer = torch.optim.Adam(net.parameters(), lr=LR, betas=(0.9, 0.999))
