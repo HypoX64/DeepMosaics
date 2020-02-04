@@ -2,20 +2,42 @@ import cv2
 import numpy as np
 import random
 
+import platform
+system_type = 'Linux'
+if 'Windows' in platform.platform():
+    system_type = 'Windows'
+
 def imread(file_path,mod = 'normal'):
     '''
     mod = 'normal' | 'gray' | 'all'
     '''
-    if mod == 'normal':
-        cv_img = cv2.imread(file_path)
-    elif mod == 'gray':
-        cv_img = cv2.imread(file_path,0)
-    elif mod == 'all':
-        cv_img = cv2.imread(file_path,-1)
+    if system_type == 'Linux':
+        if mod == 'normal':
+            img = cv2.imread(file_path)
+        elif mod == 'gray':
+            img = cv2.imread(file_path,0)
+        elif mod == 'all':
+            img = cv2.imread(file_path,-1)
+    
+    #For chinese path, use cv2.imdecode in windows.
+    #It will loss EXIF, I can't fix it
+    else: 
+        if mod == 'gray':
+            img = cv2.imdecode(np.fromfile(file_path,dtype=np.uint8),0)
+        else:
+            img = cv2.imdecode(np.fromfile(file_path,dtype=np.uint8),-1)
 
-    # # imread for chinese path in windows but no EXIF
-    # cv_img = cv2.imdecode(np.fromfile(file_path,dtype=np.uint8),-1)
-    return cv_img
+    return img
+
+def imwrite(file_path,img):
+    '''
+    in other to save chinese path images in windows,
+    this fun just for save final output images
+    '''
+    if system_type == 'Linux':
+        cv2.imwrite(file_path, img)
+    else:
+        cv2.imencode('.jpg', img)[1].tofile(file_path)
 
 def resize(img,size,interpolation=cv2.INTER_LINEAR):
     h, w = img.shape[:2]

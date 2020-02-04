@@ -37,11 +37,15 @@ def run_pix2pix(img,net,opt):
     return img_fake
 
 def run_styletransfer(opt, net, img):
+
     if opt.output_size != 0:
-        img = impro.resize(img,opt.output_size)
-    if opt.edges:
-        if not opt.only_edges:
-            img = img[0:256*int(img.shape[0]/256),0:256*int(img.shape[1]/256),:]
+        if 'resize' in opt.preprocess and 'resize_scale_width' not in opt.preprocess:
+            img = impro.resize(img,opt.output_size)
+        elif 'resize_scale_width' in opt.preprocess:
+            img = cv2.resize(img, (opt.output_size,opt.output_size))
+        img = img[0:4*int(img.shape[0]/4),0:4*int(img.shape[1]/4),:]
+
+    if 'edges' in opt.preprocess:
         if opt.canny > 100:
             canny_low = opt.canny-50
             canny_high = np.clip(opt.canny+50,0,255)
@@ -56,7 +60,6 @@ def run_styletransfer(opt, net, img):
             return img
         img = data.im2tensor(img,use_gpu=opt.use_gpu,gray=True,use_transform = False,is0_1 = False)
     else:    
-        img = img[0:4*int(img.shape[0]/4),0:4*int(img.shape[1]/4),:]
         img = data.im2tensor(img,use_gpu=opt.use_gpu)
     img = net(img)
     img = data.tensor2im(img)

@@ -21,7 +21,7 @@ def addmosaic_img(opt,netS):
     img = impro.imread(path)
     mask = runmodel.get_ROI_position(img,netS,opt)[0]
     img = mosaic.addmosaic(img,mask,opt)
-    cv2.imwrite(os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_add.jpg'),img)
+    impro.imwrite(os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_add.jpg'),img)
 
 def addmosaic_video(opt,netS):
     path = opt.media_path
@@ -56,7 +56,7 @@ def styletransfer_img(opt,netG):
     img = impro.imread(opt.media_path)
     img = runmodel.run_styletransfer(opt, netG, img)
     suffix = os.path.basename(opt.model_path).replace('.pth','').replace('style_','')
-    cv2.imwrite(os.path.join(opt.result_dir,os.path.splitext(os.path.basename(opt.media_path))[0]+'_'+suffix+'.jpg'),img)
+    impro.imwrite(os.path.join(opt.result_dir,os.path.splitext(os.path.basename(opt.media_path))[0]+'_'+suffix+'.jpg'),img)
 
 def styletransfer_video(opt,netG):
     path = opt.media_path
@@ -89,7 +89,7 @@ def cleanmosaic_img(opt,netG,netM):
         img_result = impro.replace_mosaic(img_origin,img_fake,x,y,size,opt.no_feather)
     else:
         print('Do not find mosaic')
-    cv2.imwrite(os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.jpg'),img_result)
+    impro.imwrite(os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.jpg'),img_result)
 
 def cleanmosaic_video_byframe(opt,netG,netM):
     path = opt.media_path

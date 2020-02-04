@@ -56,12 +56,12 @@ def main():
 
     util.clean_tempfiles(tmp_init = False)
         
-main()
-# if __name__ == '__main__':
-#     try:
-#         main()
-#     except Exception as e:
-#         print('Error:',e)
-#         input('Please press any key to exit.\n')
-#         util.clean_tempfiles(tmp_init = False)
-#         exit(0)
+# main()
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print('Error:',e)
+        input('Please press any key to exit.\n')
+        util.clean_tempfiles(tmp_init = False)
+        exit(0)

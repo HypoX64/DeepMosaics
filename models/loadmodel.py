@@ -39,7 +39,7 @@ def pix2pix(opt):
 
 def style(opt):
     if opt.edges:
-        netG = define_G(1, 3, 64, 'unet_256', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
+        netG = define_G(1, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
     else:
         netG = define_G(3, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=False, init_type='normal', gpu_ids=[])
 

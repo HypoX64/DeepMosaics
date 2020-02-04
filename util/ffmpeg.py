@@ -45,4 +45,4 @@ def continuous_screenshot(videopath,savedir,fps):
     fps:       save how many images per second
     '''
     videoname = os.path.splitext(os.path.basename(videopath))[0]
-    os.system('ffmpeg -i '+videopath+' -vf fps='+str(fps)+' '+savedir+'/'+videoname+'_%05d.jpg')
+    os.system('ffmpeg -i "'+videopath+'" -vf fps='+str(fps)+' '+savedir+'/'+videoname+'_%05d.jpg')

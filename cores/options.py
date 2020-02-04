@@ -17,9 +17,9 @@ class Options():
         self.parser.add_argument('--model_path', type=str, default='./pretrained_models/add_hands_128.pth',help='pretrained model path')
         self.parser.add_argument('--result_dir', type=str, default='./result',help='output media will be saved here')
         self.parser.add_argument('--tempimage_type', type=str, default='png',help='type of temp image, png | jpg, png is better but occupy more storage space')
-        self.parser.add_argument('--output_size', type=int, default=0,help='size of output file,if 0 -> origin')
         self.parser.add_argument('--netG', type=str, default='auto',
-            help='select model to use for netG(Clean mosaic and Transfer style) -> auto | unet_128 | unet_256| resnet_9blocks | HD | video')
+            help='select model to use for netG(Clean mosaic and Transfer style) -> auto | unet_128 | unet_256 | resnet_9blocks | HD | video')
+        self.parser.add_argument('--output_size', type=int, default=0,help='size of output file,if 0 -> origin')
         
         #AddMosaic
         self.parser.add_argument('--mosaic_mod', type=str, default='squa_avg',help='type of mosaic -> squa_avg | squa_random | squa_avg_circle_edge | rect_avg | random')
@@ -35,7 +35,8 @@ class Options():
         self.parser.add_argument('--ex_mult', type=str, default='auto',help='mosaic area expansion')
         
         #StyleTransfer
-        self.parser.add_argument('--edges', action='store_true', help='if true, make edges first')
+        self.parser.add_argument('--preprocess', type=str, default='resize', help='resize and cropping of images at load time [ resize | resize_scale_width | edges | gray] or resize,edges(use comma to split)')
+        self.parser.add_argument('--edges', action='store_true', help='if true, use edges to generate pictures,(input_nc = 1)')  
         self.parser.add_argument('--canny', type=int, default=150,help='threshold of canny')
         self.parser.add_argument('--only_edges', action='store_true', help='if true, output media will be edges')
 
@@ -65,6 +66,12 @@ class Options():
             else:
                 print('Please input running mode!')
 
+        if self.opt.output_size == 0 and self.opt.mode == 'style':
+            self.opt.output_size = 512
+
+        if 'edges' in model_name or 'edges' in self.opt.preprocess:
+            self.opt.edges = True
+
         if self.opt.netG == 'auto' and self.opt.mode =='clean':
             if 'unet_128' in model_name:
                 self.opt.netG = 'unet_128'
@@ -77,12 +84,9 @@ class Options():
             else:
                 print('Type of Generator error!')
 
-        if 'edges' in model_name:
-            self.opt.edges = True
-
         if self.opt.ex_mult == 'auto':
             if 'face' in model_name:
-                self.opt.ex_mult = 1.2
+                self.opt.ex_mult = 1.1
             else:
                 self.opt.ex_mult = 1.5
         else:
