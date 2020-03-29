@@ -25,7 +25,9 @@ def main():
 
     elif opt.mode == 'clean':
         netM = loadmodel.unet_clean(opt)
-        if opt.netG == 'video':
+        if opt.traditional:
+            netG = None
+        elif opt.netG == 'video':
             netG = loadmodel.video(opt)
         else:
             netG = loadmodel.pix2pix(opt)
@@ -35,7 +37,7 @@ def main():
             if util.is_img(file):
                 core.cleanmosaic_img(opt,netG,netM)
             elif util.is_video(file):
-                if opt.netG == 'video':            
+                if opt.netG == 'video' and not opt.traditional:            
                     core.cleanmosaic_video_fusion(opt,netG,netM)
                 else:
                     core.cleanmosaic_video_byframe(opt,netG,netM)
@@ -56,12 +58,12 @@ def main():
 
     util.clean_tempfiles(tmp_init = False)
         
-# main()
-if __name__ == '__main__':
-    try:
-        main()
-    except Exception as e:
-        print('Error:',e)
-        input('Please press any key to exit.\n')
-        util.clean_tempfiles(tmp_init = False)
-        exit(0)
+main()
+# if __name__ == '__main__':
+#     try:
+#         main()
+#     except Exception as e:
+#         print('Error:',e)
+#         input('Please press any key to exit.\n')
+#         util.clean_tempfiles(tmp_init = False)
+#         exit(0)

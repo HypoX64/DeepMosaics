@@ -10,15 +10,16 @@ class Options():
     def initialize(self):
 
         #base
-        self.parser.add_argument('--use_gpu',type=int,default=1, help='if 0 or -1, do not use gpu')
+        self.parser.add_argument('--use_gpu',type=int,default=0, help='if -1, do not use gpu')
         # self.parser.add_argument('--use_gpu', action='store_true', help='if input it, use gpu')
-        self.parser.add_argument('--media_path', type=str, default='./hands_test.mp4',help='your videos or images path')
+        self.parser.add_argument('--media_path', type=str, default='./imgs/ruoruo.jpg',help='your videos or images path')
         self.parser.add_argument('--mode', type=str, default='auto',help='auto | add | clean | style')
-        self.parser.add_argument('--model_path', type=str, default='./pretrained_models/add_hands_128.pth',help='pretrained model path')
+        self.parser.add_argument('--model_path', type=str, default='./pretrained_models/mosaic/add_face.pth',help='pretrained model path')
         self.parser.add_argument('--result_dir', type=str, default='./result',help='output media will be saved here')
         self.parser.add_argument('--tempimage_type', type=str, default='png',help='type of temp image, png | jpg, png is better but occupy more storage space')
         self.parser.add_argument('--netG', type=str, default='auto',
             help='select model to use for netG(Clean mosaic and Transfer style) -> auto | unet_128 | unet_256 | resnet_9blocks | HD | video')
+        self.parser.add_argument('--fps', type=int, default=0,help='read and output fps, if 0-> origin')
         self.parser.add_argument('--output_size', type=int, default=0,help='size of output file,if 0 -> origin')
         
         #AddMosaic
@@ -29,8 +30,11 @@ class Options():
         
         #CleanMosaic     
         self.parser.add_argument('--mosaic_position_model_path', type=str, default='auto',help='name of model use to find mosaic position')
+        self.parser.add_argument('--traditional', action='store_true', help='if true, use traditional image processing methods to clean mosaic')
+        self.parser.add_argument('--tr_blur', type=int, default=10, help='ksize of blur when using traditional method, it will affect final quality')
+        self.parser.add_argument('--tr_down', type=int, default=10, help='downsample when using traditional method,it will affect final quality')
         self.parser.add_argument('--no_feather', action='store_true', help='if true, no edge feather and color correction, but run faster')
-        self.parser.add_argument('--no_large_area', action='store_true', help='if true, do not find the largest mosaic area')
+        self.parser.add_argument('--all_mosaic_area', action='store_true', help='if true, find all mosaic area, else only find the largest area')
         self.parser.add_argument('--medfilt_num', type=int, default=11,help='medfilt window of mosaic movement in the video')
         self.parser.add_argument('--ex_mult', type=str, default='auto',help='mosaic area expansion')
         
@@ -50,17 +54,16 @@ class Options():
 
         model_name = os.path.basename(self.opt.model_path)
 
-        if torch.cuda.is_available() and self.opt.use_gpu > 0:
+        if torch.cuda.is_available() and self.opt.use_gpu > -1:
             self.opt.use_gpu = True
         else:
             self.opt.use_gpu = False
 
-
         if self.opt.mode == 'auto':
-            if 'add' in model_name:
-                self.opt.mode = 'add'
-            elif 'clean' in model_name:
+            if 'clean' in model_name or self.opt.traditional:
                 self.opt.mode = 'clean'
+            elif 'add' in model_name:
+                self.opt.mode = 'add'
             elif 'style' in model_name or 'edges' in model_name:
                 self.opt.mode = 'style'
             else:

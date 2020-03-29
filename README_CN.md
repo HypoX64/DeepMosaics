@@ -49,18 +49,18 @@
 git clone https://github.com/HypoX64/DeepMosaics
 cd DeepMosaics
 ```
-#### 下载测试视频以及预训练模型
-可以通过以下两种方法下载测试视频以及预训练模型,并将他们置于项目文件夹中.<br>
+#### 下载预训练模型
+可以通过以下两种方法下载预训练模型,并将他们置于'./pretrained_models'文件夹中.<br>
 [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ) <br>
 
 #### 简单的例子
-* 为视频添加马赛克,例子中认为手是需要打码的区域 ,可以通过切换预训练模型切换自动打码区域(输出结果将储存到 './result')
+* 为视频添加马赛克,例子中认为脸是需要打码的区域 ,可以通过切换预训练模型切换自动打码区域(输出结果将储存到 './result')
 ```bash
-python3 deepmosaic.py
+python3 deepmosaic.py --media_path ./imgs/ruoruo.jpg --model_path ./pretrained_models/mosaic/add_face.pth --use_gpu -1
 ```
 * 将视频中的马赛克移除,对于不同的打码物体需要使用对应的预训练模型进行马赛克消除(输出结果将储存到  './result')
 ```bash
-python3 deepmosaic.py --mode clean --model_path ./pretrained_models/clean_hands_unet_128.pth --media_path ./result/hands_test_AddMosaic.mp4
+python3 deepmosaic.py --media_path ./result/ruoruo_add.jpg --model_path ./pretrained_models/mosaic/clean_face_HD.pth --use_gpu -1
 ```
 #### 更多的参数
 如果想要测试其他的图片或视频,请参照以下文件输入参数.

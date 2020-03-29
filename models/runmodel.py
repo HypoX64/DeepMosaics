@@ -8,22 +8,10 @@ import torch
 import numpy as np
 
 def run_unet(img,net,size = 224,use_gpu = True):
-    img=impro.image2folat(img,3)
-    img=img.reshape(1,3,size,size)
-    img = torch.from_numpy(img)
-    if use_gpu:
-        img=img.cuda()
-    pred = net(img)
-    pred = (pred.cpu().detach().numpy()*255)
-    pred = pred.reshape(size,size).astype('uint8')
-    return pred
-
-def run_unet_rectim(img,net,size = 224,use_gpu = True):
     img = impro.resize(img,size)
-    img1,img2 = impro.spiltimage(img,size)
-    mask1 = run_unet(img1,net,size,use_gpu = use_gpu)
-    mask2 = run_unet(img2,net,size,use_gpu = use_gpu)
-    mask = impro.mergeimage(mask1,mask2,img,size)
+    img = data.im2tensor(img,use_gpu = use_gpu,  bgr2rgb = False,use_transform = False , is0_1 = True)
+    mask = net(img)
+    mask = data.tensor2im(mask, gray=True,rgb2bgr = False, is0_1 = True)
     return mask
 
 def run_pix2pix(img,net,opt):
@@ -35,6 +23,13 @@ def run_pix2pix(img,net,opt):
     img_fake = net(img)
     img_fake = data.tensor2im(img_fake)
     return img_fake
+
+def traditional_cleaner(img,opt):
+    h,w = img.shape[:2]
+    img = cv2.blur(img, (opt.tr_blur,opt.tr_blur))
+    img = img[::opt.tr_down,::opt.tr_down,:]
+    img = cv2.resize(img, (w,h),interpolation=cv2.INTER_LANCZOS4)
+    return img
 
 def run_styletransfer(opt, net, img):
 
@@ -60,23 +55,22 @@ def run_styletransfer(opt, net, img):
             return img
         img = data.im2tensor(img,use_gpu=opt.use_gpu,gray=True,use_transform = False,is0_1 = False)
     else:    
-        img = data.im2tensor(img,use_gpu=opt.use_gpu)
+        img = data.im2tensor(img,use_gpu=opt.use_gpu,gray=False,use_transform = True)
     img = net(img)
     img = data.tensor2im(img)
     return img
 
 def get_ROI_position(img,net,opt):
-    mask = run_unet_rectim(img,net,use_gpu = opt.use_gpu)
+    mask = run_unet(img,net,size=224,use_gpu = opt.use_gpu)
     mask = impro.mask_threshold(mask,opt.mask_extend,opt.mask_threshold)
     x,y,halfsize,area = impro.boundingSquare(mask, 1)
     return mask,x,y,area
 
 def get_mosaic_position(img_origin,net_mosaic_pos,opt,threshold = 128 ):
-    mask = run_unet_rectim(img_origin,net_mosaic_pos,use_gpu = opt.use_gpu)
-    #mask_1 = mask.copy()
+    mask = run_unet(img_origin,net_mosaic_pos,size=224,use_gpu = opt.use_gpu)
     mask = impro.mask_threshold(mask,30,threshold)
-    if not opt.no_large_area:
-        mask = impro.find_best_ROI(mask)
+    if not opt.all_mosaic_area:
+        mask = impro.find_mostlikely_ROI(mask)
     x,y,size,area = impro.boundingSquare(mask,Ex_mul=opt.ex_mult)
     rat = min(img_origin.shape[:2])/224.0
     x,y,size = int(rat*x),int(rat*y),int(rat*size)

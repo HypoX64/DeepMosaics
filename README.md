@@ -48,17 +48,17 @@ git clone https://github.com/HypoX64/DeepMosaics
 cd DeepMosaics
 ```
 #### Get pre_trained models and test video
-You can download pre_trained models and test video and replace the files in the project.<br>
+You can download pre_trained models and put them into './pretrained_models'.<br>
 [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ)
 
 #### Simple example
 * Add Mosaic (output video will save in './result')
 ```bash
-python3 deepmosaic.py
+python3 deepmosaic.py --media_path ./imgs/ruoruo.jpg --model_path ./pretrained_models/mosaic/add_face.pth --use_gpu -1
 ```
 * Clean Mosaic (output video will save in './result')
 ```bash
-python3 deepmosaic.py --mode clean --model_path ./pretrained_models/clean_hands_unet_128.pth --media_path ./result/hands_test_AddMosaic.mp4
+python3 deepmosaic.py --media_path ./result/ruoruo_add.jpg --model_path ./pretrained_models/mosaic/clean_face_HD.pth --use_gpu -1
 ```
 #### More parameters
 If you want to test other image or video, please refer to this file.

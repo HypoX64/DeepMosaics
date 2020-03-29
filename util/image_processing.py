@@ -19,7 +19,7 @@ def imread(file_path,mod = 'normal'):
         elif mod == 'all':
             img = cv2.imread(file_path,-1)
     
-    #For chinese path, use cv2.imdecode in windows.
+    #In windows, for chinese path, use cv2.imdecode insteaded.
     #It will loss EXIF, I can't fix it
     else: 
         if mod == 'gray':
@@ -133,7 +133,7 @@ def mergeimage(img1,img2,orgin_image,size = 128):
     result_img = cv2.add(new_img1,new_img2)
     return result_img
 
-def find_best_ROI(mask):
+def find_mostlikely_ROI(mask):
     contours,hierarchy=cv2.findContours(mask, cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
     if len(contours)>0:
         areas = []
@@ -182,9 +182,9 @@ def boundingSquare(mask,Ex_mul):
     center = ((point0+point1)/2).astype('int')
     return center[0],center[1],halfsize,area
 
-def mask_threshold(mask,blur,threshold):
+def mask_threshold(mask,ex_mun,threshold):
     mask = cv2.threshold(mask,threshold,255,cv2.THRESH_BINARY)[1]
-    mask = cv2.blur(mask, (blur, blur))
+    mask = cv2.blur(mask, (ex_mun, ex_mun))
     mask = cv2.threshold(mask,threshold/5,255,cv2.THRESH_BINARY)[1]
     return mask
 
@@ -200,7 +200,7 @@ def mask_area(mask):
 
 
 def replace_mosaic(img_origin,img_fake,x,y,size,no_father):
-    img_fake = resize(img_fake,size*2)
+    img_fake = resize(img_fake,size*2,interpolation=cv2.INTER_LANCZOS4)
     if no_father:
         img_origin[y-size:y+size,x-size:x+size]=img_fake
         img_result = img_origin

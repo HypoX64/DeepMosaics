@@ -40,10 +40,12 @@ def is_videos(paths):
             tmp.append(path)
     return tmp  
 
-def  writelog(path,log):
+def  writelog(path,log,isprint=False):
     f = open(path,'a+')
     f.write(log+'\n')
     f.close()
+    if isprint:
+        print(log)
 
 def makedirs(path):
     if os.path.isdir(path):
@@ -87,3 +89,11 @@ def copyfile(src,dst):
         shutil.copyfile(src, dst)
     except Exception as e:
         print(e)
+
+def opt2str(opt):
+    message = ''
+    message += '---------------------- Options --------------------\n'
+    for k, v in sorted(vars(opt).items()):
+        message += '{:>25}: {:<35}\n'.format(str(k), str(v))
+    message += '----------------- End -------------------'
+    return message

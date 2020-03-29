@@ -14,17 +14,21 @@ transform = transforms.Compose([
 def tensor2im(image_tensor, imtype=np.uint8, gray=False, rgb2bgr = True ,is0_1 = False):
     image_tensor =image_tensor.data
     image_numpy = image_tensor[0].cpu().float().numpy()
-    # if gray:
-    #     image_numpy = (image_numpy+1.0)/2.0 * 255.0
-    # else:
-    if image_numpy.shape[0] == 1:
-        image_numpy = np.tile(image_numpy, (3, 1, 1))
-
-    image_numpy = image_numpy.transpose((1, 2, 0))
-
+    
     if not is0_1:
         image_numpy = (image_numpy + 1)/2.0
-    image_numpy = np.clip(image_numpy * 255.0,0,255)  
+    image_numpy = np.clip(image_numpy * 255.0,0,255) 
+
+    # gray -> output 1ch
+    if gray:
+        h, w = image_numpy.shape[1:]
+        image_numpy = image_numpy.reshape(h,w)
+        return image_numpy.astype(imtype)
+
+    # output 3ch
+    if image_numpy.shape[0] == 1:
+        image_numpy = np.tile(image_numpy, (3, 1, 1))
+    image_numpy = image_numpy.transpose((1, 2, 0))  
     if rgb2bgr and not gray:
         image_numpy = image_numpy[...,::-1]-np.zeros_like(image_numpy)
     return image_numpy.astype(imtype)

@@ -153,6 +153,7 @@ result/
 /python_test.py
 /pretrained_models_old
 /deepmosaic_window
+/sftp-config.json
 #./make_datasets
 /make_datasets/video
 /make_datasets/tmp
@@ -160,6 +161,9 @@ result/
 /make_datasets/datasets
 /make_datasets/dataset
 /make_datasets/datasets_img
+/make_datasets/videos
+#./models
+/models/videoHD_model.py
 #./train
 /train/clean/dataset
 #mediafile
@@ -178,3 +182,4 @@ result/
 *.JPG
 *.MP4
 *.JPEG
+*.exe
