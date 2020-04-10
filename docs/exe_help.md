@@ -17,6 +17,7 @@ Attentions:<br>
 
 ### Introduction to pre-trained models
 * Mosaic
+
 |               Name               |                         Description                         |
 | :------------------------------: | :---------------------------------------------------------: |
 |           add_face.pth           |          Add mosaic to all faces in images/videos.          |
@@ -27,6 +28,7 @@ Attentions:<br>
 |    clean_youknow_video_HD.pth    | Clean mosaic to all (FBI Warning) in videos.<br>(RAM > 8GB) |
 
 *  Style Transfer
+
 |          Name           |                        Description                        |
 | :---------------------: | :-------------------------------------------------------: |
 | style_apple2orange.pth  | Convert apples to oranges. |
@@ -55,6 +57,7 @@ Attentions:<br>
 ### Introduction to options
 If you need more effects,  use '--option your-parameters' to enter what you need.
 * Base
+
 |    Option    |                Description                 |                 Default                 |
 | :----------: | :----------------------------------------: | :-------------------------------------: |
 |  --use_gpu   |           if -1, do not use gpu            |                    0                    |
@@ -65,6 +68,7 @@ If you need more effects,  use '--option your-parameters' to enter what you need
 |    --fps     |     read and output fps, if 0-> origin     |                    0                    |
 
 * AddMosaic
+
 |      Option      |                         Description                          | Default  |
 | :--------------: | :----------------------------------------------------------: | :------: |
 |   --mosaic_mod   | type of mosaic -> squa_avg/ squa_random/ squa_avg_circle_edge/ rect_avg/random | squa_avg |
@@ -73,6 +77,7 @@ If you need more effects,  use '--option your-parameters' to enter what you need
 | --mask_threshold |         threshold of recognize mosaic position 0~255         |    64    |
 
 * CleanMosaic
+
 |    Option     |                         Description                          | Default |
 | :-----------: | :----------------------------------------------------------: | :-----: |
 | --traditional | if specified, use traditional image processing methods to clean mosaic |         |
@@ -81,6 +86,7 @@ If you need more effects,  use '--option your-parameters' to enter what you need
 | --medfilt_num |        medfilt window of mosaic movement in the video        |   11    |
 
 * Style Transfer
+
 |    Option     |             Description              | Default |
 | :-----------: | :----------------------------------: | :-----: |
 | --output_size | size of output media, if 0 -> origin |   512   |

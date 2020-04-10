@@ -3,6 +3,7 @@ The current pre-trained models are divided into two categories(Add/Clean mosaic 
 Download  pre-trained model via [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ) <br>
 
 ### Mosaic
+
 |               Name               |                         Description                         |
 | :------------------------------: | :---------------------------------------------------------: |
 |           add_face.pth           |          Add mosaic to all faces in images/videos.          |
@@ -13,6 +14,7 @@ Download  pre-trained model via [[Google Drive]](https://drive.google.com/open?i
 |    clean_youknow_video_HD.pth    | Clean mosaic to all (FBI Warning) in videos.<br>(RAM > 8GB) |
 
 ### Style Transfer
+
 |          Name           |                        Description                        |
 | :---------------------: | :-------------------------------------------------------: |
 | style_apple2orange.pth  | Convert apples to oranges. |
