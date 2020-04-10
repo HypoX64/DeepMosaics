@@ -3,6 +3,7 @@ from .pix2pix_model import define_G
 from .pix2pixHD_model import define_G as define_G_HD
 from .unet_model import UNet
 from .video_model import MosaicNet
+from .videoHD_model import MosaicNet as MosaicNet_HD
 
 def show_paramsnumber(net,netname='net'):
     parameters = sum(param.numel() for param in net.parameters())
@@ -63,7 +64,10 @@ def style(opt):
     return netG
 
 def video(opt):
-    netG = MosaicNet(3*25+1, 3,norm = 'batch')
+    if 'HD' in opt.model_path:
+        netG = MosaicNet_HD(3*25+1, 3, norm='instance')
+    else:
+        netG = MosaicNet(3*25+1, 3,norm = 'batch')
     show_paramsnumber(netG,'netG')
     netG.load_state_dict(torch.load(opt.model_path))
     netG.eval()

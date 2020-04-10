@@ -1,4 +1,6 @@
 import os
+import sys
+import traceback
 from cores import Options,core
 from util import util
 from models import loadmodel
@@ -58,12 +60,18 @@ def main():
 
     util.clean_tempfiles(tmp_init = False)
         
-main()
-# if __name__ == '__main__':
-#     try:
-#         main()
-#     except Exception as e:
-#         print('Error:',e)
-#         input('Please press any key to exit.\n')
-#         util.clean_tempfiles(tmp_init = False)
-#         exit(0)
+# main()
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as ex:
+        print('--------------------ERROR--------------------')
+        ex_type, ex_val, ex_stack = sys.exc_info()
+        print('Error Type:',ex_type)
+        print(ex_val)
+        for stack in traceback.extract_tb(ex_stack):
+            print(stack)
+        input('Please press any key to exit.\n')
+        util.clean_tempfiles(tmp_init = False)
+        exit(0)
+

@@ -138,7 +138,7 @@ mask_old/
 origin_image/
 datasets/
 dataset/
-test*/
+test*
 video_tmp/
 result/
 #./
@@ -163,14 +163,12 @@ result/
 /make_datasets/datasets_img
 /make_datasets/videos
 #./models
-/models/videoHD_model.py
+#/models/videoHD_model.py
 #./train
 /train/clean/dataset
 #mediafile
 *iter
 *.pth
-*.png
-*.jpg
 *.jpeg
 *.bmp
 *.mp4

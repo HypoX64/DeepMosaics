@@ -150,7 +150,10 @@ def cleanmosaic_video_byframe(opt,netG,netM):
 def cleanmosaic_video_fusion(opt,netG,netM):
     path = opt.media_path
     N = 25
-    INPUT_SIZE = 128
+    if 'HD' in os.path.basename(opt.model_path):
+        INPUT_SIZE = 256
+    else:
+        INPUT_SIZE = 128
     fps,imagepaths,height,width = video_init(opt,path)
     positions = get_mosaic_positions(opt,netM,imagepaths,savemask=True)
     

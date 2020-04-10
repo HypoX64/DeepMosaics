@@ -16,12 +16,17 @@ from models import pix2pix_model,pix2pixHD_model,video_model,unet_model,loadmode
 from matplotlib import pyplot as plt
 import torch.backends.cudnn as cudnn
 
+'''
+--------------------------Get options--------------------------
+'''
+
 opt = Options()
 opt.parser.add_argument('--N',type=int,default=25, help='')
 opt.parser.add_argument('--lr',type=float,default=0.0002, help='')
 opt.parser.add_argument('--beta1',type=float,default=0.5, help='')
-opt.parser.add_argument('--gan', action='store_true', help='if input it, use gan')
-opt.parser.add_argument('--l2', action='store_true', help='if input it, use L2 loss')
+opt.parser.add_argument('--gan', action='store_true', help='if specified, use gan')
+opt.parser.add_argument('--l2', action='store_true', help='if specified, use L2 loss')
+opt.parser.add_argument('--hd', action='store_true', help='if specified, use HD model')
 opt.parser.add_argument('--lambda_L1',type=float,default=100, help='')
 opt.parser.add_argument('--lambda_gan',type=float,default=1, help='')
 opt.parser.add_argument('--finesize',type=int,default=256, help='')
@@ -36,6 +41,10 @@ opt.parser.add_argument('--startiter',type=int,default=0, help='')
 opt.parser.add_argument('--continuetrain', action='store_true', help='')
 opt.parser.add_argument('--savename',type=str,default='MosaicNet', help='')
 
+
+'''
+--------------------------Init--------------------------
+'''
 opt = opt.getparse()
 dir_checkpoint = os.path.join('checkpoints/',opt.savename)
 util.makedirs(dir_checkpoint)
@@ -54,17 +63,18 @@ print('check dataset...')
 for video in videos:
     video_images = os.listdir('./dataset/'+video+'/ori')
     lengths.append(len(video_images))
-#unet_128
-#resnet_9blocks
-#netG = pix2pix_model.define_G(3*N+1, 3, 128, 'resnet_6blocks', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
-netG = videoHD_model.MosaicNet(3*N+1, 3, norm=opt.norm)
+if opt.hd:
+    netG = videoHD_model.MosaicNet(3*N+1, 3, norm=opt.norm)
+else:
+    netG = video_model.MosaicNet(3*N+1, 3, norm=opt.norm)
 loadmodel.show_paramsnumber(netG,'netG')
-# netG = unet_model.UNet(3*N+1, 3)
+
 if opt.gan:
-    netD = pix2pixHD_model.define_D(6, 64, 3, norm=opt.norm, use_sigmoid=False, num_D=2)
-    #netD = pix2pix_model.define_D(3*2+1, 64, 'pixel', norm='instance')
-    #netD = pix2pix_model.define_D(3*2, 64, 'basic', norm='instance')
-    #netD = pix2pix_model.define_D(3*2+1, 64, 'n_layers', n_layers_D=5, norm='instance')
+    if opt.hd:
+        netD = pix2pixHD_model.define_D(6, 64, 3, norm = opt.norm, use_sigmoid=False, num_D=2)    
+    else:
+        netD = pix2pix_model.define_D(3*2, 64, 'basic', norm = opt.norm)
+    netD.train()
 
 if opt.continuetrain:
     if not os.path.isfile(os.path.join(dir_checkpoint,'last_G.pth')):
@@ -82,10 +92,11 @@ optimizer_G = torch.optim.Adam(netG.parameters(), lr=opt.lr,betas=(opt.beta1, 0.
 criterion_L1 = nn.L1Loss()
 criterion_L2 = nn.MSELoss()
 if opt.gan:
-    optimizer_D = torch.optim.Adam(netG.parameters(), lr=opt.lr,betas=(opt.beta1, 0.999))
-    # criterionGAN = pix2pix_model.GANLoss(gan_mode='lsgan').cuda()
-    criterionGAN = pix2pixHD_model.GANLoss(tensor=torch.cuda.FloatTensor)
-    netD.train()
+    optimizer_D = torch.optim.Adam(netD.parameters(), lr=opt.lr,betas=(opt.beta1, 0.999))
+    if opt.hd:
+        criterionGAN = pix2pixHD_model.GANLoss(tensor=torch.cuda.FloatTensor)
+    else:
+        criterionGAN = pix2pix_model.GANLoss(gan_mode='lsgan').cuda()   
 
 if opt.use_gpu:
     netG.cuda()
@@ -94,6 +105,9 @@ if opt.use_gpu:
         criterionGAN.cuda()
     cudnn.benchmark = True
 
+'''
+--------------------------preload data--------------------------
+'''
 def loaddata():
     video_index = random.randint(0,len(videos)-1)
     video = videos[video_index]
@@ -136,19 +150,19 @@ def preload():
             # time.sleep(0.1)
         except Exception as e:
             print("error:",e)
-
 import threading
 t = threading.Thread(target=preload,args=())  #t为新创建的线程
 t.daemon = True
 t.start()
-
 time_start=time.time()
 while load_cnt < opt.perload_num:
     time.sleep(0.1)
 time_end=time.time()
 print('load speed:',round((time_end-time_start)/opt.perload_num,3),'s/it')
 
-
+'''
+--------------------------train--------------------------
+'''
 util.copyfile('./train.py', os.path.join(dir_checkpoint,'train.py'))
 util.copyfile('../../models/videoHD_model.py', os.path.join(dir_checkpoint,'model.py'))
 netG.train()
@@ -222,7 +236,7 @@ for iter in range(opt.startiter+1,opt.maxiter):
              target, pred,os.path.join(dir_checkpoint,'result_train.jpg'))
         except Exception as e:
             print(e)
-     
+    # plot
     if (iter+1)%1000 == 0:
         time_end = time.time()
         if opt.gan:
@@ -255,7 +269,7 @@ for iter in range(opt.startiter+1,opt.maxiter):
         loss_sum = [0.,0.,0.,0.]
         time_start=time.time()
 
-
+    # save network
     if (iter+1)%opt.savefreq == 0:
         if iter+1 != opt.savefreq:
             os.rename(os.path.join(dir_checkpoint,'last_G.pth'),os.path.join(dir_checkpoint,str(iter+1-opt.savefreq)+'G.pth'))
@@ -274,31 +288,32 @@ for iter in range(opt.startiter+1,opt.maxiter):
         print('network saved.')
 
         #test
-        netG.eval()
-        
-        test_names = os.listdir('./test')
-        test_names.sort()
-        result = np.zeros((opt.finesize*2,opt.finesize*len(test_names),3), dtype='uint8')
+        if os.path.isdir('./test'):  
+            netG.eval()
+            
+            test_names = os.listdir('./test')
+            test_names.sort()
+            result = np.zeros((opt.finesize*2,opt.finesize*len(test_names),3), dtype='uint8')
 
-        for cnt,test_name in enumerate(test_names,0):
-            img_names = os.listdir(os.path.join('./test',test_name,'image'))
-            img_names.sort()
-            inputdata = np.zeros((opt.finesize,opt.finesize,3*N+1), dtype='uint8')
-            for i in range(0,N):
-                img = impro.imread(os.path.join('./test',test_name,'image',img_names[i]))
-                img = impro.resize(img,opt.finesize)
-                inputdata[:,:,i*3:(i+1)*3] = img
+            for cnt,test_name in enumerate(test_names,0):
+                img_names = os.listdir(os.path.join('./test',test_name,'image'))
+                img_names.sort()
+                inputdata = np.zeros((opt.finesize,opt.finesize,3*N+1), dtype='uint8')
+                for i in range(0,N):
+                    img = impro.imread(os.path.join('./test',test_name,'image',img_names[i]))
+                    img = impro.resize(img,opt.finesize)
+                    inputdata[:,:,i*3:(i+1)*3] = img
 
-            mask = impro.imread(os.path.join('./test',test_name,'mask.png'),'gray')
-            mask = impro.resize(mask,opt.finesize)
-            mask = impro.mask_threshold(mask,15,128)
-            inputdata[:,:,-1] = mask
-            result[0:opt.finesize,opt.finesize*cnt:opt.finesize*(cnt+1),:] = inputdata[:,:,int((N-1)/2)*3:(int((N-1)/2)+1)*3]
-            inputdata = data.im2tensor(inputdata,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False,is0_1 = False)
-            pred = netG(inputdata)
- 
-            pred = data.tensor2im(pred,rgb2bgr = False, is0_1 = False)
-            result[opt.finesize:opt.finesize*2,opt.finesize*cnt:opt.finesize*(cnt+1),:] = pred
+                mask = impro.imread(os.path.join('./test',test_name,'mask.png'),'gray')
+                mask = impro.resize(mask,opt.finesize)
+                mask = impro.mask_threshold(mask,15,128)
+                inputdata[:,:,-1] = mask
+                result[0:opt.finesize,opt.finesize*cnt:opt.finesize*(cnt+1),:] = inputdata[:,:,int((N-1)/2)*3:(int((N-1)/2)+1)*3]
+                inputdata = data.im2tensor(inputdata,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False,is0_1 = False)
+                pred = netG(inputdata)
+     
+                pred = data.tensor2im(pred,rgb2bgr = False, is0_1 = False)
+                result[opt.finesize:opt.finesize*2,opt.finesize*cnt:opt.finesize*(cnt+1),:] = pred
 
-        cv2.imwrite(os.path.join(dir_checkpoint,str(iter+1)+'_test.jpg'), result)
-        netG.train()
+            cv2.imwrite(os.path.join(dir_checkpoint,str(iter+1)+'_test.jpg'), result)
+            netG.train()
