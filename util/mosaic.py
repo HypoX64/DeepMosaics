@@ -10,10 +10,19 @@ def addmosaic(img,mask,opt):
     elif opt.mosaic_size == 0:
         img = addmosaic_autosize(img, mask, opt.mosaic_mod)
     else:
-        img = addmosaic_normal(img,mask,opt.mosaic_size,opt.output_size,model = opt.mosaic_mod)
+        img = addmosaic_base(img,mask,opt.mosaic_size,opt.output_size,model = opt.mosaic_mod)
     return img
 
-def addmosaic_normal(img,mask,n,out_size = 0,model = 'squa_avg',rect_rat = 1.6):
+def addmosaic_base(img,mask,n,out_size = 0,model = 'squa_avg',rect_rat = 1.6,father=0):
+    '''
+    img: input image
+    mask: input mask
+    n: mosaic size
+    out_size: output size  0->original
+    model : squa_avg squa_mid squa_random squa_avg_circle_edge rect_avg
+    rect_rat: if model==rect_avg , mosaic w/h=rect_rat
+    father : father size, -1->no 0->auto
+    '''
     n = int(n)
     if out_size:
         img = resize(img,out_size)      
@@ -44,9 +53,9 @@ def addmosaic_normal(img,mask,n,out_size = 0,model = 'squa_avg',rect_rat = 1.6):
             for j in range(int(w/n)):
                 img_mosaic[i*n:(i+1)*n,j*n:(j+1)*n,:]=img[i*n:(i+1)*n,j*n:(j+1)*n,:].mean(0).mean(0)
         mask = cv2.threshold(mask,127,255,cv2.THRESH_BINARY)[1]
-        mask = ch_one2three(mask)
-        mask_inv = cv2.bitwise_not(mask)
-        imgroi1 = cv2.bitwise_and(mask,img_mosaic)
+        _mask = ch_one2three(mask)
+        mask_inv = cv2.bitwise_not(_mask)
+        imgroi1 = cv2.bitwise_and(_mask,img_mosaic)
         imgroi2 = cv2.bitwise_and(mask_inv,img)
         img_mosaic = cv2.add(imgroi1,imgroi2)
 
@@ -58,12 +67,21 @@ def addmosaic_normal(img,mask,n,out_size = 0,model = 'squa_avg',rect_rat = 1.6):
                 if mask[int(i*n_h+n_h/2),int(j*n_w+n_w/2)] == 255:
                     img_mosaic[i*n_h:(i+1)*n_h,j*n_w:(j+1)*n_w,:]=img[i*n_h:(i+1)*n_h,j*n_w:(j+1)*n_w,:].mean(0).mean(0)
     
+    if father != -1:
+        if father==0:
+            mask = (cv2.blur(mask, (n, n)))
+        else:
+            mask = (cv2.blur(mask, (father, father)))
+        mask = ch_one2three(mask)/255.0
+        img_mosaic = (img*(1-mask)+img_mosaic*mask).astype('uint8')
+    
     return img_mosaic
 
 def get_autosize(img,mask,area_type = 'normal'):
     h,w = img.shape[:2]
-    mask = cv2.resize(mask,(w,h))
-    alpha = np.min((w,h))/512
+    size = np.min([h,w])
+    mask = resize(mask,size)
+    alpha = size/512
     try:
         if area_type == 'normal':
             area = mask_area(mask)
@@ -85,66 +103,32 @@ def get_autosize(img,mask,area_type = 'normal'):
         pass
     return size
 
+def get_random_parameter(img,mask):
+    # mosaic size
+    p = np.array([0.5,0.5])
+    mod = np.random.choice(['normal','bounding'], p = p.ravel())
+    mosaic_size = get_autosize(img,mask,area_type = mod)
+    mosaic_size = int(mosaic_size*random.uniform(0.9,2.1))
+
+    # mosaic mod
+    p = np.array([0.25, 0.25, 0.1, 0.4])
+    mod = np.random.choice(['squa_mid','squa_avg','squa_avg_circle_edge','rect_avg'], p = p.ravel())
+
+    # rect_rat for rect_avg
+    rect_rat = random.uniform(1.1,1.6)
+    
+    # father size
+    father = int(mosaic_size*random.uniform(0,1.5))
+
+    return mosaic_size,mod,rect_rat,father
+
+
 def addmosaic_autosize(img,mask,model,area_type = 'normal'):
-    h,w = img.shape[:2]
-    mask = cv2.resize(mask,(w,h))
-    alpha = np.min((w,h))/512
-    try:
-        if area_type == 'normal':
-            area = mask_area(mask)
-        elif area_type == 'bounding':
-            w,h = cv2.boundingRect(mask)[2:]
-            area = w*h
-    except:
-        area = 0
-    area = area/(alpha*alpha)
-    if area>50000:
-        img_mosaic = addmosaic_normal(img,mask,alpha*((area-50000)/50000+12),model = model)
-    elif 20000<area<=50000:
-        img_mosaic = addmosaic_normal(img,mask,alpha*((area-20000)/30000+8),model = model)
-    elif 5000<area<=20000:
-        img_mosaic = addmosaic_normal(img,mask,alpha*((area-5000)/20000+7),model = model)
-    elif 0<=area<=5000:
-        img_mosaic = addmosaic_normal(img,mask,alpha*((area-0)/5000+6),model = model)
-    else:
-        pass
+    mosaic_size = get_autosize(img,mask,area_type = 'normal')
+    img_mosaic = addmosaic_base(img,mask,mosaic_size,model = model)
     return img_mosaic
 
-def addmosaic_random(img,mask,area_type = 'normal'):
-    # img = resize(img,512)
-    h,w = img.shape[:2]
-    mask = cv2.resize(mask,(w,h))
-    alpha = np.min((w,h))/512
-    #area_avg=5925*4
-    try:
-        if area_type == 'normal':
-            area = mask_area(mask)
-        elif area_type == 'bounding':
-            w,h = cv2.boundingRect(mask)[2:]
-            area = w*h
-    except:
-        area = 0
-    area = area/(alpha*alpha)
-    if area>50000:
-        img_mosaic = random_mod(img,mask,alpha*random.uniform(8,30)) #16,30
-    elif 20000<area<=50000:
-        img_mosaic = random_mod(img,mask,alpha*random.uniform(8,20)) #12,20
-    elif 5000<area<=20000:
-        img_mosaic = random_mod(img,mask,alpha*random.uniform(8,15))
-    elif 0<=area<=5000:
-        img_mosaic = random_mod(img,mask,alpha*random.uniform(4,10))
-    else:
-        pass
+def addmosaic_random(img,mask):
+    mosaic_size,mod,rect_rat,father = get_random_parameter(img,mask)
+    img_mosaic = addmosaic_base(img,mask,mosaic_size,model = mod,rect_rat=rect_rat,father=father)
     return img_mosaic
-
-def random_mod(img,mask,n):
-    ran=random.random()
-    if ran < 0.3:
-        img = addmosaic_normal(img,mask,n,model = 'squa_mid')
-    if 0.3 <= ran < 0.5:
-        img = addmosaic_normal(img,mask,n,model = 'squa_avg')
-    elif 0.5 <= ran <0.6:
-        img = addmosaic_normal(img,mask,n,model = 'squa_avg_circle_edge')
-    else:
-        img = addmosaic_normal(img,mask,n,model = 'rect_avg')
-    return img

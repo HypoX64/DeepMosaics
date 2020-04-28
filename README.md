@@ -6,25 +6,19 @@ This porject based on "semantic segmentation" and "Image-to-Image Translation".<
 * [中文版README](./README_CN.md)<br>
 
 ### More example
-
 origin | auto add mosaic |  auto clean mosaic  
 :-:|:-:|:-:
 ![image](./imgs/example/lena.jpg) | ![image](./imgs/example/lena_add.jpg) | ![image](./imgs/example/lena_clean.jpg) 
 ![image](./imgs/example/youknow.png)  | ![image](./imgs/example/youknow_add.png) | ![image](./imgs/example/youknow_clean.png) 
-
 * Compared with [DeepCreamPy](https://github.com/deeppomf/DeepCreamPy)
-
 mosaic image | DeepCreamPy | ours  
 :-:|:-:|:-:
 ![image](./imgs/example/face_a_mosaic.jpg) | ![image](./imgs/example/a_dcp.png) | ![image](./imgs/example/face_a_clean.jpg) 
 ![image](./imgs/example/face_b_mosaic.jpg) | ![image](./imgs/example/b_dcp.png) | ![image](./imgs/example/face_b_clean.jpg) 
-
 * Style Transfer
-
 origin | to Van Gogh | to winter
 :-:|:-:|:-:
 ![image](./imgs/example/SZU.jpg) | ![image](./imgs/example/SZU_vangogh.jpg) | ![image](./imgs/example/SZU_summer2winter.jpg) 
-
 An interesting example:[Ricardo Milos to cat](https://www.bilibili.com/video/BV1Q7411W7n6)
 
 ## Run DeepMosaics
@@ -33,6 +27,7 @@ You can either run DeepMosaics via pre-built binary package or from source.<br>
 ### Pre-built binary package
 For windows, we bulid a GUI version for easy test.<br>
 Download this version and pre-trained model via [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ) <br>
+
 * [[How to use]](./docs/exe_help.md)<br>
 
 ![image](./imgs/GUI.png)<br>
@@ -64,11 +59,11 @@ You can download pre_trained models and put them into './pretrained_models'.<br>
 [[Introduction to pre-trained models]](./docs/pre-trained_models_introduction.md)<br>
 
 #### Simple example
-* Add Mosaic (output video will save in './result')<br>
+* Add Mosaic (output media will save in './result')<br>
 ```bash
 python3 deepmosaic.py --media_path ./imgs/ruoruo.jpg --model_path ./pretrained_models/mosaic/add_face.pth --use_gpu -1
 ```
-* Clean Mosaic (output video will save in './result')<br>
+* Clean Mosaic (output media will save in './result')<br>
 ```bash
 python3 deepmosaic.py --media_path ./result/ruoruo_add.jpg --model_path ./pretrained_models/mosaic/clean_face_HD.pth --use_gpu -1
 ```
@@ -76,5 +71,9 @@ python3 deepmosaic.py --media_path ./result/ruoruo_add.jpg --model_path ./pretra
 If you want to test other image or video, please refer to this file.<br>
 [[options_introduction.md]](./docs/options_introduction.md) <br>
 
+## Training with your own dataset
+If you want to train with your own dataset, please refer to [training_with_your_own_dataset.md](./docs/training_with_your_own_dataset.md)
+
 ## Acknowledgments
-This code borrows heavily from [[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet)[[pix2pixHD]](https://github.com/NVIDIA/pix2pixHD).
+This code borrows heavily from [[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet) [[pix2pixHD]](https://github.com/NVIDIA/pix2pixHD) [[BiSeNet]](https://github.com/ooooverflow/BiSeNet).
+

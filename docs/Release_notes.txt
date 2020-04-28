@@ -1,0 +1,23 @@
+DeepMosaics V0.3.0
+Core program building with windows10_1703_x86_64 
+ + python 3.68  
+ + pyinstaller 3.5
+GUI building with C#
+For more detail, please view on github: https://github.com/HypoX64/DeepMosaics
+
+Releases History
+ V0.3.0
+   1. Support BiSeNet(Better recognition of mosaics).
+   2. New videoHD model.
+   3. Better feathering method.
+ V0.2.0
+   1. Add video model.
+   2. Now you can input chinese path
+   3. Support style transfer
+   4. Support fps limit
+ V0.1.2
+   1. Support pix2pixHD model
+ V0.1.1
+   1. Check path, can't input illegal path
+ V0.1.0
+   1. Initial release.

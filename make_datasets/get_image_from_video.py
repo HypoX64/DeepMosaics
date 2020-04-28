@@ -1,19 +1,17 @@
 import os
-import numpy as np
-import cv2
-import random
-import csv
-
 import sys
 sys.path.append("..")
+from cores import Options
 from util import util,ffmpeg
-from util import image_processing as impro
 
-files = util.Traversal('./videos')
+opt = Options()
+opt.parser.add_argument('--datadir',type=str,default='', help='your video dir')
+opt.parser.add_argument('--savedir',type=str,default='../datasets/video2image', help='')
+opt = opt.getparse()
+
+files = util.Traversal(opt.datadir)
 videos = util.is_videos(files)
-output_dir = './datasets_img/v2im'
-util.makedirs(output_dir)
-FPS = 1
-util.makedirs(output_dir)
+
+util.makedirs(opt.savedir)
 for video in videos:
-    ffmpeg.continuous_screenshot(video, output_dir, FPS)
+    ffmpeg.continuous_screenshot(video, opt.savedir, opt.fps)

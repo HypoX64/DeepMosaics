@@ -4,6 +4,7 @@ from .pix2pixHD_model import define_G as define_G_HD
 from .unet_model import UNet
 from .video_model import MosaicNet
 from .videoHD_model import MosaicNet as MosaicNet_HD
+from .BiSeNet_model import BiSeNet
 
 def show_paramsnumber(net,netname='net'):
     parameters = sum(param.numel() for param in net.parameters())
@@ -75,21 +76,35 @@ def video(opt):
         netG.cuda()
     return netG
 
-
-def unet_clean(opt):
-    net = UNet(n_channels = 3, n_classes = 1)
+def bisenet(opt,type='roi'):
+    '''
+    type: roi or mosaic
+    '''
+    net = BiSeNet(num_classes=1, context_path='resnet18',train_flag=False)
     show_paramsnumber(net,'segment')
-    net.load_state_dict(torch.load(opt.mosaic_position_model_path))
+    if type == 'roi':
+        net.load_state_dict(torch.load(opt.model_path))
+    elif type == 'mosaic':
+        net.load_state_dict(torch.load(opt.mosaic_position_model_path))
     net.eval()
     if opt.use_gpu:
         net.cuda()
     return net
 
-def unet(opt):
-    net = UNet(n_channels = 3, n_classes = 1)
-    show_paramsnumber(net,'segment')
-    net.load_state_dict(torch.load(opt.model_path))
-    net.eval()
-    if opt.use_gpu:
-        net.cuda()
-    return net
+# def unet_clean(opt):
+#     net = UNet(n_channels = 3, n_classes = 1)
+#     show_paramsnumber(net,'segment')
+#     net.load_state_dict(torch.load(opt.mosaic_position_model_path))
+#     net.eval()
+#     if opt.use_gpu:
+#         net.cuda()
+#     return net
+
+# def unet(opt):
+#     net = UNet(n_channels = 3, n_classes = 1)
+#     show_paramsnumber(net,'segment')
+#     net.load_state_dict(torch.load(opt.model_path))
+#     net.eval()
+#     if opt.use_gpu:
+#         net.cuda()
+#     return net

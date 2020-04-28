@@ -15,7 +15,7 @@ def main():
     else:
         files = [opt.media_path]        
     if opt.mode == 'add':
-        netS = loadmodel.unet(opt)
+        netS = loadmodel.bisenet(opt,'roi')
         for file in files:
             opt.media_path = file
             if util.is_img(file):
@@ -26,7 +26,7 @@ def main():
                 print('This type of file is not supported')
 
     elif opt.mode == 'clean':
-        netM = loadmodel.unet_clean(opt)
+        netM = loadmodel.bisenet(opt,'mosaic')
         if opt.traditional:
             netG = None
         elif opt.netG == 'video':

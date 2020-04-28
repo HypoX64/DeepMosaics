@@ -154,6 +154,7 @@ result/
 /pretrained_models_old
 /deepmosaic_window
 /sftp-config.json
+/exe
 #./make_datasets
 /make_datasets/video
 /make_datasets/tmp

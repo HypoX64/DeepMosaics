@@ -2,11 +2,18 @@ import os,json
 
 # ffmpeg 3.4.6
 
-def video2image(videopath,imagepath,fps=0):
-    if fps == 0:
-        os.system('ffmpeg -i "'+videopath+'" -f image2 '+imagepath)
+def video2image(videopath,imagepath,fps=0,start_time=0,last_time=0):
+    if start_time == 0:
+        if fps == 0:
+            os.system('ffmpeg -i "'+videopath+'" -f image2 '+'-q:v -0 '+imagepath)
+        else:
+            os.system('ffmpeg -i "'+videopath+'" -r '+str(fps)+' -f image2 '+'-q:v -0 '+imagepath)
     else:
-        os.system('ffmpeg -i "'+videopath+'" -r '+str(fps)+' -f image2 '+imagepath)
+        if fps == 0:
+            os.system('ffmpeg -ss '+start_time+' -t '+last_time+' -i "'+videopath+'" -f image2 '+'-q:v -0 '+imagepath)
+        else:
+            os.system('ffmpeg -ss '+start_time+' -t '+last_time+' -i "'+videopath+'" -r '+str(fps)+' -f image2 '+'-q:v -0 '+imagepath)
+
 
 def video2voice(videopath,voicepath):
     os.system('ffmpeg -i "'+videopath+'" -f mp3 '+voicepath)
@@ -53,4 +60,4 @@ def continuous_screenshot(videopath,savedir,fps):
     fps:       save how many images per second
     '''
     videoname = os.path.splitext(os.path.basename(videopath))[0]
-    os.system('ffmpeg -i "'+videopath+'" -vf fps='+str(fps)+' '+savedir+'/'+videoname+'_%05d.jpg')
+    os.system('ffmpeg -i "'+videopath+'" -vf fps='+str(fps)+' -q:v -0 '+savedir+'/'+videoname+'_%06d.jpg')

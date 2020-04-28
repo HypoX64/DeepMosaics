@@ -7,7 +7,7 @@ from util import data
 import torch
 import numpy as np
 
-def run_unet(img,net,size = 224,use_gpu = True):
+def run_segment(img,net,size = 360,use_gpu = True):
     img = impro.resize(img,size)
     img = data.im2tensor(img,use_gpu = use_gpu,  bgr2rgb = False,use_transform = False , is0_1 = True)
     mask = net(img)
@@ -60,18 +60,26 @@ def run_styletransfer(opt, net, img):
     img = data.tensor2im(img)
     return img
 
-def get_ROI_position(img,net,opt):
-    mask = run_unet(img,net,size=224,use_gpu = opt.use_gpu)
+def get_ROI_position(img,net,opt,keepsize=True):
+    mask = run_segment(img,net,size=360,use_gpu = opt.use_gpu)
     mask = impro.mask_threshold(mask,opt.mask_extend,opt.mask_threshold)
+    if keepsize:
+        mask = impro.resize_like(mask, img)
     x,y,halfsize,area = impro.boundingSquare(mask, 1)
-    return mask,x,y,area
+    return mask,x,y,halfsize,area
 
-def get_mosaic_position(img_origin,net_mosaic_pos,opt,threshold = 128 ):
-    mask = run_unet(img_origin,net_mosaic_pos,size=224,use_gpu = opt.use_gpu)
-    mask = impro.mask_threshold(mask,30,threshold)
+def get_mosaic_position(img_origin,net_mosaic_pos,opt):
+    h,w = img_origin.shape[:2]
+    mask = run_segment(img_origin,net_mosaic_pos,size=360,use_gpu = opt.use_gpu)
+    # mask_1 = mask.copy()
+    mask = impro.mask_threshold(mask,ex_mun=int(min(h,w)/20),threshold=opt.mask_threshold)
     if not opt.all_mosaic_area:
         mask = impro.find_mostlikely_ROI(mask)
     x,y,size,area = impro.boundingSquare(mask,Ex_mul=opt.ex_mult)
-    rat = min(img_origin.shape[:2])/224.0
+    #Location fix
+    rat = min(h,w)/360.0
     x,y,size = int(rat*x),int(rat*y),int(rat*size)
+    x,y = np.clip(x, 0, w),np.clip(y, 0, h)
+    size = np.clip(size, 0, min(w-x,h-y))
+    # print(x,y,size)
     return x,y,size,mask

@@ -40,6 +40,13 @@ def is_videos(paths):
             tmp.append(path)
     return tmp  
 
+def is_dirs(paths):
+    tmp = []
+    for path in paths:
+        if os.path.isdir(path):
+            tmp.append(path)
+    return tmp  
+
 def  writelog(path,log,isprint=False):
     f = open(path,'a+')
     f.write(log+'\n')
@@ -72,7 +79,15 @@ def file_init(opt):
     if not os.path.isdir(opt.result_dir):
         os.makedirs(opt.result_dir)
         print('makedir:',opt.result_dir)
-    clean_tempfiles()
+    clean_tempfiles(True)
+
+def second2stamp(s):
+    h = int(s/3600)
+    s = int(s%3600)
+    m = int(s/60)
+    s = int(s%60)
+
+    return "%02d:%02d:%02d" % (h, m, s)
 
 def get_bar(percent,num = 25):
     bar = '['

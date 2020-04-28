@@ -15,7 +15,7 @@ class encoder_2d(nn.Module):
         ### downsample
         for i in range(n_downsampling):
             mult = 2**i
-            model += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1),
+            model += [nn.ReflectionPad2d(1),nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=0),
                       norm_layer(ngf * mult * 2), activation]
 
         self.model = nn.Sequential(*model)
@@ -39,16 +39,6 @@ class decoder_2d(nn.Module):
         ### upsample         
         for i in range(n_downsampling):
             mult = 2**(n_downsampling - i)
-            # if i%2 ==0:
-            #     model += [  nn.Upsample(scale_factor = 2, mode='nearest'),
-            #     nn.ReflectionPad2d(1),
-            #     nn.Conv2d(ngf * mult, int(ngf * mult / 2),kernel_size=3, stride=1, padding=0),
-            #     norm_layer(int(ngf * mult / 2)),
-            #     nn.ReLU(True)]
-            # else:
-
-            #     model += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2), kernel_size=3, stride=2, padding=1, output_padding=1),
-            #                norm_layer(int(ngf * mult / 2)), activation]
 
             # model += [  nn.Upsample(scale_factor = 2, mode='nearest'),
             # nn.ReflectionPad2d(1),

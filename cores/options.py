@@ -16,17 +16,17 @@ class Options():
         self.parser.add_argument('--mode', type=str, default='auto',help='Program running mode. auto | add | clean | style')
         self.parser.add_argument('--model_path', type=str, default='./pretrained_models/mosaic/add_face.pth',help='pretrained model path')
         self.parser.add_argument('--result_dir', type=str, default='./result',help='output media will be saved here')
-        self.parser.add_argument('--tempimage_type', type=str, default='png',help='type of temp image, png | jpg, png is better but occupy more storage space')
+        self.parser.add_argument('--tempimage_type', type=str, default='jpg',help='type of temp image, png | jpg, png is better but occupy more storage space')
         self.parser.add_argument('--netG', type=str, default='auto',
             help='select model to use for netG(Clean mosaic and Transfer style) -> auto | unet_128 | unet_256 | resnet_9blocks | HD | video')
         self.parser.add_argument('--fps', type=int, default=0,help='read and output fps, if 0-> origin')
         self.parser.add_argument('--output_size', type=int, default=0,help='size of output media, if 0 -> origin')
-        
+        self.parser.add_argument('--mask_threshold', type=int, default=64,help='threshold of recognize clean or add mosaic position 0~255')
+
         #AddMosaic
         self.parser.add_argument('--mosaic_mod', type=str, default='squa_avg',help='type of mosaic -> squa_avg | squa_random | squa_avg_circle_edge | rect_avg | random')
         self.parser.add_argument('--mosaic_size', type=int, default=0,help='mosaic size,if 0 auto size')
         self.parser.add_argument('--mask_extend', type=int, default=10,help='extend mosaic area')
-        self.parser.add_argument('--mask_threshold', type=int, default=64,help='threshold of recognize mosaic position 0~255')
         
         #CleanMosaic     
         self.parser.add_argument('--mosaic_position_model_path', type=str, default='auto',help='name of model use to find mosaic position')

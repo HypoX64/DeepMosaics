@@ -21,6 +21,7 @@ import torch.backends.cudnn as cudnn
 '''
 
 opt = Options()
+opt.parser.add_argument('--gpu_id',type=int,default=0, help='')
 opt.parser.add_argument('--N',type=int,default=25, help='')
 opt.parser.add_argument('--lr',type=float,default=0.0002, help='')
 opt.parser.add_argument('--beta1',type=float,default=0.5, help='')
@@ -32,14 +33,15 @@ opt.parser.add_argument('--lambda_gan',type=float,default=1, help='')
 opt.parser.add_argument('--finesize',type=int,default=256, help='')
 opt.parser.add_argument('--loadsize',type=int,default=286, help='')
 opt.parser.add_argument('--batchsize',type=int,default=1, help='')
-opt.parser.add_argument('--perload_num',type=int,default=16, help='')
+opt.parser.add_argument('--perload_num',type=int,default=16, help='number of images pool')
 opt.parser.add_argument('--norm',type=str,default='instance', help='')
 
+opt.parser.add_argument('--dataset',type=str,default='./datasets/face/', help='')
 opt.parser.add_argument('--maxiter',type=int,default=10000000, help='')
 opt.parser.add_argument('--savefreq',type=int,default=10000, help='')
 opt.parser.add_argument('--startiter',type=int,default=0, help='')
 opt.parser.add_argument('--continuetrain', action='store_true', help='')
-opt.parser.add_argument('--savename',type=str,default='MosaicNet', help='')
+opt.parser.add_argument('--savename',type=str,default='face', help='')
 
 
 '''
@@ -50,19 +52,27 @@ dir_checkpoint = os.path.join('checkpoints/',opt.savename)
 util.makedirs(dir_checkpoint)
 util.writelog(os.path.join(dir_checkpoint,'loss.txt'), 
               str(time.asctime(time.localtime(time.time())))+'\n'+util.opt2str(opt))
+torch.cuda.set_device(opt.gpu_id)
 
 N = opt.N
 loss_sum = [0.,0.,0.,0.]
 loss_plot = [[],[]]
 item_plot = []
 
-videos = os.listdir('./dataset')
-videos.sort()
-lengths = []
-print('check dataset...')
-for video in videos:
-    video_images = os.listdir('./dataset/'+video+'/ori')
-    lengths.append(len(video_images))
+# list video dir 
+videonames = os.listdir(opt.dataset)
+videonames.sort()
+lengths = [];tmp = []
+print('Check dataset...')
+for video in videonames:
+    if video != 'opt.txt':
+        video_images = os.listdir(os.path.join(opt.dataset,video,'origin_image'))
+        lengths.append(len(video_images))
+        tmp.append(video)
+videonames = tmp
+video_num = len(videonames)
+#def network
+print('Init network...')
 if opt.hd:
     netG = videoHD_model.MosaicNet(3*N+1, 3, norm=opt.norm)
 else:
@@ -71,7 +81,8 @@ loadmodel.show_paramsnumber(netG,'netG')
 
 if opt.gan:
     if opt.hd:
-        netD = pix2pixHD_model.define_D(6, 64, 3, norm = opt.norm, use_sigmoid=False, num_D=2)    
+        #netD = pix2pixHD_model.define_D(6, 64, 3, norm = opt.norm, use_sigmoid=False, num_D=1)
+        netD = pix2pixHD_model.define_D(6, 64, 3, norm = opt.norm, use_sigmoid=False, num_D=2,getIntermFeat=True)    
     else:
         netD = pix2pix_model.define_D(3*2, 64, 'basic', norm = opt.norm)
     netD.train()
@@ -106,36 +117,38 @@ if opt.use_gpu:
     cudnn.benchmark = True
 
 '''
---------------------------preload data--------------------------
+--------------------------preload data & data pool--------------------------
 '''
-def loaddata():
-    video_index = random.randint(0,len(videos)-1)
-    video = videos[video_index]
-    img_index = random.randint(int(N/2)+1,lengths[video_index]- int(N/2)-1)
-    input_img = np.zeros((opt.loadsize,opt.loadsize,3*N+1), dtype='uint8')
-    for i in range(0,N):
+def loaddata(video_index):
     
-        img = cv2.imread('./dataset/'+video+'/mosaic/output_'+'%05d'%(img_index+i-int(N/2))+'.png')
-        img = impro.resize(img,opt.loadsize)
-        input_img[:,:,i*3:(i+1)*3] = img
-    mask = cv2.imread('./dataset/'+video+'/mask/output_'+'%05d'%(img_index)+'.png',0)
-    mask = impro.resize(mask,opt.loadsize)
-    mask = impro.mask_threshold(mask,15,128)
-    input_img[:,:,-1] = mask
-
-    ground_true = cv2.imread('./dataset/'+video+'/ori/output_'+'%05d'%(img_index)+'.png')
-    ground_true = impro.resize(ground_true,opt.loadsize)
-
+    videoname = videonames[video_index]
+    img_index = random.randint(int(N/2)+1,lengths[video_index]- int(N/2)-1)
+    
+    input_img = np.zeros((opt.loadsize,opt.loadsize,3*N+1), dtype='uint8')
+    # this frame
+    this_mask = impro.imread(os.path.join(opt.dataset,videoname,'mask','%05d'%(img_index)+'.png'),'gray',loadsize=opt.loadsize)
+    input_img[:,:,-1] = this_mask
+    #print(os.path.join(opt.dataset,videoname,'origin_image','%05d'%(img_index)+'.jpg'))
+    ground_true =  impro.imread(os.path.join(opt.dataset,videoname,'origin_image','%05d'%(img_index)+'.jpg'),loadsize=opt.loadsize)
+    mosaic_size,mod,rect_rat,father = mosaic.get_random_parameter(ground_true,this_mask)
+    # merge other frame
+    for i in range(0,N):
+        img =  impro.imread(os.path.join(opt.dataset,videoname,'origin_image','%05d'%(img_index+i-int(N/2))+'.jpg'),loadsize=opt.loadsize)
+        mask = impro.imread(os.path.join(opt.dataset,videoname,'mask','%05d'%(img_index+i-int(N/2))+'.png'),'gray',loadsize=opt.loadsize)
+        img_mosaic = mosaic.addmosaic_base(img, mask, mosaic_size,model = mod,rect_rat=rect_rat,father=father)
+        input_img[:,:,i*3:(i+1)*3] = img_mosaic
+    # to tensor
     input_img,ground_true = data.random_transform_video(input_img,ground_true,opt.finesize,N)
     input_img = data.im2tensor(input_img,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False,is0_1=False)
     ground_true = data.im2tensor(ground_true,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False,is0_1=False)
     
     return input_img,ground_true
 
-print('preloading data, please wait 5s...')
+print('Preloading data, please wait...')
 
 if opt.perload_num <= opt.batchsize:
     opt.perload_num = opt.batchsize*2
+#data pool
 input_imgs = torch.rand(opt.perload_num,N*3+1,opt.finesize,opt.finesize).cuda()
 ground_trues = torch.rand(opt.perload_num,3,opt.finesize,opt.finesize).cuda()
 load_cnt = 0
@@ -144,14 +157,15 @@ def preload():
     global load_cnt   
     while 1:
         try:
+            video_index = random.randint(0,video_num-1)
             ran = random.randint(0, opt.perload_num-1)
-            input_imgs[ran],ground_trues[ran] = loaddata()
+            input_imgs[ran],ground_trues[ran] = loaddata(video_index)
             load_cnt += 1
             # time.sleep(0.1)
         except Exception as e:
             print("error:",e)
 import threading
-t = threading.Thread(target=preload,args=())  #t为新创建的线程
+t = threading.Thread(target=preload,args=()) 
 t.daemon = True
 t.start()
 time_start=time.time()

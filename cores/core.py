@@ -38,7 +38,7 @@ def addmosaic_video(opt,netS):
     positions = []
     for i,imagepath in enumerate(imagepaths,1):
         img = impro.imread(os.path.join('./tmp/video2image',imagepath))
-        mask,x,y,area = runmodel.get_ROI_position(img,netS,opt)
+        mask,x,y,size,area = runmodel.get_ROI_position(img,netS,opt)
         positions.append([x,y,area])      
         cv2.imwrite(os.path.join('./tmp/ROI_mask',imagepath),mask)
         print('\r','Find ROI location:'+str(i)+'/'+str(len(imagepaths)),util.get_bar(100*i/len(imagepaths),num=35),end='')
@@ -110,7 +110,7 @@ def cleanmosaic_img(opt,netG,netM):
     print('Clean Mosaic:',path)
     img_origin = impro.imread(path)
     x,y,size,mask = runmodel.get_mosaic_position(img_origin,netM,opt)
-    #cv2.imwrite('./mask/'+os.path.basename(path), mask)
+    cv2.imwrite('./mask/'+os.path.basename(path), mask)
     img_result = img_origin.copy()
     if size != 0 :
         img_mosaic = img_origin[y-size:y+size,x-size:x+size]
@@ -118,7 +118,7 @@ def cleanmosaic_img(opt,netG,netM):
             img_fake = runmodel.traditional_cleaner(img_mosaic,opt)
         else:
             img_fake = runmodel.run_pix2pix(img_mosaic,netG,opt)
-        img_result = impro.replace_mosaic(img_origin,img_fake,x,y,size,opt.no_feather)
+        img_result = impro.replace_mosaic(img_origin,img_fake,mask,x,y,size,opt.no_feather)
     else:
         print('Do not find mosaic')
     impro.imwrite(os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.jpg'),img_result)
@@ -126,7 +126,7 @@ def cleanmosaic_img(opt,netG,netM):
 def cleanmosaic_video_byframe(opt,netG,netM):
     path = opt.media_path
     fps,imagepaths = video_init(opt,path)[:2]
-    positions = get_mosaic_positions(opt,netM,imagepaths,savemask=False)
+    positions = get_mosaic_positions(opt,netM,imagepaths,savemask=True)
     # clean mosaic
     for i,imagepath in enumerate(imagepaths,0):
         x,y,size = positions[i][0],positions[i][1],positions[i][2]
@@ -138,7 +138,8 @@ def cleanmosaic_video_byframe(opt,netG,netM):
                 img_fake = runmodel.traditional_cleaner(img_mosaic,opt)
             else:
                 img_fake = runmodel.run_pix2pix(img_mosaic,netG,opt)
-        img_result = impro.replace_mosaic(img_origin,img_fake,x,y,size,opt.no_feather)
+        mask = cv2.imread(os.path.join('./tmp/mosaic_mask',imagepath),0)
+        img_result = impro.replace_mosaic(img_origin,img_fake,mask,x,y,size,opt.no_feather)
         cv2.imwrite(os.path.join('./tmp/replace_mosaic',imagepath),img_result)
         print('\r','Clean Mosaic:'+str(i+1)+'/'+str(len(imagepaths)),util.get_bar(100*i/len(imagepaths),num=35),end='')
     print()
@@ -178,13 +179,13 @@ def cleanmosaic_video_fusion(opt,netG,netM):
 
             mosaic_input = np.zeros((INPUT_SIZE,INPUT_SIZE,3*N+1), dtype='uint8')
             mosaic_input[:,:,0:N*3] = impro.resize(img_pool[y-size:y+size,x-size:x+size,:], INPUT_SIZE)
-            mask = impro.resize(mask,np.min(img_origin.shape[:2]))[y-size:y+size,x-size:x+size]
-            mosaic_input[:,:,-1] = impro.resize(mask, INPUT_SIZE)
+            mask_input = impro.resize(mask,np.min(img_origin.shape[:2]))[y-size:y+size,x-size:x+size]
+            mosaic_input[:,:,-1] = impro.resize(mask_input, INPUT_SIZE)
 
             mosaic_input = data.im2tensor(mosaic_input,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False,is0_1 = False)
             unmosaic_pred = netG(mosaic_input)
             img_fake = data.tensor2im(unmosaic_pred,rgb2bgr = False ,is0_1 = False)
-            img_result = impro.replace_mosaic(img_origin,img_fake,x,y,size,opt.no_feather)
+            img_result = impro.replace_mosaic(img_origin,img_fake,mask,x,y,size,opt.no_feather)
             cv2.imwrite(os.path.join('./tmp/replace_mosaic',imagepath),img_result)
         print('\r','Clean Mosaic:'+str(i+1)+'/'+str(len(imagepaths)),util.get_bar(100*i/len(imagepaths),num=35),end='')
     print()

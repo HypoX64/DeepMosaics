@@ -3,25 +3,19 @@
 这是一个通过深度学习自动的为图片/视频添加马赛克,或消除马赛克的项目.<br>它基于“语义分割”以及“图像翻译”.<br>
 
 ### 更多例子
-
 原始 | 自动打码 |  自动去码  
 :-:|:-:|:-:
 ![image](./imgs/example/lena.jpg) | ![image](./imgs/example/lena_add.jpg) | ![image](./imgs/example/lena_clean.jpg) 
 ![image](./imgs/example/youknow.png)  | ![image](./imgs/example/youknow_add.png) | ![image](./imgs/example/youknow_clean.png) 
-
 * 与 [DeepCreamPy](https://github.com/deeppomf/DeepCreamPy)相比较
-
 马赛克图片 | DeepCreamPy | ours  
 :-:|:-:|:-:
 ![image](./imgs/example/face_a_mosaic.jpg) | ![image](./imgs/example/a_dcp.png) | ![image](./imgs/example/face_a_clean.jpg) 
 ![image](./imgs/example/face_b_mosaic.jpg) | ![image](./imgs/example/b_dcp.png) | ![image](./imgs/example/face_b_clean.jpg) 
-
 * 风格转换
-
 原始 | 梵高风格 | 转化为冬天
 :-:|:-:|:-:
 ![image](./imgs/example/SZU.jpg) | ![image](./imgs/example/SZU_vangogh.jpg) | ![image](./imgs/example/SZU_summer2winter.jpg) 
-
 一个有意思的尝试:[香蕉君♂猫](https://www.bilibili.com/video/BV1Q7411W7n6)
 
 ## 如何运行
@@ -74,5 +68,9 @@ python3 deepmosaic.py --media_path ./result/ruoruo_add.jpg --model_path ./pretra
 如果想要测试其他的图片或视频,请参照以下文件输入参数.<br>
 [[options_introduction_CN.md]](./docs/options_introduction_CN.md) <br>
 
+## 使用自己的数据训练模型
+如果需要使用自己的数据训练模型，请参照 [training_with_your_own_dataset.md](./docs/training_with_your_own_dataset.md)
+
 ## 鸣谢
-代码大量的参考了以下项目:[[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet)[[pix2pixHD]](https://github.com/NVIDIA/pix2pixHD).
+代码大量的参考了以下项目:[[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet) [[pix2pixHD]](https://github.com/NVIDIA/pix2pixHD) [[BiSeNet]](https://github.com/ooooverflow/BiSeNet).
+
