@@ -6,19 +6,25 @@ This porject based on "semantic segmentation" and "Image-to-Image Translation".<
 * [中文版README](./README_CN.md)<br>
 
 ### More example
+
 origin | auto add mosaic |  auto clean mosaic  
 :-:|:-:|:-:
 ![image](./imgs/example/lena.jpg) | ![image](./imgs/example/lena_add.jpg) | ![image](./imgs/example/lena_clean.jpg) 
 ![image](./imgs/example/youknow.png)  | ![image](./imgs/example/youknow_add.png) | ![image](./imgs/example/youknow_clean.png) 
+
 * Compared with [DeepCreamPy](https://github.com/deeppomf/DeepCreamPy)
+
 mosaic image | DeepCreamPy | ours  
 :-:|:-:|:-:
 ![image](./imgs/example/face_a_mosaic.jpg) | ![image](./imgs/example/a_dcp.png) | ![image](./imgs/example/face_a_clean.jpg) 
 ![image](./imgs/example/face_b_mosaic.jpg) | ![image](./imgs/example/b_dcp.png) | ![image](./imgs/example/face_b_clean.jpg) 
+
 * Style Transfer
+
 origin | to Van Gogh | to winter
 :-:|:-:|:-:
 ![image](./imgs/example/SZU.jpg) | ![image](./imgs/example/SZU_vangogh.jpg) | ![image](./imgs/example/SZU_summer2winter.jpg) 
+
 An interesting example:[Ricardo Milos to cat](https://www.bilibili.com/video/BV1Q7411W7n6)
 
 ## Run DeepMosaics
