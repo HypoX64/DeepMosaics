@@ -10,14 +10,14 @@
 ![image](./imgs/example/youknow.png)  | ![image](./imgs/example/youknow_add.png) | ![image](./imgs/example/youknow_clean.png) 
 
 * 与 [DeepCreamPy](https://github.com/deeppomf/DeepCreamPy)相比较
-马赛克图片 | DeepCreamPy | ours  
 
+马赛克图片 | DeepCreamPy | ours  
 :-:|:-:|:-:
 ![image](./imgs/example/face_a_mosaic.jpg) | ![image](./imgs/example/a_dcp.png) | ![image](./imgs/example/face_a_clean.jpg) 
 ![image](./imgs/example/face_b_mosaic.jpg) | ![image](./imgs/example/b_dcp.png) | ![image](./imgs/example/face_b_clean.jpg) 
 
 * 风格转换
-* 
+
 原始 | 梵高风格 | 转化为冬天
 :-:|:-:|:-:
 ![image](./imgs/example/SZU.jpg) | ![image](./imgs/example/SZU_vangogh.jpg) | ![image](./imgs/example/SZU_summer2winter.jpg) 
