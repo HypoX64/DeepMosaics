@@ -117,44 +117,17 @@ def makedataset(target_image,orgin_image):
     img[0:256,256:512] = orgin_image[0:256,int(w/2-256/2):int(w/2+256/2)]
     return img
 
-def spiltimage(img,size = 128):
-    h, w = img.shape[:2]
-    # size = min(h,w)
-    if w >= h:
-        img1 = img[:,0:size]
-        img2 = img[:,w-size:w]
-    else:
-        img1 = img[0:size,:]
-        img2 = img[h-size:h,:]
-
-    return img1,img2
-
-def mergeimage(img1,img2,orgin_image,size = 128):
-    h, w = orgin_image.shape[:2]
-    new_img1 = np.zeros((h,w), dtype = "uint8")
-    new_img2 = np.zeros((h,w), dtype = "uint8")
-
-    # size = min(h,w)
-    if w >= h:
-        new_img1[:,0:size]=img1
-        new_img2[:,w-size:w]=img2
-    else:
-        new_img1[0:size,:]=img1
-        new_img2[h-size:h,:]=img2
-    result_img = cv2.add(new_img1,new_img2)
-    return result_img
-
-def block_dct_and_idct(g,QQF):
-    T = cv2.dct(g)
-    IT = np.round(cv2.idct(np.round(np.round(16.0*T/QQF)*QQF/16)))
-    return IT
+def block_dct_and_idct(g,QQF,QQF_16):
+    return cv2.idct(np.round(16.0*cv2.dct(g)/QQF)*QQF_16)
 
 def image_dct_and_idct(I,QF):
     h,w = I.shape
     QQF = DCT_Q*QF
-    for i in range(int(h/8)):
-        for j in range(int(w/8)):
-            I[i*8:(i+1)*8,j*8:(j+1)*8] = block_dct_and_idct(I[i*8:(i+1)*8,j*8:(j+1)*8],QQF)
+    QQF_16 = QQF/16.0
+    for i in range(h//8):
+        for j in range(w//8):
+            I[i*8:(i+1)*8,j*8:(j+1)*8] = cv2.idct(np.round(16.0*cv2.dct(I[i*8:(i+1)*8,j*8:(j+1)*8])/QQF)*QQF_16)
+            #I[i*8:(i+1)*8,j*8:(j+1)*8] = block_dct_and_idct(I[i*8:(i+1)*8,j*8:(j+1)*8],QQF,QQF_16)
     return I
 
 def dctblur(img,Q):
@@ -162,7 +135,7 @@ def dctblur(img,Q):
     Q: 1~20, 1->best
     '''
     h,w = img.shape[:2]
-    img[:8*int(h/8),:8*int(w/8)]
+    img = img[:8*(h//8),:8*(w//8)]
     img = img.astype(np.float32)
     if img.ndim == 2:
         img = image_dct_and_idct(img, Q)
@@ -250,9 +223,9 @@ def Q_lapulase(resImg):
     score = res.var()
     return score
 
-def replace_mosaic(img_origin,img_fake,mask,x,y,size,no_father):
+def replace_mosaic(img_origin,img_fake,mask,x,y,size,no_feather):
     img_fake = cv2.resize(img_fake,(size*2,size*2),interpolation=cv2.INTER_LANCZOS4)
-    if no_father:
+    if no_feather:
         img_origin[y-size:y+size,x-size:x+size]=img_fake
         img_result = img_origin
     else:

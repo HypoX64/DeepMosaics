@@ -7,7 +7,7 @@ from util import data
 import torch
 import numpy as np
 
-def run_segment(img,net,size = 360,use_gpu = True):
+def run_segment(img,net,size = 360,use_gpu = 0):
     img = impro.resize(img,size)
     img = data.im2tensor(img,use_gpu = use_gpu,  bgr2rgb = False,use_transform = False , is0_1 = True)
     mask = net(img)

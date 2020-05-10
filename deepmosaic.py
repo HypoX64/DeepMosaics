@@ -72,6 +72,6 @@ if __name__ == '__main__':
         for stack in traceback.extract_tb(ex_stack):
             print(stack)
         input('Please press any key to exit.\n')
-        util.clean_tempfiles(tmp_init = False)
+        #util.clean_tempfiles(tmp_init = False)
         exit(0)
 

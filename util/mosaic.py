@@ -13,7 +13,7 @@ def addmosaic(img,mask,opt):
         img = addmosaic_base(img,mask,opt.mosaic_size,opt.output_size,model = opt.mosaic_mod)
     return img
 
-def addmosaic_base(img,mask,n,out_size = 0,model = 'squa_avg',rect_rat = 1.6,father=0):
+def addmosaic_base(img,mask,n,out_size = 0,model = 'squa_avg',rect_rat = 1.6,feather=0,start_point=[0,0]):
     '''
     img: input image
     mask: input mask
@@ -21,37 +21,50 @@ def addmosaic_base(img,mask,n,out_size = 0,model = 'squa_avg',rect_rat = 1.6,fat
     out_size: output size  0->original
     model : squa_avg squa_mid squa_random squa_avg_circle_edge rect_avg
     rect_rat: if model==rect_avg , mosaic w/h=rect_rat
-    father : father size, -1->no 0->auto
+    feather : feather size, -1->no 0->auto
+    start_point : [0,0], please not input this parameter
     '''
     n = int(n)
+    
+    h_start = np.clip(start_point[0], 0, n)
+    w_start = np.clip(start_point[1], 0, n)
+    pix_mid_h = n//2+h_start
+    pix_mid_w = n//2+w_start
+    h, w = img.shape[:2]
+    h_step = (h-h_start)//n
+    w_step = (w-w_start)//n
     if out_size:
         img = resize(img,out_size)      
-    h, w = img.shape[:2]
-    mask = cv2.resize(mask,(w,h))
-    img_mosaic=img.copy()
+    if mask.shape[0] != h:
+        mask = cv2.resize(mask,(w,h))
+    img_mosaic = img.copy()
 
     if model=='squa_avg':
-        for i in range(int(h/n)):
-            for j in range(int(w/n)):
-                if mask[int(i*n+n/2),int(j*n+n/2)] == 255:
-                    img_mosaic[i*n:(i+1)*n,j*n:(j+1)*n,:]=img[i*n:(i+1)*n,j*n:(j+1)*n,:].mean(0).mean(0)
+        for i in range(h_step):
+            for j in range(w_step):
+                if mask[i*n+pix_mid_h,j*n+pix_mid_w]:
+                    img_mosaic[i*n+h_start:(i+1)*n+h_start,j*n+w_start:(j+1)*n+w_start,:]=\
+                           img[i*n+h_start:(i+1)*n+h_start,j*n+w_start:(j+1)*n+w_start,:].mean(axis=(0,1))
 
     elif model=='squa_mid':
-        for i in range(int(h/n)):
-            for j in range(int(w/n)):
-                if mask[int(i*n+n/2),int(j*n+n/2)] == 255:
-                    img_mosaic[i*n:(i+1)*n,j*n:(j+1)*n,:]=img[i*n+int(n/2),j*n+int(n/2),:]
+        for i in range(h_step):
+            for j in range(w_step):
+                if mask[i*n+pix_mid_h,j*n+pix_mid_w]:
+                    img_mosaic[i*n+h_start:(i+1)*n+h_start,j*n+w_start:(j+1)*n+w_start,:]=\
+                           img[i*n+n//2+h_start,j*n+n//2+w_start,:]
 
     elif model == 'squa_random':
-        for i in range(int(h/n)):
-            for j in range(int(w/n)):
-                if mask[int(i*n+n/2),int(j*n+n/2)] == 255:
-                    img_mosaic[i*n:(i+1)*n,j*n:(j+1)*n,:]=img[int(i*n-n/2+n*random.random()),int(j*n-n/2+n*random.random()),:]
+        for i in range(h_step):
+            for j in range(w_step):
+                if mask[i*n+pix_mid_h,j*n+pix_mid_w]:
+                    img_mosaic[i*n+h_start:(i+1)*n+h_start,j*n+w_start:(j+1)*n+w_start,:]=\
+                    img[h_start+int(i*n-n/2+n*random.random()),w_start+int(j*n-n/2+n*random.random()),:]
 
     elif model == 'squa_avg_circle_edge':
-        for i in range(int(h/n)):
-            for j in range(int(w/n)):
-                img_mosaic[i*n:(i+1)*n,j*n:(j+1)*n,:]=img[i*n:(i+1)*n,j*n:(j+1)*n,:].mean(0).mean(0)
+        for i in range(h_step):
+            for j in range(w_step):
+                img_mosaic[i*n+h_start:(i+1)*n+h_start,j*n+w_start:(j+1)*n+w_start,:]=\
+                       img[i*n+h_start:(i+1)*n+h_start,j*n+w_start:(j+1)*n+w_start,:].mean(axis=(0,1))
         mask = cv2.threshold(mask,127,255,cv2.THRESH_BINARY)[1]
         _mask = ch_one2three(mask)
         mask_inv = cv2.bitwise_not(_mask)
@@ -60,20 +73,24 @@ def addmosaic_base(img,mask,n,out_size = 0,model = 'squa_avg',rect_rat = 1.6,fat
         img_mosaic = cv2.add(imgroi1,imgroi2)
 
     elif model =='rect_avg':
-        n_h=n
-        n_w=int(n*rect_rat)
-        for i in range(int(h/n_h)):
-            for j in range(int(w/n_w)):
-                if mask[int(i*n_h+n_h/2),int(j*n_w+n_w/2)] == 255:
-                    img_mosaic[i*n_h:(i+1)*n_h,j*n_w:(j+1)*n_w,:]=img[i*n_h:(i+1)*n_h,j*n_w:(j+1)*n_w,:].mean(0).mean(0)
+        n_h = n
+        n_w = int(n*rect_rat)
+        n_h_half = n_h//2+h_start
+        n_w_half = n_w//2+w_start
+        for i in range((h-h_start)//n_h):
+            for j in range((w-w_start)//n_w):
+                if mask[i*n_h+n_h_half,j*n_w+n_w_half]:
+                    img_mosaic[i*n_h+h_start:(i+1)*n_h+h_start,j*n_w+w_start:(j+1)*n_w+w_start,:]=\
+                           img[i*n_h+h_start:(i+1)*n_h+h_start,j*n_w+w_start:(j+1)*n_w+w_start,:].mean(axis=(0,1))
     
-    if father != -1:
-        if father==0:
+    if feather != -1:
+        if feather==0:
             mask = (cv2.blur(mask, (n, n)))
         else:
-            mask = (cv2.blur(mask, (father, father)))
-        mask = ch_one2three(mask)/255.0
-        img_mosaic = (img*(1-mask)+img_mosaic*mask).astype('uint8')
+            mask = (cv2.blur(mask, (feather, feather)))
+        mask = mask/255.0
+        for i in range(3):img_mosaic[:,:,i] = (img[:,:,i]*(1-mask)+img_mosaic[:,:,i]*mask)
+        img_mosaic = img_mosaic.astype(np.uint8)
     
     return img_mosaic
 
@@ -108,19 +125,21 @@ def get_random_parameter(img,mask):
     p = np.array([0.5,0.5])
     mod = np.random.choice(['normal','bounding'], p = p.ravel())
     mosaic_size = get_autosize(img,mask,area_type = mod)
-    mosaic_size = int(mosaic_size*random.uniform(0.9,2.1))
+    mosaic_size = int(mosaic_size*random.uniform(0.9,2.5))
 
     # mosaic mod
-    p = np.array([0.25, 0.25, 0.1, 0.4])
-    mod = np.random.choice(['squa_mid','squa_avg','squa_avg_circle_edge','rect_avg'], p = p.ravel())
+    p = np.array([0.25, 0.3, 0.45])
+    mod = np.random.choice(['squa_mid','squa_avg','rect_avg'], p = p.ravel())
 
     # rect_rat for rect_avg
     rect_rat = random.uniform(1.1,1.6)
     
-    # father size
-    father = int(mosaic_size*random.uniform(0,1.5))
+    # feather size
+    feather = -1
+    if random.random()<0.7:
+        feather = int(mosaic_size*random.uniform(0,1.5))
 
-    return mosaic_size,mod,rect_rat,father
+    return mosaic_size,mod,rect_rat,feather
 
 
 def addmosaic_autosize(img,mask,model,area_type = 'normal'):
@@ -129,6 +148,17 @@ def addmosaic_autosize(img,mask,model,area_type = 'normal'):
     return img_mosaic
 
 def addmosaic_random(img,mask):
-    mosaic_size,mod,rect_rat,father = get_random_parameter(img,mask)
-    img_mosaic = addmosaic_base(img,mask,mosaic_size,model = mod,rect_rat=rect_rat,father=father)
+    mosaic_size,mod,rect_rat,feather = get_random_parameter(img,mask)
+    img_mosaic = addmosaic_base(img,mask,mosaic_size,model = mod,rect_rat=rect_rat,feather=feather)
     return img_mosaic
+
+def get_random_startpos(num,bisa_p,bisa_max,bisa_max_part):
+    pos = np.zeros((num,2), dtype=np.int64)
+    if random.random()<bisa_p:
+        indexs = random.sample((np.linspace(1,num-1,num-1,dtype=np.int64)).tolist(), random.randint(1, bisa_max_part))
+        indexs.append(0)
+        indexs.append(num)
+        indexs.sort()
+        for i in range(len(indexs)-1):
+            pos[indexs[i]:indexs[i+1]] = [random.randint(0,bisa_max),random.randint(0,bisa_max)]
+    return pos

@@ -67,11 +67,11 @@ You can download pre_trained models and put them into './pretrained_models'.<br>
 #### Simple example
 * Add Mosaic (output media will save in './result')<br>
 ```bash
-python3 deepmosaic.py --media_path ./imgs/ruoruo.jpg --model_path ./pretrained_models/mosaic/add_face.pth --use_gpu -1
+python3 deepmosaic.py --media_path ./imgs/ruoruo.jpg --model_path ./pretrained_models/mosaic/add_face.pth --use_gpu 0
 ```
 * Clean Mosaic (output media will save in './result')<br>
 ```bash
-python3 deepmosaic.py --media_path ./result/ruoruo_add.jpg --model_path ./pretrained_models/mosaic/clean_face_HD.pth --use_gpu -1
+python3 deepmosaic.py --media_path ./result/ruoruo_add.jpg --model_path ./pretrained_models/mosaic/clean_face_HD.pth --use_gpu 0
 ```
 #### More parameters
 If you want to test other image or video, please refer to this file.<br>

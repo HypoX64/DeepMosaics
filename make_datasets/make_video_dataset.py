@@ -1,21 +1,22 @@
 import os
-import random
 import sys
+sys.path.append("..")
+from cores import Options
+opt = Options()
+
+import random
 import datetime
 import time
-import shutil
-import threading
 
 import numpy as np
 import cv2
+import torch
 
-sys.path.append("..")
 from models import runmodel,loadmodel
 import util.image_processing as impro
 from util import util,mosaic,data,ffmpeg
-from cores import Options
 
-opt = Options()
+
 opt.parser.add_argument('--datadir',type=str,default='your video dir', help='')
 opt.parser.add_argument('--savedir',type=str,default='../datasets/video/face', help='')
 opt.parser.add_argument('--interval',type=int,default=30, help='interval of split video ')
@@ -25,6 +26,7 @@ opt.parser.add_argument('--quality', type=int ,default= 45,help='minimal quality
 opt.parser.add_argument('--outsize', type=int ,default= 286,help='')
 opt.parser.add_argument('--startcnt', type=int ,default= 0,help='')
 opt.parser.add_argument('--minsize', type=int ,default= 96,help='minimal roi size')
+opt.parser.add_argument('--no_sclectscene', action='store_true', help='')  
 opt = opt.getparse()
 
 
@@ -44,51 +46,30 @@ video_cnt = 1
 starttime = datetime.datetime.now()
 for videopath in videopaths:
     try:
-        timestamps=[]
-        fps,endtime,height,width = ffmpeg.get_video_infos(videopath)
-        for cut_point in range(1,int((endtime-opt.time)/opt.interval)):
-            util.clean_tempfiles()
-            ffmpeg.video2image(videopath, './tmp/video2image/%05d.'+opt.tempimage_type,fps=1,
-                start_time = util.second2stamp(cut_point*opt.interval),last_time = util.second2stamp(opt.time))
-            imagepaths = util.Traversal('./tmp/video2image')
-            cnt = 0 
-            for i in range(opt.time):
-                img = impro.imread(imagepaths[i])
-                mask = runmodel.get_ROI_position(img,net,opt,keepsize=True)[0]
-                if not opt.all_mosaic_area:
-                    mask = impro.find_mostlikely_ROI(mask)
-                x,y,size,area = impro.boundingSquare(mask,Ex_mul=1)
-                if area > opt.minmaskarea and size>opt.minsize and impro.Q_lapulase(img)>opt.quality:
-                    cnt +=1
-            if cnt == opt.time:
-                # print(second)
-                timestamps.append(util.second2stamp(cut_point*opt.interval))
+        if opt.no_sclectscene:
+            timestamps=['00:00:00']
+        else:
+            timestamps=[]
+            fps,endtime,height,width = ffmpeg.get_video_infos(videopath)
+            for cut_point in range(1,int((endtime-opt.time)/opt.interval)):
+                util.clean_tempfiles()
+                ffmpeg.video2image(videopath, './tmp/video2image/%05d.'+opt.tempimage_type,fps=1,
+                    start_time = util.second2stamp(cut_point*opt.interval),last_time = util.second2stamp(opt.time))
+                imagepaths = util.Traversal('./tmp/video2image')
+                cnt = 0 
+                for i in range(opt.time):
+                    img = impro.imread(imagepaths[i])
+                    mask = runmodel.get_ROI_position(img,net,opt,keepsize=True)[0]
+                    if not opt.all_mosaic_area:
+                        mask = impro.find_mostlikely_ROI(mask)
+                    x,y,size,area = impro.boundingSquare(mask,Ex_mul=1)
+                    if area > opt.minmaskarea and size>opt.minsize and impro.Q_lapulase(img)>opt.quality:
+                        cnt +=1
+                if cnt == opt.time:
+                    # print(second)
+                    timestamps.append(util.second2stamp(cut_point*opt.interval))
         util.writelog(os.path.join(opt.savedir,'opt.txt'),videopath+'\n'+str(timestamps))
         #print(timestamps)
-
-        # util.clean_tempfiles()
-        # fps,endtime,height,width = ffmpeg.get_video_infos(videopath)
-        # # print(fps,endtime,height,width)
-        # ffmpeg.continuous_screenshot(videopath, './tmp/video2image', 1)
-
-        # # find where to cut
-        # print('Find where to cut...')
-        # timestamps=[]
-        # imagepaths = util.Traversal('./tmp/video2image')
-        # for second in range(int(endtime)):
-        #     if second%opt.interval==0:
-        #         cnt = 0 
-        #         for i in range(opt.time):
-        #             img = impro.imread(imagepaths[second+i])
-        #             mask = runmodel.get_ROI_position(img,net,opt)[0]
-        #             if not opt.all_mosaic_area:
-        #                 mask = impro.find_mostlikely_ROI(mask)
-        #             if impro.mask_area(mask) > opt.minmaskarea and impro.Q_lapulase(img)>opt.quality:
-        #                 # print(impro.mask_area(mask))
-        #                 cnt +=1
-        #         if cnt == opt.time:
-        #             # print(second)
-        #             timestamps.append(util.second2stamp(second))
 
         #generate datasets
         print('Generate datasets...')
@@ -143,3 +124,5 @@ for videopath in videopaths:
         util.writelog(os.path.join(opt.savedir,'opt.txt'), 
               videopath+'\n'+str(result_cnt)+'\n'+str(e))
     video_cnt +=1
+    if opt.use_gpu != -1:
+        torch.cuda.empty_cache()

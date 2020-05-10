@@ -1,5 +1,10 @@
-import sys
 import os
+import sys
+sys.path.append("..")
+sys.path.append("../..")
+from cores import Options
+opt = Options()
+
 import random
 import datetime
 import time
@@ -13,9 +18,6 @@ import torch.backends.cudnn as cudnn
 import torch.nn as nn
 from torch import optim
 
-sys.path.append("..")
-sys.path.append("../..")
-from cores import Options
 from util import mosaic,util,ffmpeg,filt,data
 from util import image_processing as impro
 from models import unet_model,BiSeNet_model
@@ -24,8 +26,6 @@ from models import unet_model,BiSeNet_model
 '''
 --------------------------Get options--------------------------
 '''
-opt = Options()
-opt.parser.add_argument('--gpu_id',type=int,default=0, help='')
 opt.parser.add_argument('--lr',type=float,default=0.001, help='')
 opt.parser.add_argument('--finesize',type=int,default=360, help='')
 opt.parser.add_argument('--loadsize',type=int,default=400, help='')
@@ -51,12 +51,11 @@ dir_checkpoint = os.path.join('checkpoints/',opt.savename)
 util.makedirs(dir_checkpoint)
 util.writelog(os.path.join(dir_checkpoint,'loss.txt'), 
               str(time.asctime(time.localtime(time.time())))+'\n'+util.opt2str(opt))
-torch.cuda.set_device(opt.gpu_id)
 
 def Totensor(img,use_gpu=True):
     size=img.shape[0]
     img = torch.from_numpy(img).float()
-    if opt.use_gpu:
+    if opt.use_gpu != -1:
         img = img.cuda()
     return img
 
@@ -110,7 +109,7 @@ if opt.continuetrain:
     f = open(os.path.join(dir_checkpoint,'epoch_log.txt'),'r')
     opt.startepoch = int(f.read())
     f.close()
-if opt.use_gpu:
+if opt.use_gpu != -1:
     net.cuda()
     cudnn.benchmark = True
 
@@ -134,7 +133,7 @@ for epoch in range(opt.startepoch,opt.maxepoch):
     starttime = datetime.datetime.now()
     util.writelog(os.path.join(dir_checkpoint,'loss.txt'),'Epoch {}/{}.'.format(epoch + 1, opt.maxepoch),True)
     net.train()
-    if opt.use_gpu:
+    if opt.use_gpu != -1:
         net.cuda()
     epoch_loss = 0
     for i in range(int(img_num*0.8/opt.batchsize)):

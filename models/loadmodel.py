@@ -34,7 +34,7 @@ def pix2pix(opt):
     show_paramsnumber(netG,'netG')
     netG.load_state_dict(torch.load(opt.model_path))
     netG.eval()
-    if opt.use_gpu:
+    if opt.use_gpu != -1:
         netG.cuda()
     return netG
 
@@ -60,7 +60,7 @@ def style(opt):
         __patch_instance_norm_state_dict(state_dict, netG, key.split('.'))
     netG.load_state_dict(state_dict)
 
-    if opt.use_gpu:
+    if opt.use_gpu != -1:
         netG.cuda()
     return netG
 
@@ -72,7 +72,7 @@ def video(opt):
     show_paramsnumber(netG,'netG')
     netG.load_state_dict(torch.load(opt.model_path))
     netG.eval()
-    if opt.use_gpu:
+    if opt.use_gpu != -1:
         netG.cuda()
     return netG
 
@@ -87,24 +87,6 @@ def bisenet(opt,type='roi'):
     elif type == 'mosaic':
         net.load_state_dict(torch.load(opt.mosaic_position_model_path))
     net.eval()
-    if opt.use_gpu:
+    if opt.use_gpu != -1:
         net.cuda()
     return net
-
-# def unet_clean(opt):
-#     net = UNet(n_channels = 3, n_classes = 1)
-#     show_paramsnumber(net,'segment')
-#     net.load_state_dict(torch.load(opt.mosaic_position_model_path))
-#     net.eval()
-#     if opt.use_gpu:
-#         net.cuda()
-#     return net
-
-# def unet(opt):
-#     net = UNet(n_channels = 3, n_classes = 1)
-#     show_paramsnumber(net,'segment')
-#     net.load_state_dict(torch.load(opt.model_path))
-#     net.eval()
-#     if opt.use_gpu:
-#         net.cuda()
-#     return net

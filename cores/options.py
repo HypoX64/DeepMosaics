@@ -1,6 +1,6 @@
 import argparse
 import os
-import torch
+
 
 class Options():
     def __init__(self):
@@ -10,7 +10,7 @@ class Options():
     def initialize(self):
 
         #base
-        self.parser.add_argument('--use_gpu',type=int,default=0, help='if -1, do not use gpu')
+        self.parser.add_argument('--use_gpu',type=int,default=0, help='if -1, use cpu')
         # self.parser.add_argument('--use_gpu', action='store_true', help='if input it, use gpu')
         self.parser.add_argument('--media_path', type=str, default='./imgs/ruoruo.jpg',help='your videos or images path')
         self.parser.add_argument('--mode', type=str, default='auto',help='Program running mode. auto | add | clean | style')
@@ -54,10 +54,12 @@ class Options():
 
         model_name = os.path.basename(self.opt.model_path)
 
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(self.opt.use_gpu)
+        import torch
         if torch.cuda.is_available() and self.opt.use_gpu > -1:
-            self.opt.use_gpu = True
+            pass
         else:
-            self.opt.use_gpu = False
+            self.opt.use_gpu = -1
 
         if self.opt.mode == 'auto':
             if 'clean' in model_name or self.opt.traditional:

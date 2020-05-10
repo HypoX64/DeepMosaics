@@ -48,7 +48,7 @@ def define_G(input_nc, output_nc, ngf, netG, n_downsample_global=3, n_blocks_glo
 def define_D(input_nc, ndf, n_layers_D, norm='instance', use_sigmoid=False, num_D=1, getIntermFeat=False, gpu_ids=[]):        
     norm_layer = get_norm_layer(norm_type=norm)   
     netD = MultiscaleDiscriminator(input_nc, ndf, n_layers_D, norm_layer, use_sigmoid, num_D, getIntermFeat)   
-    print(netD)
+    #print(netD)
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
         netD.cuda(gpu_ids[0])
@@ -67,6 +67,24 @@ def print_network(net):
 ##############################################################################
 # Losses
 ##############################################################################
+class GAN_Feat_loss(nn.Module):
+    def __init__(self, opt):
+        super(GAN_Feat_loss, self).__init__()        
+        self.num_D = opt.num_D
+        self.n_layers_D = opt.n_layers_D
+        self.lambda_feat = opt.lambda_feat
+        self.criterionFeat = nn.L1Loss()
+
+    def forward(self, pred_fake, pred_real): 
+        loss_G_GAN_Feat = 0
+        feat_weights = 4.0 / (self.n_layers_D + 1)
+        D_weights = 1.0 / self.num_D
+        for i in range(self.num_D):
+            for j in range(len(pred_fake[i])-1):
+                loss_G_GAN_Feat += D_weights * feat_weights * \
+                self.criterionFeat(pred_fake[i][j], pred_real[i][j].detach()) * self.lambda_feat
+        return loss_G_GAN_Feat
+
 class GANLoss(nn.Module):
     def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0,
                  tensor=torch.FloatTensor):

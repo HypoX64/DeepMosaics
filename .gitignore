@@ -141,6 +141,7 @@ dataset/
 test*
 video_tmp/
 result/
+nohup.out
 #./
 /pix2pix
 /pix2pixHD
