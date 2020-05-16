@@ -62,7 +62,8 @@ def makedirs(path):
         print('makedir:',path)
 
 def clean_tempfiles(tmp_init=True):
-    if os.path.isdir('./tmp'):   
+    if os.path.isdir('./tmp'): 
+        print('Clean temp...')  
         shutil.rmtree('./tmp')
     if tmp_init:
         os.makedirs('./tmp')
@@ -86,8 +87,15 @@ def second2stamp(s):
     s = int(s%3600)
     m = int(s/60)
     s = int(s%60)
-
     return "%02d:%02d:%02d" % (h, m, s)
+
+def counttime(t1,t2,now_num,all_num):
+    '''
+    t1,t2: time.time()
+    '''
+    used_time = int(t2-t1)
+    all_time = int(used_time/now_num*all_num)
+    return second2stamp(used_time)+'/'+second2stamp(all_time)
 
 def get_bar(percent,num = 25):
     bar = '['
@@ -97,7 +105,7 @@ def get_bar(percent,num = 25):
         else:
             bar += '-'
     bar += ']'
-    return bar+' '+str(round(percent,2))+'%'
+    return bar+' '+"%.2f"%percent+'%'
 
 def copyfile(src,dst):
     try:

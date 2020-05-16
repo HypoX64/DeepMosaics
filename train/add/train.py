@@ -35,7 +35,7 @@ opt.parser.add_argument('--model',type=str,default='BiSeNet', help='BiSeNet or U
 opt.parser.add_argument('--maxepoch',type=int,default=100, help='')
 opt.parser.add_argument('--savefreq',type=int,default=5, help='')
 opt.parser.add_argument('--maxload',type=int,default=1000000, help='')
-opt.parser.add_argument('--continuetrain', action='store_true', help='')
+opt.parser.add_argument('--continue_train', action='store_true', help='')
 opt.parser.add_argument('--startepoch',type=int,default=0, help='')
 opt.parser.add_argument('--dataset',type=str,default='./datasets/face/', help='')
 opt.parser.add_argument('--savename',type=str,default='face', help='')
@@ -100,11 +100,11 @@ if opt.model =='UNet':
 elif opt.model =='BiSeNet':
     net = BiSeNet_model.BiSeNet(num_classes=1, context_path='resnet18')
 
-if opt.continuetrain:
+if opt.continue_train:
     if not os.path.isfile(os.path.join(dir_checkpoint,'last.pth')):
-        opt.continuetrain = False
+        opt.continue_train = False
         print('can not load last.pth, training on init weight.')
-if opt.continuetrain:
+if opt.continue_train:
     net.load_state_dict(torch.load(os.path.join(dir_checkpoint,'last.pth')))
     f = open(os.path.join(dir_checkpoint,'epoch_log.txt'),'r')
     opt.startepoch = int(f.read())

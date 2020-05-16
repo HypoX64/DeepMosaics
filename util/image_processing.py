@@ -237,8 +237,6 @@ def replace_mosaic(img_origin,img_fake,mask,x,y,size,no_feather):
         eclosion_num = int(size/5)
         entad = int(eclosion_num/2+2)
 
-        # mask = np.zeros(img_origin.shape, dtype='uint8')
-        # mask = cv2.rectangle(mask,(x-size+entad,y-size+entad),(x+size-entad,y+size-entad),(255,255,255),-1)
         mask = cv2.resize(mask,(img_origin.shape[1],img_origin.shape[0]))
         mask = ch_one2three(mask)
         

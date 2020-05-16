@@ -11,7 +11,6 @@ class Options():
 
         #base
         self.parser.add_argument('--use_gpu',type=int,default=0, help='if -1, use cpu')
-        # self.parser.add_argument('--use_gpu', action='store_true', help='if input it, use gpu')
         self.parser.add_argument('--media_path', type=str, default='./imgs/ruoruo.jpg',help='your videos or images path')
         self.parser.add_argument('--mode', type=str, default='auto',help='Program running mode. auto | add | clean | style')
         self.parser.add_argument('--model_path', type=str, default='./pretrained_models/mosaic/add_face.pth',help='pretrained model path')
@@ -20,6 +19,7 @@ class Options():
         self.parser.add_argument('--netG', type=str, default='auto',
             help='select model to use for netG(Clean mosaic and Transfer style) -> auto | unet_128 | unet_256 | resnet_9blocks | HD | video')
         self.parser.add_argument('--fps', type=int, default=0,help='read and output fps, if 0-> origin')
+        self.parser.add_argument('--no_preview', action='store_true', help='if specified, do not preview images when processing video')
         self.parser.add_argument('--output_size', type=int, default=0,help='size of output media, if 0 -> origin')
         self.parser.add_argument('--mask_threshold', type=int, default=64,help='threshold of recognize clean or add mosaic position 0~255')
 

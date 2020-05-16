@@ -11,6 +11,7 @@ import random
 import torch
 import torch.nn as nn
 import time
+from multiprocessing import Process, Queue
 
 from util import mosaic,util,ffmpeg,filt,data
 from util import image_processing as impro
@@ -32,17 +33,18 @@ opt.parser.add_argument('--lambda_gan',type=float,default=1, help='')
 opt.parser.add_argument('--finesize',type=int,default=256, help='')
 opt.parser.add_argument('--loadsize',type=int,default=286, help='')
 opt.parser.add_argument('--batchsize',type=int,default=1, help='')
-opt.parser.add_argument('--perload_num',type=int,default=64, help='number of images pool')
 opt.parser.add_argument('--norm',type=str,default='instance', help='')
 opt.parser.add_argument('--num_D', type=int, default=2, help='number of discriminators to use')
 opt.parser.add_argument('--n_layers_D', type=int, default=3, help='only used if which_model_netD==n_layers')
 opt.parser.add_argument('--lambda_feat', type=float, default=10.0, help='weight for feature matching loss') 
+opt.parser.add_argument('--image_pool',type=int,default=8, help='number of image load pool')
+opt.parser.add_argument('--load_process',type=int,default=4, help='number of process for loading data')
 
 opt.parser.add_argument('--dataset',type=str,default='./datasets/face/', help='')
 opt.parser.add_argument('--maxiter',type=int,default=10000000, help='')
 opt.parser.add_argument('--savefreq',type=int,default=10000, help='')
 opt.parser.add_argument('--startiter',type=int,default=0, help='')
-opt.parser.add_argument('--continuetrain', action='store_true', help='')
+opt.parser.add_argument('--continue_train', action='store_true', help='')
 opt.parser.add_argument('--savename',type=str,default='face', help='')
 
 
@@ -89,13 +91,14 @@ if opt.gan:
     else:
         netD = pix2pix_model.define_D(3*2, 64, 'basic', norm = opt.norm)
     netD.cuda()
+    netD.train()
 
 #--------------------------continue train--------------------------
-if opt.continuetrain:
+if opt.continue_train:
     if not os.path.isfile(os.path.join(dir_checkpoint,'last_G.pth')):
-        opt.continuetrain = False
+        opt.continue_train = False
         print('can not load last_G, training on init weight.')
-if opt.continuetrain:     
+if opt.continue_train:     
     netG.load_state_dict(torch.load(os.path.join(dir_checkpoint,'last_G.pth')))
     if opt.gan:
         netD.load_state_dict(torch.load(os.path.join(dir_checkpoint,'last_D.pth')))
@@ -111,7 +114,6 @@ if opt.gan:
     optimizer_D = torch.optim.Adam(netD.parameters(), lr=opt.lr,betas=(opt.beta1, 0.999))
     if opt.hd:
         criterionGAN = pix2pixHD_model.GANLoss(tensor=torch.cuda.FloatTensor).cuda() 
-        # criterionFeat = torch.nn.L1Loss()
         criterionFeat = pix2pixHD_model.GAN_Feat_loss(opt)
         criterionVGG = pix2pixHD_model.VGGLoss([opt.use_gpu])
     else:
@@ -120,64 +122,27 @@ if opt.gan:
 '''
 --------------------------preload data & data pool--------------------------
 '''
-# def loaddata(video_index):
-    
-#     videoname = videonames[video_index]
-#     img_index = random.randint(int(N/2)+1,lengths[video_index]- int(N/2)-1)
-    
-#     input_img = np.zeros((opt.loadsize,opt.loadsize,3*N+1), dtype='uint8')
-#     # this frame
-#     this_mask = impro.imread(os.path.join(opt.dataset,videoname,'mask','%05d'%(img_index)+'.png'),'gray',loadsize=opt.loadsize)
-#     input_img[:,:,-1] = this_mask
-#     #print(os.path.join(opt.dataset,videoname,'origin_image','%05d'%(img_index)+'.jpg'))
-#     ground_true =  impro.imread(os.path.join(opt.dataset,videoname,'origin_image','%05d'%(img_index)+'.jpg'),loadsize=opt.loadsize)
-#     mosaic_size,mod,rect_rat,feather = mosaic.get_random_parameter(ground_true,this_mask)
-#     start_pos = mosaic.get_random_startpos(num=N,bisa_p=0.3,bisa_max=mosaic_size,bisa_max_part=3)
-#     # merge other frame
-#     for i in range(0,N):
-#         img =  impro.imread(os.path.join(opt.dataset,videoname,'origin_image','%05d'%(img_index+i-int(N/2))+'.jpg'),loadsize=opt.loadsize)
-#         mask = impro.imread(os.path.join(opt.dataset,videoname,'mask','%05d'%(img_index+i-int(N/2))+'.png'),'gray',loadsize=opt.loadsize)
-#         img_mosaic = mosaic.addmosaic_base(img, mask, mosaic_size,model = mod,rect_rat=rect_rat,feather=feather,start_point=start_pos[i])
-#         input_img[:,:,i*3:(i+1)*3] = img_mosaic
-#     # to tensor
-#     input_img,ground_true = data.random_transform_video(input_img,ground_true,opt.finesize,N)
-#     input_img = data.im2tensor(input_img,bgr2rgb=False,use_gpu=-1,use_transform = False,is0_1=False)
-#     ground_true = data.im2tensor(ground_true,bgr2rgb=False,use_gpu=-1,use_transform = False,is0_1=False)
-    
-#     return input_img,ground_true
-
 print('Preloading data, please wait...')
-
-if opt.perload_num <= opt.batchsize:
-    opt.perload_num = opt.batchsize*2
-#data pool
-input_imgs = torch.rand(opt.perload_num,N*3+1,opt.finesize,opt.finesize)
-ground_trues = torch.rand(opt.perload_num,3,opt.finesize,opt.finesize)
-load_cnt = 0
-
-def preload():
-    global load_cnt   
+def preload(pool):
+    cnt = 0
+    input_imgs = torch.rand(opt.batchsize,N*3+1,opt.finesize,opt.finesize)
+    ground_trues = torch.rand(opt.batchsize,3,opt.finesize,opt.finesize)
     while 1:
         try:
-            video_index = random.randint(0,video_num-1)
-            videoname = videonames[video_index]
-            img_index = random.randint(int(N/2)+1,lengths[video_index]- int(N/2)-1)
-            input_imgs[load_cnt%opt.perload_num],ground_trues[load_cnt%opt.perload_num] = data.load_train_video(videoname,img_index,opt)
-            # input_imgs[load_cnt%opt.perload_num],ground_trues[load_cnt%opt.perload_num] = loaddata(video_index)
-            load_cnt += 1
-            # time.sleep(0.1)
+            for i in range(opt.batchsize):
+                video_index = random.randint(0,video_num-1)
+                videoname = videonames[video_index]
+                img_index = random.randint(int(N/2)+1,lengths[video_index]- int(N/2)-1)
+                input_imgs[i],ground_trues[i] = data.load_train_video(videoname,img_index,opt)
+            cnt += 1
+            pool.put([input_imgs,ground_trues])
         except Exception as e:
-            print("error:",e)
-import threading
-t = threading.Thread(target=preload,args=()) 
-t.daemon = True
-t.start()
-time_start=time.time()
-while load_cnt < opt.perload_num:
-    time.sleep(0.1)
-time_end=time.time()
-util.writelog(os.path.join(dir_checkpoint,'loss.txt'), 
-              'load speed: '+str(round((time_end-time_start)/(opt.perload_num),3))+' s/it',True)
+            print("Error:",videoname,e)
+pool = Queue(opt.image_pool)
+for i in range(opt.load_process):
+    p = Process(target=preload,args=(pool,))
+    p.daemon = True
+    p.start()
 
 '''
 --------------------------train--------------------------
@@ -185,14 +150,12 @@ util.writelog(os.path.join(dir_checkpoint,'loss.txt'),
 util.copyfile('./train.py', os.path.join(dir_checkpoint,'train.py'))
 util.copyfile('../../models/videoHD_model.py', os.path.join(dir_checkpoint,'model.py'))
 netG.train()
-netD.train()
 time_start=time.time()
 print("Begin training...")
 for iter in range(opt.startiter+1,opt.maxiter):
 
-    ran = random.randint(0, opt.perload_num-opt.batchsize)
-    inputdata = (input_imgs[ran:ran+opt.batchsize].clone()).cuda()
-    target = (ground_trues[ran:ran+opt.batchsize].clone()).cuda()
+    inputdata,target = pool.get()
+    inputdata,target = inputdata.cuda(),target.cuda()
 
     if opt.gan:
         # compute fake images: G(A)
@@ -226,17 +189,6 @@ for iter in range(opt.startiter+1,opt.maxiter):
         fake_AB = torch.cat((real_A, pred), 1)
         pred_fake = netD(fake_AB)
         loss_G_GAN = criterionGAN(pred_fake, True)*opt.lambda_gan
-        # GAN feature matching loss
-        # if opt.hd:
-        #     real_AB = torch.cat((real_A, target), 1)
-        #     pred_real = netD(real_AB)
-        #     loss_G_GAN_Feat=criterionFeat(pred_fake,pred_real)
-            # loss_G_GAN_Feat = 0
-            # feat_weights = 4.0 / (opt.n_layers_D + 1)
-            # D_weights = 1.0 / opt.num_D
-            # for i in range(opt.num_D):
-            #     for j in range(len(pred_fake[i])-1):
-            #         loss_G_GAN_Feat += D_weights * feat_weights * criterionFeat(pred_fake[i][j], pred_real[i][j].detach()) * opt.lambda_feat
             
         # combine loss and calculate gradients
         if opt.l2:
@@ -273,42 +225,33 @@ for iter in range(opt.startiter+1,opt.maxiter):
         loss_G_L1.backward()
         optimizer_G.step()
 
-    # save eval result
+    # save train result
     if (iter+1)%1000 == 0:
-        video_index = random.randint(0,video_num-1)
-        videoname = videonames[video_index]
-        img_index = random.randint(int(N/2)+1,lengths[video_index]- int(N/2)-1)
-        inputdata,target = data.load_train_video(videoname, img_index, opt)
-
-        # inputdata,target = loaddata(random.randint(0,video_num-1))
-        inputdata,target = inputdata.cuda(),target.cuda()
-        with torch.no_grad():
-            pred = netG(inputdata)
         try:
             data.showresult(inputdata[:,int((N-1)/2)*3:(int((N-1)/2)+1)*3,:,:],
-                target, pred, os.path.join(dir_checkpoint,'result_eval.jpg'))
+                target, pred, os.path.join(dir_checkpoint,'result_train.jpg'))
         except Exception as e:
             print(e)
 
     # plot
     if (iter+1)%1000 == 0:
         time_end = time.time()
-        if opt.gan:
-            savestr ='iter:{0:d} L1_loss:{1:.3f} GAN_loss:{2:.3f} Feat:{3:.3f} VGG:{4:.3f} time:{5:.2f}'.format(
-                iter+1,loss_sum[0]/1000,loss_sum[1]/1000,loss_sum[2]/1000,loss_sum[3]/1000,(time_end-time_start)/1000)
-            util.writelog(os.path.join(dir_checkpoint,'loss.txt'), savestr,True)
-            if (iter+1)/1000 >= 10:
-                for i in range(4):loss_plot[i].append(loss_sum[i]/1000)
-                item_plot.append(iter+1)
-                try:
-                    labels = ['L1_loss','GAN_loss','GAN_Feat_loss','VGG_loss']
-                    for i in range(4):plt.plot(item_plot,loss_plot[i],label=labels[i])     
-                    plt.xlabel('iter')
-                    plt.legend(loc=1)
-                    plt.savefig(os.path.join(dir_checkpoint,'loss.jpg'))
-                    plt.close()
-                except Exception as e:
-                    print("error:",e)
+        #if opt.gan:
+        savestr ='iter:{0:d} L1_loss:{1:.3f} GAN_loss:{2:.3f} Feat:{3:.3f} VGG:{4:.3f} time:{5:.2f}'.format(
+            iter+1,loss_sum[0]/1000,loss_sum[1]/1000,loss_sum[2]/1000,loss_sum[3]/1000,(time_end-time_start)/1000)
+        util.writelog(os.path.join(dir_checkpoint,'loss.txt'), savestr,True)
+        if (iter+1)/1000 >= 10:
+            for i in range(4):loss_plot[i].append(loss_sum[i]/1000)
+            item_plot.append(iter+1)
+            try:
+                labels = ['L1_loss','GAN_loss','GAN_Feat_loss','VGG_loss']
+                for i in range(4):plt.plot(item_plot,loss_plot[i],label=labels[i])     
+                plt.xlabel('iter')
+                plt.legend(loc=1)
+                plt.savefig(os.path.join(dir_checkpoint,'loss.jpg'))
+                plt.close()
+            except Exception as e:
+                print("error:",e)
 
         loss_sum = [0.,0.,0.,0.,0.,0.]
         time_start=time.time()

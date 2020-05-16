@@ -60,7 +60,6 @@ def main():
 
     util.clean_tempfiles(tmp_init = False)
         
-# main()
 if __name__ == '__main__':
     try:
         main()

@@ -183,3 +183,4 @@ nohup.out
 *.MP4
 *.JPEG
 *.exe
+*.npy
