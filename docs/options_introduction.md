@@ -7,10 +7,14 @@ If you need more effects,  use '--option your-parameters' to enter what you need
 | :----------: | :------------------------: | :-------------------------------------: |
 |  --use_gpu   |   if -1, do not use gpu    |                    0                    |
 | --media_path | your videos or images path |            ./imgs/ruoruo.jpg            |
+| --start_time | start position of video, default is the beginning of video | '00:00:00' |
+| --last_time | limit the duration of the video, default is the entire video | '00:00:00' |
 |    --mode    |    program running mode(auto/clean/add/style)    |                 'auto'                  |
 | --model_path |   pretrained model path    | ./pretrained_models/mosaic/add_face.pth |
 | --result_dir |  output media will be saved here|                 ./result          |
+| --temp_dir | Temporary files will go here | ./tmp |
 |    --fps    |    read and output fps, if 0-> origin    |                 0                  |
+| --no_preview | if specified,do not preview images when processing video. eg.(when run it on server) | Flase |
 
 ### AddMosaic
 

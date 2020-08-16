@@ -54,15 +54,15 @@ def main():
                 core.styletransfer_img(opt,netG)
             elif util.is_video(file):
                 core.styletransfer_video(opt,netG)
-
             else:
                 print('This type of file is not supported')
 
-    util.clean_tempfiles(tmp_init = False)
+    util.clean_tempfiles(opt, tmp_init = False)
         
 if __name__ == '__main__':
     try:
         main()
+        print('Finished!')
     except Exception as ex:
         print('--------------------ERROR--------------------')
         ex_type, ex_val, ex_stack = sys.exc_info()

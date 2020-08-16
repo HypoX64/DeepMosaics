@@ -52,10 +52,10 @@ for videopath in videopaths:
             timestamps=[]
             fps,endtime,height,width = ffmpeg.get_video_infos(videopath)
             for cut_point in range(1,int((endtime-opt.time)/opt.interval)):
-                util.clean_tempfiles()
-                ffmpeg.video2image(videopath, './tmp/video2image/%05d.'+opt.tempimage_type,fps=1,
+                util.clean_tempfiles(opt)
+                ffmpeg.video2image(videopath, opt.temp_dir+'/video2image/%05d.'+opt.tempimage_type,fps=1,
                     start_time = util.second2stamp(cut_point*opt.interval),last_time = util.second2stamp(opt.time))
-                imagepaths = util.Traversal('./tmp/video2image')
+                imagepaths = util.Traversal(opt.temp_dir+'/video2image')
                 cnt = 0 
                 for i in range(opt.time):
                     img = impro.imread(imagepaths[i])
@@ -80,8 +80,8 @@ for videopath in videopaths:
             util.makedirs(origindir)
             util.makedirs(maskdir)
 
-            util.clean_tempfiles()
-            ffmpeg.video2image(videopath, './tmp/video2image/%05d.'+opt.tempimage_type,
+            util.clean_tempfiles(opt)
+            ffmpeg.video2image(videopath, opt.temp_dir+'/video2image/%05d.'+opt.tempimage_type,
                 start_time = timestamp,last_time = util.second2stamp(opt.time))
             
             endtime = datetime.datetime.now()
@@ -89,7 +89,7 @@ for videopath in videopaths:
                 util.get_bar(100*video_cnt/len(videopaths),35),'',
                 util.second2stamp((endtime-starttime).seconds)+'/'+util.second2stamp((endtime-starttime).seconds/video_cnt*len(videopaths)))
 
-            imagepaths = util.Traversal('./tmp/video2image')
+            imagepaths = util.Traversal(opt.temp_dir+'/video2image')
             imagepaths = sorted(imagepaths)
             imgs=[];masks=[]
             mask_flag = False

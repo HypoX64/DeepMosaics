@@ -11,13 +11,13 @@ from util import image_processing as impro
 ---------------------Video Init---------------------
 '''
 def video_init(opt,path):
-    util.clean_tempfiles()
+    util.clean_tempfiles(opt)
     fps,endtime,height,width = ffmpeg.get_video_infos(path)
     if opt.fps !=0:
         fps = opt.fps
-    ffmpeg.video2voice(path,'./tmp/voice_tmp.mp3')
-    ffmpeg.video2image(path,'./tmp/video2image/output_%06d.'+opt.tempimage_type,fps)
-    imagepaths=os.listdir('./tmp/video2image')
+    ffmpeg.video2voice(path,opt.temp_dir+'/voice_tmp.mp3',opt.start_time,opt.last_time)
+    ffmpeg.video2image(path,opt.temp_dir+'/video2image/output_%06d.'+opt.tempimage_type,fps,opt.start_time,opt.last_time)
+    imagepaths=os.listdir(opt.temp_dir+'/video2image')
     imagepaths.sort()
     return fps,imagepaths,height,width
 
@@ -35,6 +35,7 @@ def addmosaic_img(opt,netS):
 def addmosaic_video(opt,netS):
     path = opt.media_path
     fps,imagepaths = video_init(opt,path)[:2]
+    length = len(imagepaths)
     # get position
     positions = []
     t1 = time.time()
@@ -43,17 +44,17 @@ def addmosaic_video(opt,netS):
     
     print('Find ROI location:')
     for i,imagepath in enumerate(imagepaths,1):
-        img = impro.imread(os.path.join('./tmp/video2image',imagepath))
+        img = impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepath))
         mask,x,y,size,area = runmodel.get_ROI_position(img,netS,opt)
         positions.append([x,y,area])      
-        cv2.imwrite(os.path.join('./tmp/ROI_mask',imagepath),mask)     
+        cv2.imwrite(os.path.join(opt.temp_dir+'/ROI_mask',imagepath),mask)     
         
         #preview result and print
         if not opt.no_preview:
             cv2.imshow('preview',mask)
             cv2.waitKey(1) & 0xFF
         t2 = time.time()
-        print('\r',str(i)+'/'+str(len(imagepaths)),util.get_bar(100*i/len(imagepaths),util.counttime(t1,t2,i,len(imagepaths)),num=35),end='')
+        print('\r',str(i)+'/'+str(length),util.get_bar(100*i/length,num=35),util.counttime(t1,t2,i,length),end='')
     
     print('\nOptimize ROI locations...')
     mask_index = filt.position_medfilt(np.array(positions), 7)
@@ -61,29 +62,29 @@ def addmosaic_video(opt,netS):
     # add mosaic
     print('Add Mosaic:')
     t1 = time.time()
-    for i in range(len(imagepaths)):
-        mask = impro.imread(os.path.join('./tmp/ROI_mask',imagepaths[mask_index[i]]),'gray')
-        img = impro.imread(os.path.join('./tmp/video2image',imagepaths[i]))
+    for i,imagepath in enumerate(imagepaths,1):
+        mask = impro.imread(os.path.join(opt.temp_dir+'/ROI_mask',imagepaths[mask_index[i-1]]),'gray')
+        img = impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepath))
         if impro.mask_area(mask)>100: 
             try:#Avoid unknown errors
                 img = mosaic.addmosaic(img, mask, opt)
             except Exception as e:
                    print('Warning:',e)
-        cv2.imwrite(os.path.join('./tmp/addmosaic_image',imagepaths[i]),img)
+        cv2.imwrite(os.path.join(opt.temp_dir+'/addmosaic_image',imagepath),img)
         
         #preview result and print
         if not opt.no_preview:
-            cv2.imshow('preview',mask)
+            cv2.imshow('preview',img)
             cv2.waitKey(1) & 0xFF
         t2 = time.time()
-        print('\r',str(i+1)+'/'+str(len(imagepaths)),util.get_bar(100*i/len(imagepaths),num=35),util.counttime(t1,t2,i,len(imagepaths)),end='')
+        print('\r',str(i)+'/'+str(length),util.get_bar(100*i/length,num=35),util.counttime(t1,t2,i,length),end='')
     
     print()
     if not opt.no_preview:
         cv2.destroyAllWindows()
     ffmpeg.image2video( fps,
-                        './tmp/addmosaic_image/output_%06d.'+opt.tempimage_type,
-                        './tmp/voice_tmp.mp3',
+                        opt.temp_dir+'/addmosaic_image/output_%06d.'+opt.tempimage_type,
+                        opt.temp_dir+'/voice_tmp.mp3',
                          os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_add.mp4'))
 
 '''
@@ -107,13 +108,13 @@ def styletransfer_video(opt,netG):
     length = len(imagepaths)
 
     for i,imagepath in enumerate(imagepaths,1):
-        img = impro.imread(os.path.join('./tmp/video2image',imagepath))
+        img = impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepath))
         img = runmodel.run_styletransfer(opt, netG, img)
-        cv2.imwrite(os.path.join('./tmp/style_transfer',imagepath),img)
+        cv2.imwrite(os.path.join(opt.temp_dir+'/style_transfer',imagepath),img)
         
         #preview result and print
         if not opt.no_preview:
-            cv2.imshow('preview',mask)
+            cv2.imshow('preview',img)
             cv2.waitKey(1) & 0xFF
         t2 = time.time()
         print('\r',str(i)+'/'+str(length),util.get_bar(100*i/length,num=35),util.counttime(t1,t2,i,len(imagepaths)),end='')
@@ -123,8 +124,8 @@ def styletransfer_video(opt,netG):
         cv2.destroyAllWindows()
     suffix = os.path.basename(opt.model_path).replace('.pth','').replace('style_','')
     ffmpeg.image2video( fps,
-                './tmp/style_transfer/output_%06d.'+opt.tempimage_type,
-                './tmp/voice_tmp.mp3',
+                opt.temp_dir+'/style_transfer/output_%06d.'+opt.tempimage_type,
+                opt.temp_dir+'/voice_tmp.mp3',
                  os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_'+suffix+'.mp4'))  
 
 '''
@@ -139,11 +140,11 @@ def get_mosaic_positions(opt,netM,imagepaths,savemask=True):
 
     print('Find mosaic location:')
     for i,imagepath in enumerate(imagepaths,1):
-        img_origin = impro.imread(os.path.join('./tmp/video2image',imagepath))
+        img_origin = impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepath))
         x,y,size,mask = runmodel.get_mosaic_position(img_origin,netM,opt)
         positions.append([x,y,size])
         if savemask:
-            cv2.imwrite(os.path.join('./tmp/mosaic_mask',imagepath), mask)
+            cv2.imwrite(os.path.join(opt.temp_dir+'/mosaic_mask',imagepath), mask)
         
         #preview result and print
         if not opt.no_preview:
@@ -192,7 +193,7 @@ def cleanmosaic_video_byframe(opt,netG,netM):
     length = len(imagepaths)
     for i,imagepath in enumerate(imagepaths,0):
         x,y,size = positions[i][0],positions[i][1],positions[i][2]
-        img_origin = impro.imread(os.path.join('./tmp/video2image',imagepath))
+        img_origin = impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepath))
         img_result = img_origin.copy()
         if size > 100:
             try:#Avoid unknown errors
@@ -201,11 +202,11 @@ def cleanmosaic_video_byframe(opt,netG,netM):
                     img_fake = runmodel.traditional_cleaner(img_mosaic,opt)
                 else:
                     img_fake = runmodel.run_pix2pix(img_mosaic,netG,opt)
-                mask = cv2.imread(os.path.join('./tmp/mosaic_mask',imagepath),0)
+                mask = cv2.imread(os.path.join(opt.temp_dir+'/mosaic_mask',imagepath),0)
                 img_result = impro.replace_mosaic(img_origin,img_fake,mask,x,y,size,opt.no_feather)
             except Exception as e:
                 print('Warning:',e)
-        cv2.imwrite(os.path.join('./tmp/replace_mosaic',imagepath),img_result)
+        cv2.imwrite(os.path.join(opt.temp_dir+'/replace_mosaic',imagepath),img_result)
         
         #preview result and print
         if not opt.no_preview:
@@ -213,13 +214,12 @@ def cleanmosaic_video_byframe(opt,netG,netM):
             cv2.waitKey(1) & 0xFF
         t2 = time.time()
         print('\r',str(i+1)+'/'+str(length),util.get_bar(100*i/length,num=35),util.counttime(t1,t2,i+1,len(imagepaths)),end='')
-    
     print()
     if not opt.no_preview:
         cv2.destroyAllWindows()
     ffmpeg.image2video( fps,
-                './tmp/replace_mosaic/output_%06d.'+opt.tempimage_type,
-                './tmp/voice_tmp.mp3',
+                opt.temp_dir+'/replace_mosaic/output_%06d.'+opt.tempimage_type,
+                opt.temp_dir+'/voice_tmp.mp3',
                  os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.mp4'))  
 
 def cleanmosaic_video_fusion(opt,netG,netM):
@@ -237,19 +237,20 @@ def cleanmosaic_video_fusion(opt,netG,netM):
     
     # clean mosaic
     print('Clean Mosaic:')
+    length = len(imagepaths)
     img_pool = np.zeros((height,width,3*N), dtype='uint8')
     mosaic_input = np.zeros((INPUT_SIZE,INPUT_SIZE,3*N+1), dtype='uint8')
     for i,imagepath in enumerate(imagepaths,0):
         x,y,size = positions[i][0],positions[i][1],positions[i][2]
         
         # image read stream
-        mask = cv2.imread(os.path.join('./tmp/mosaic_mask',imagepath),0)
+        mask = cv2.imread(os.path.join(opt.temp_dir+'/mosaic_mask',imagepath),0)
         if i==0 :
             for j in range(0,N):
-                img_pool[:,:,j*3:(j+1)*3] = impro.imread(os.path.join('./tmp/video2image',imagepaths[np.clip(i+j-12,0,len(imagepaths)-1)]))
+                img_pool[:,:,j*3:(j+1)*3] = impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepaths[np.clip(i+j-12,0,len(imagepaths)-1)]))
         else:
             img_pool[:,:,0:(N-1)*3] = img_pool[:,:,3:N*3]
-            img_pool[:,:,(N-1)*3:] = impro.imread(os.path.join('./tmp/video2image',imagepaths[np.clip(i+12,0,len(imagepaths)-1)]))
+            img_pool[:,:,(N-1)*3:] = impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepaths[np.clip(i+12,0,len(imagepaths)-1)]))
         img_origin = img_pool[:,:,int((N-1)/2)*3:(int((N-1)/2)+1)*3]
         img_result = img_origin.copy()
 
@@ -267,11 +268,18 @@ def cleanmosaic_video_fusion(opt,netG,netM):
                 img_result = impro.replace_mosaic(img_origin,img_fake,mask,x,y,size,opt.no_feather)        
             except Exception as e:
                 print('Warning:',e)
-        cv2.imwrite(os.path.join('./tmp/replace_mosaic',imagepath),img_result)           
+        cv2.imwrite(os.path.join(opt.temp_dir+'/replace_mosaic',imagepath),img_result)           
         
-        print('\r',str(i+1)+'/'+str(len(imagepaths)),util.get_bar(100*i/len(imagepaths),num=35),end='')
+        #preview result and print
+        if not opt.no_preview:
+            cv2.imshow('clean',img_result)
+            cv2.waitKey(1) & 0xFF
+        t2 = time.time()
+        print('\r',str(i+1)+'/'+str(length),util.get_bar(100*i/length,num=35),util.counttime(t1,t2,i+1,len(imagepaths)),end='')
     print()
+    if not opt.no_preview:
+        cv2.destroyAllWindows()
     ffmpeg.image2video( fps,
-                './tmp/replace_mosaic/output_%06d.'+opt.tempimage_type,
-                './tmp/voice_tmp.mp3',
+                opt.temp_dir+'/replace_mosaic/output_%06d.'+opt.tempimage_type,
+                opt.temp_dir+'/voice_tmp.mp3',
                  os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.mp4'))        

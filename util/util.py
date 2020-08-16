@@ -61,26 +61,27 @@ def makedirs(path):
         os.makedirs(path)
         print('makedir:',path)
 
-def clean_tempfiles(tmp_init=True):
-    if os.path.isdir('./tmp'): 
+def clean_tempfiles(opt,tmp_init=True):
+    tmpdir = opt.temp_dir
+    if os.path.isdir(tmpdir): 
         print('Clean temp...')  
-        shutil.rmtree('./tmp')
+        shutil.rmtree(tmpdir)
     if tmp_init:
-        os.makedirs('./tmp')
-        os.makedirs('./tmp/video2image')
-        os.makedirs('./tmp/addmosaic_image')
-        os.makedirs('./tmp/mosaic_crop')
-        os.makedirs('./tmp/replace_mosaic')
-        os.makedirs('./tmp/mosaic_mask')
-        os.makedirs('./tmp/ROI_mask')
-        os.makedirs('./tmp/ROI_mask_check')
-        os.makedirs('./tmp/style_transfer')
-
+        os.makedirs(tmpdir)
+        os.makedirs(os.path.join(tmpdir, 'video2image'))
+        os.makedirs(os.path.join(tmpdir, 'addmosaic_image'))
+        os.makedirs(os.path.join(tmpdir, 'mosaic_crop'))
+        os.makedirs(os.path.join(tmpdir, 'replace_mosaic'))
+        os.makedirs(os.path.join(tmpdir, 'mosaic_mask'))
+        os.makedirs(os.path.join(tmpdir, 'ROI_mask'))
+        os.makedirs(os.path.join(tmpdir, 'ROI_mask_check'))
+        os.makedirs(os.path.join(tmpdir, 'style_transfer'))
+ 
 def file_init(opt):
     if not os.path.isdir(opt.result_dir):
         os.makedirs(opt.result_dir)
         print('makedir:',opt.result_dir)
-    clean_tempfiles(True)
+    clean_tempfiles(opt,True)
 
 def second2stamp(s):
     h = int(s/3600)

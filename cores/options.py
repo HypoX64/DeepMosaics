@@ -10,16 +10,19 @@ class Options():
     def initialize(self):
 
         #base
-        self.parser.add_argument('--use_gpu',type=int,default=0, help='if -1, use cpu')
+        self.parser.add_argument('--use_gpu', type=int,default=0, help='if -1, use cpu')
         self.parser.add_argument('--media_path', type=str, default='./imgs/ruoruo.jpg',help='your videos or images path')
+        self.parser.add_argument('-ss', '--start_time', type=str, default='00:00:00',help='start position of video, default is the beginning of video')
+        self.parser.add_argument('-t', '--last_time', type=str, default='00:00:00',help='limit the duration of the video, default is the entire video')
         self.parser.add_argument('--mode', type=str, default='auto',help='Program running mode. auto | add | clean | style')
         self.parser.add_argument('--model_path', type=str, default='./pretrained_models/mosaic/add_face.pth',help='pretrained model path')
         self.parser.add_argument('--result_dir', type=str, default='./result',help='output media will be saved here')
+        self.parser.add_argument('--temp_dir', type=str, default='./tmp', help='Temporary files will go here')
         self.parser.add_argument('--tempimage_type', type=str, default='jpg',help='type of temp image, png | jpg, png is better but occupy more storage space')
         self.parser.add_argument('--netG', type=str, default='auto',
             help='select model to use for netG(Clean mosaic and Transfer style) -> auto | unet_128 | unet_256 | resnet_9blocks | HD | video')
         self.parser.add_argument('--fps', type=int, default=0,help='read and output fps, if 0-> origin')
-        self.parser.add_argument('--no_preview', action='store_true', help='if specified, do not preview images when processing video')
+        self.parser.add_argument('--no_preview', action='store_true', help='if specified,do not preview images when processing video. eg.(when run it on server)')
         self.parser.add_argument('--output_size', type=int, default=0,help='size of output media, if 0 -> origin')
         self.parser.add_argument('--mask_threshold', type=int, default=64,help='threshold of recognize clean or add mosaic position 0~255')
 
@@ -51,8 +54,9 @@ class Options():
         if not self.initialized:
             self.initialize()
         self.opt = self.parser.parse_args()
-
+        
         model_name = os.path.basename(self.opt.model_path)
+        self.opt.temp_dir = os.path.join(self.opt.temp_dir, 'DeepMosaics_temp')
 
         os.environ["CUDA_VISIBLE_DEVICES"] = str(self.opt.use_gpu)
         import torch
@@ -60,6 +64,11 @@ class Options():
             pass
         else:
             self.opt.use_gpu = -1
+
+        if not os.path.exists(self.opt.media_path):
+            print('Error: Bad media path!')
+            input('Please press any key to exit.\n')
+            exit(0)
 
         if self.opt.mode == 'auto':
             if 'clean' in model_name or self.opt.traditional:

@@ -7,10 +7,14 @@
 | :----------: | :------------------------: | :-------------------------------------: |
 |  --use_gpu   |   if -1, do not use gpu    |                    0                    |
 | --media_path | 需要处理的视频或者照片的路径 |            ./imgs/ruoruo.jpg            |
+| --start_time | 视频开始处理的位置，默认从头开始 | '00:00:00' |
+| --last_time | 处理的视频时长，默认是整个视频 | '00:00:00' |
 |    --mode    |    运行模式(auto/clean/add/style)    |                 'auto'                  |
 | --model_path |   预训练模型的路径    | ./pretrained_models/mosaic/add_face.pth |
 | --result_dir | 保存路径 |                 ./result          |
+| --temp_dir | 临时文件存储目录 | ./tmp |
 |    --fps    |    限制视频输出的fps，0则为默认    |                 0                  |
+| --no_preview | 如果输入，将不会在处理视频时播放实时预览．比如当你在服务器运行的时候 | Flase |
 
 ### 添加马赛克
 
