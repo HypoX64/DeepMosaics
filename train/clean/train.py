@@ -16,6 +16,8 @@ from multiprocessing import Process, Queue
 from util import mosaic,util,ffmpeg,filt,data
 from util import image_processing as impro
 from models import pix2pix_model,pix2pixHD_model,video_model,unet_model,loadmodel,videoHD_model
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import torch.backends.cudnn as cudnn
 

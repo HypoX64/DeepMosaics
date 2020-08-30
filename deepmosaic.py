@@ -5,7 +5,7 @@ from cores import Options,core
 from util import util
 from models import loadmodel
 
-opt = Options().getparse()
+opt = Options().getparse(test_flag = True)
 util.file_init(opt)
 
 def main():

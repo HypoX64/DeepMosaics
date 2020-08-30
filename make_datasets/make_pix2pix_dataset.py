@@ -106,7 +106,13 @@ for fold in range(opt.fold):
                 # t.start()
 
                 saveflag = True
-                x,y,size,area = impro.boundingSquare(mask, random.uniform(1.4,1.6))
+                if opt.mod == ['drawn','irregular']:
+                    x,y,size,area = impro.boundingSquare(mask_drawn, random.uniform(1.2,1.6))
+                elif opt.mod == ['network','irregular']:
+                    x,y,size,area = impro.boundingSquare(mask_net, random.uniform(1.2,1.6))
+                else:
+                    x,y,size,area = impro.boundingSquare(mask, random.uniform(1.2,1.6))
+
                 if area < 1000:
                     saveflag = False
                 else:

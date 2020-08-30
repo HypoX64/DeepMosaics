@@ -79,7 +79,7 @@ def ch_one2three(img):
     res = cv2.merge([img, img, img])
     return res
 
-def color_adjust(img,alpha=1,beta=0,b=0,g=0,r=0,ran = False):
+def color_adjust(img,alpha=0,beta=0,b=0,g=0,r=0,ran = False):
     '''
     g(x) = (1+α)g(x)+255*β, 
     g(x) = g(x[:+b*255,:+g*255,:+r*255])

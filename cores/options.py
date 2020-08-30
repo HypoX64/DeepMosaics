@@ -50,7 +50,7 @@ class Options():
         self.initialized = True
 
 
-    def getparse(self):
+    def getparse(self, test_flag = False):
         if not self.initialized:
             self.initialize()
         self.opt = self.parser.parse_args()
@@ -65,10 +65,11 @@ class Options():
         else:
             self.opt.use_gpu = -1
 
-        if not os.path.exists(self.opt.media_path):
-            print('Error: Bad media path!')
-            input('Please press any key to exit.\n')
-            exit(0)
+        if test_flag:
+            if not os.path.exists(self.opt.media_path):
+                print('Error: Bad media path!')
+                input('Please press any key to exit.\n')
+                exit(0)
 
         if self.opt.mode == 'auto':
             if 'clean' in model_name or self.opt.traditional:
