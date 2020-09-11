@@ -65,6 +65,17 @@ if __name__ == '__main__':
         print('Finished!')
     except Exception as ex:
         print('--------------------ERROR--------------------')
+        print('--------------Environment--------------')
+        print('DeepMosaics: 0.4.0')
+        print('Python:',sys.version)
+        import torch
+        print('Pytorch:',torch.__version__)
+        import cv2
+        print('OpenCV:',cv2.__version__)
+        import platform
+        print('Platform:',platform.platform())
+
+        print('--------------BUG--------------')
         ex_type, ex_val, ex_stack = sys.exc_info()
         print('Error Type:',ex_type)
         print(ex_val)

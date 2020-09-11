@@ -24,7 +24,7 @@ def imread(file_path,mod = 'normal',loadsize = 0):
     '''
     if system_type == 'Linux':
         if mod == 'normal':
-            img = cv2.imread(file_path)
+            img = cv2.imread(file_path,1)
         elif mod == 'gray':
             img = cv2.imread(file_path,0)
         elif mod == 'all':
@@ -33,11 +33,13 @@ def imread(file_path,mod = 'normal',loadsize = 0):
     #In windows, for chinese path, use cv2.imdecode insteaded.
     #It will loss EXIF, I can't fix it
     else: 
-        if mod == 'gray':
+        if mod == 'normal':
+            img = cv2.imdecode(np.fromfile(file_path,dtype=np.uint8),1)
+        elif mod == 'gray':
             img = cv2.imdecode(np.fromfile(file_path,dtype=np.uint8),0)
-        else:
+        elif mod == 'all':
             img = cv2.imdecode(np.fromfile(file_path,dtype=np.uint8),-1)
-    
+            
     if loadsize != 0:
         img = resize(img, loadsize, interpolation=cv2.INTER_CUBIC)
 

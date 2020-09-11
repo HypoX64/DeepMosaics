@@ -13,7 +13,7 @@ class Options():
         self.parser.add_argument('--use_gpu', type=int,default=0, help='if -1, use cpu')
         self.parser.add_argument('--media_path', type=str, default='./imgs/ruoruo.jpg',help='your videos or images path')
         self.parser.add_argument('-ss', '--start_time', type=str, default='00:00:00',help='start position of video, default is the beginning of video')
-        self.parser.add_argument('-t', '--last_time', type=str, default='00:00:00',help='limit the duration of the video, default is the entire video')
+        self.parser.add_argument('-t', '--last_time', type=str, default='00:00:00',help='duration of the video, default is the entire video')
         self.parser.add_argument('--mode', type=str, default='auto',help='Program running mode. auto | add | clean | style')
         self.parser.add_argument('--model_path', type=str, default='./pretrained_models/mosaic/add_face.pth',help='pretrained model path')
         self.parser.add_argument('--result_dir', type=str, default='./result',help='output media will be saved here')
