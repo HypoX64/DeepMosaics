@@ -70,11 +70,9 @@ def clean_tempfiles(opt,tmp_init=True):
         os.makedirs(tmpdir)
         os.makedirs(os.path.join(tmpdir, 'video2image'))
         os.makedirs(os.path.join(tmpdir, 'addmosaic_image'))
-        os.makedirs(os.path.join(tmpdir, 'mosaic_crop'))
         os.makedirs(os.path.join(tmpdir, 'replace_mosaic'))
         os.makedirs(os.path.join(tmpdir, 'mosaic_mask'))
         os.makedirs(os.path.join(tmpdir, 'ROI_mask'))
-        os.makedirs(os.path.join(tmpdir, 'ROI_mask_check'))
         os.makedirs(os.path.join(tmpdir, 'style_transfer'))
  
 def file_init(opt):
@@ -90,11 +88,16 @@ def second2stamp(s):
     s = int(s%60)
     return "%02d:%02d:%02d" % (h, m, s)
 
-def counttime(t1,t2,now_num,all_num):
+def stamp2second(stamp):
+    substamps = stamp.split(':')
+    return int(substamps[0])*3600 + int(substamps[1])*60 + int(substamps[2])
+
+
+def counttime(start_time,current_time,now_num,all_num):
     '''
-    t1,t2: time.time()
+    start_time,current_time: time.time()
     '''
-    used_time = int(t2-t1)
+    used_time = int(current_time-start_time)
     all_time = int(used_time/now_num*all_num)
     return second2stamp(used_time)+'/'+second2stamp(all_time)
 

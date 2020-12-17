@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 
 
 class Options():
@@ -69,7 +70,7 @@ class Options():
             if not os.path.exists(self.opt.media_path):
                 print('Error: Bad media path!')
                 input('Please press any key to exit.\n')
-                exit(0)
+                sys.exit(0)
 
         if self.opt.mode == 'auto':
             if 'clean' in model_name or self.opt.traditional:
@@ -81,7 +82,7 @@ class Options():
             else:
                 print('Please input running model!')
                 input('Please press any key to exit.\n')
-                exit(0)
+                sys.exit(0)
 
         if self.opt.output_size == 0 and self.opt.mode == 'style':
             self.opt.output_size = 512
@@ -101,7 +102,7 @@ class Options():
             else:
                 print('Type of Generator error!')
                 input('Please press any key to exit.\n')
-                exit(0)
+                sys.exit(0)
 
         if self.opt.ex_mult == 'auto':
             if 'face' in model_name:

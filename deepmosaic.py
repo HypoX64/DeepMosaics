@@ -6,7 +6,8 @@ from util import util
 from models import loadmodel
 
 opt = Options().getparse(test_flag = True)
-util.file_init(opt)
+if not os.path.isdir(opt.temp_dir):
+    util.file_init(opt)
 
 def main():
     
@@ -22,8 +23,10 @@ def main():
                 core.addmosaic_img(opt,netS)
             elif util.is_video(file):
                 core.addmosaic_video(opt,netS)
+                util.clean_tempfiles(opt, tmp_init = False)
             else:
                 print('This type of file is not supported')
+            util.clean_tempfiles(opt, tmp_init = False)
 
     elif opt.mode == 'clean':
         netM = loadmodel.bisenet(opt,'mosaic')
@@ -43,6 +46,7 @@ def main():
                     core.cleanmosaic_video_fusion(opt,netG,netM)
                 else:
                     core.cleanmosaic_video_byframe(opt,netG,netM)
+                util.clean_tempfiles(opt, tmp_init = False)
             else:
                 print('This type of file is not supported')
 
@@ -54,6 +58,7 @@ def main():
                 core.styletransfer_img(opt,netG)
             elif util.is_video(file):
                 core.styletransfer_video(opt,netG)
+                util.clean_tempfiles(opt, tmp_init = False)
             else:
                 print('This type of file is not supported')
 
@@ -83,5 +88,4 @@ if __name__ == '__main__':
             print(stack)
         input('Please press any key to exit.\n')
         #util.clean_tempfiles(tmp_init = False)
-        exit(0)
-
+        sys.exit(0)
