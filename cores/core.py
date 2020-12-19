@@ -16,21 +16,20 @@ def video_init(opt,path):
         fps = opt.fps
 
     continue_flag = False
+    imagepaths = []
+
     if os.path.isdir(opt.temp_dir):
-        if (opt.last_time != '00:00:00' and  len(os.listdir(os.path.join(opt.temp_dir,'video2image'))) > fps*(util.stamp2second(opt.last_time)-1)) \
-        or (opt.last_time == '00:00:00' and len(os.listdir(os.path.join(opt.temp_dir,'video2image'))) > fps*(endtime-1)):            
-            choose = input('There is an unfinished video. Continue it? [y/n] ')
-            if choose.lower() =='yes' or choose.lower() == 'y':
-                continue_flag = True
-    
-    if continue_flag:
-        processed_num = max(len(os.listdir(os.path.join(opt.temp_dir,'addmosaic_image'))),
-            len(os.listdir(os.path.join(opt.temp_dir,'replace_mosaic'))),
-            len(os.listdir(os.path.join(opt.temp_dir,'style_transfer'))))
         imagepaths = os.listdir(opt.temp_dir+'/video2image')
-        imagepaths.sort()
-        imagepaths = imagepaths[processed_num:]
-    else:
+        if imagepaths != []:
+            imagepaths.sort()
+            last_frame = int(imagepaths[-1][7:13])
+            if (opt.last_time != '00:00:00' and  last_frame > fps*(util.stamp2second(opt.last_time)-1)) \
+            or (opt.last_time == '00:00:00' and last_frame > fps*(endtime-1)):            
+                choose = input('There is an unfinished video. Continue it? [y/n] ')
+                if choose.lower() =='yes' or choose.lower() == 'y':
+                    continue_flag = True
+    
+    if not continue_flag:
         util.file_init(opt)
         ffmpeg.video2voice(path,opt.temp_dir+'/voice_tmp.mp3',opt.start_time,opt.last_time)
         ffmpeg.video2image(path,opt.temp_dir+'/video2image/output_%06d.'+opt.tempimage_type,fps,opt.start_time,opt.last_time)
@@ -89,6 +88,7 @@ def addmosaic_video(opt,netS):
             except Exception as e:
                    print('Warning:',e)
         cv2.imwrite(os.path.join(opt.temp_dir+'/addmosaic_image',imagepath),img)
+        os.remove(os.path.join(opt.temp_dir+'/video2image',imagepath))
         
         #preview result and print
         if not opt.no_preview:
@@ -129,6 +129,7 @@ def styletransfer_video(opt,netG):
         img = impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepath))
         img = runmodel.run_styletransfer(opt, netG, img)
         cv2.imwrite(os.path.join(opt.temp_dir+'/style_transfer',imagepath),img)
+        os.remove(os.path.join(opt.temp_dir+'/video2image',imagepath))
         
         #preview result and print
         if not opt.no_preview:
@@ -225,6 +226,7 @@ def cleanmosaic_video_byframe(opt,netG,netM):
             except Exception as e:
                 print('Warning:',e)
         cv2.imwrite(os.path.join(opt.temp_dir+'/replace_mosaic',imagepath),img_result)
+        os.remove(os.path.join(opt.temp_dir+'/video2image',imagepath))
         
         #preview result and print
         if not opt.no_preview:
@@ -287,7 +289,8 @@ def cleanmosaic_video_fusion(opt,netG,netM):
                 img_result = impro.replace_mosaic(img_origin,img_fake,mask,x,y,size,opt.no_feather)
             except Exception as e:
                 print('Warning:',e)
-        cv2.imwrite(os.path.join(opt.temp_dir+'/replace_mosaic',imagepath),img_result)           
+        cv2.imwrite(os.path.join(opt.temp_dir+'/replace_mosaic',imagepath),img_result)
+        os.remove(os.path.join(opt.temp_dir+'/video2image',imagepath))      
         
         #preview result and print
         if not opt.no_preview:

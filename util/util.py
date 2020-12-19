@@ -74,6 +74,9 @@ def clean_tempfiles(opt,tmp_init=True):
         os.makedirs(os.path.join(tmpdir, 'mosaic_mask'))
         os.makedirs(os.path.join(tmpdir, 'ROI_mask'))
         os.makedirs(os.path.join(tmpdir, 'style_transfer'))
+        # make dataset
+        os.makedirs(os.path.join(tmpdir, 'mosaic_crop'))
+        os.makedirs(os.path.join(tmpdir, 'ROI_mask_check'))
  
 def file_init(opt):
     if not os.path.isdir(opt.result_dir):
