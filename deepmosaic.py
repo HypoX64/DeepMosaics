@@ -1,9 +1,14 @@
 import os
 import sys
 import traceback
-from cores import Options,core
-from util import util
-from models import loadmodel
+try:
+    from cores import Options,core
+    from util import util
+    from models import loadmodel
+except Exception as e:
+    print(e)
+    input('Please press any key to exit.\n')
+    sys.exit(0)
 
 opt = Options().getparse(test_flag = True)
 if not os.path.isdir(opt.temp_dir):
