@@ -11,7 +11,7 @@ class Options():
     def initialize(self):
 
         #base
-        self.parser.add_argument('--use_gpu', type=int,default=0, help='if -1, use cpu')
+        self.parser.add_argument('--use_gpu', type=str,default='0', help='if -1, use cpu')
         self.parser.add_argument('--media_path', type=str, default='./imgs/ruoruo.jpg',help='your videos or images path')
         self.parser.add_argument('-ss', '--start_time', type=str, default='00:00:00',help='start position of video, default is the beginning of video')
         self.parser.add_argument('-t', '--last_time', type=str, default='00:00:00',help='duration of the video, default is the entire video')
@@ -58,13 +58,15 @@ class Options():
         
         model_name = os.path.basename(self.opt.model_path)
         self.opt.temp_dir = os.path.join(self.opt.temp_dir, 'DeepMosaics_temp')
-
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(self.opt.use_gpu)
-        import torch
-        if torch.cuda.is_available() and self.opt.use_gpu > -1:
-            pass
-        else:
-            self.opt.use_gpu = -1
+           
+        
+        if self.opt.use_gpu != '-1':
+            os.environ["CUDA_VISIBLE_DEVICES"] = str(self.opt.use_gpu)
+            import torch
+            if not torch.cuda.is_available():
+                self.opt.use_gpu = '-1'
+        # else:
+        #     self.opt.use_gpu = '-1'
 
         if test_flag:
             if not os.path.exists(self.opt.media_path):

@@ -87,7 +87,7 @@ for fold in range(opt.fold):
                 mask = mask_drawn
             if 'irregular' in opt.mod:
                 mask_irr = impro.imread(irrpaths[random.randint(0,12000-1)],'gray')
-                mask_irr = data.random_transform_single(mask_irr, (img.shape[0],img.shape[1]))
+                mask_irr = data.random_transform_single_mask(mask_irr, (img.shape[0],img.shape[1]))
                 mask = mask_irr
             if 'network' in opt.mod:
                 mask_net = runmodel.get_ROI_position(img,net,opt,keepsize=True)[0]

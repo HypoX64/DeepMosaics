@@ -68,7 +68,7 @@ def loadimage(imagepaths,maskpaths,opt,test_flag = False):
     for i in range(len(imagepaths)):
         img = impro.resize(impro.imread(imagepaths[i]),opt.loadsize)
         mask = impro.resize(impro.imread(maskpaths[i],mod = 'gray'),opt.loadsize)      
-        img,mask = data.random_transform_image(img, mask, opt.finesize, test_flag)
+        img,mask = data.random_transform_pair_image(img, mask, opt.finesize, test_flag)
         images[i] = (img.transpose((2, 0, 1))/255.0)
         masks[i] = (mask.reshape(1,1,opt.finesize,opt.finesize)/255.0)
     images = Totensor(images,opt.use_gpu)

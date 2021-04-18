@@ -17,7 +17,7 @@ DCT_Q = np.array([[8,16,19,22,26,27,29,34],
                 [26,27,29,34,38,46,56,59],
                 [27,29,35,38,46,56,69,83]])
 
-def imread(file_path,mod = 'normal',loadsize = 0):
+def imread(file_path,mod = 'normal',loadsize = 0, rgb=False):
     '''
     mod:  'normal' | 'gray' | 'all'
     loadsize: 0->original
@@ -42,6 +42,9 @@ def imread(file_path,mod = 'normal',loadsize = 0):
             
     if loadsize != 0:
         img = resize(img, loadsize, interpolation=cv2.INTER_CUBIC)
+
+    if rgb and img.ndim==3:
+        img = img[:,:,::-1]
 
     return img
 
@@ -253,3 +256,26 @@ def replace_mosaic(img_origin,img_fake,mask,x,y,size,no_feather):
         img_result = (img_origin*(1-mask)+img_tmp*mask).astype('uint8')
 
     return img_result
+
+def psnr(img1,img2):
+    mse = np.mean((img1/255.0-img2/255.0)**2)
+    if mse < 1e-10:
+        return 100
+    psnr_v = 20*np.log10(1/np.sqrt(mse))
+    return psnr_v
+
+def splice(imgs,splice_shape):
+    '''Stitching multiple images, all imgs must have the same size
+    imgs : [img1,img2,img3,img4]
+    splice_shape: (2,2)
+    '''
+    h,w,ch = imgs[0].shape
+    output = np.zeros((h*splice_shape[0],w*splice_shape[1],ch),np.uint8)
+    cnt = 0
+    for i in range(splice_shape[0]):
+        for j in range(splice_shape[1]):
+            if cnt < len(imgs):
+                output[h*i:h*(i+1),w*j:w*(j+1)] = imgs[cnt]
+                cnt += 1
+    return output
+
