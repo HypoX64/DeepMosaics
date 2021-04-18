@@ -76,7 +76,7 @@ if __name__ == '__main__':
     except Exception as ex:
         print('--------------------ERROR--------------------')
         print('--------------Environment--------------')
-        print('DeepMosaics: 0.4.0')
+        print('DeepMosaics: 0.5.0')
         print('Python:',sys.version)
         import torch
         print('Pytorch:',torch.__version__)

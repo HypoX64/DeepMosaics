@@ -2,13 +2,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .pix2pixHD_model import *
+from .model_util import *
 
 
 class Encoder2d(nn.Module):
-    def __init__(self, input_nc, ngf=64, n_downsampling=3, norm_layer=nn.BatchNorm2d):
+    def __init__(self, input_nc, ngf=64, n_downsampling=3, norm_layer=nn.BatchNorm2d, activation = nn.ReLU(True)):
         super(Encoder2d, self).__init__()        
-        activation = nn.ReLU(True)        
-
+   
         model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation]
         ### downsample
         for i in range(n_downsampling):
@@ -22,10 +22,9 @@ class Encoder2d(nn.Module):
         return self.model(input)
 
 class Encoder3d(nn.Module):
-    def __init__(self, input_nc, ngf=64, n_downsampling=3, norm_layer=nn.BatchNorm3d):
+    def __init__(self, input_nc, ngf=64, n_downsampling=3, norm_layer=nn.BatchNorm3d,activation = nn.ReLU(True)):
         super(Encoder3d, self).__init__()        
-        activation = nn.ReLU(True)        
-
+               
         model = [nn.Conv3d(input_nc, ngf, kernel_size=3, padding=1), norm_layer(ngf), activation]
         ### downsample
         for i in range(n_downsampling):
@@ -39,17 +38,18 @@ class Encoder3d(nn.Module):
         return self.model(input)
 
 class BVDNet(nn.Module):
-    def __init__(self, N, n_downsampling=3, n_blocks=1, input_nc=3, output_nc=3):
+    def __init__(self, N, n_downsampling=3, n_blocks=1, input_nc=3, output_nc=3,norm='batch',activation=nn.LeakyReLU(0.2)):
         super(BVDNet, self).__init__()
 
         ngf = 64
         padding_type = 'reflect'
-        norm_layer = nn.BatchNorm2d
+        norm_layer = get_norm_layer(norm,'2d')
+        norm_layer_3d = get_norm_layer(norm,'3d')
         self.N = N
 
-        # encoder  
-        self.encoder3d = Encoder3d(input_nc,64,n_downsampling)
-        self.encoder2d = Encoder2d(input_nc,64,n_downsampling)
+        # encoder
+        self.encoder3d = Encoder3d(input_nc,64,n_downsampling,norm_layer_3d,activation)
+        self.encoder2d = Encoder2d(input_nc,64,n_downsampling,norm_layer,activation)
 
         ### resnet blocks
         self.blocks = []
@@ -62,31 +62,31 @@ class BVDNet(nn.Module):
         self.decoder = []        
         for i in range(n_downsampling):
             mult = 2**(n_downsampling - i)
-            # self.decoder += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2), kernel_size=3, stride=2, padding=1, output_padding=1),
-            #            norm_layer(int(ngf * mult / 2)), nn.ReLU(True)]
-            self.decoder += [   nn.Upsample(scale_factor = 2, mode='nearest'),
-                                nn.ReflectionPad2d(1),
-                                nn.Conv2d(ngf * mult, int(ngf * mult / 2),kernel_size=3, stride=1, padding=0),
-                                norm_layer(int(ngf * mult / 2)),
-                                nn.ReLU(True)]
+            self.decoder += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2), kernel_size=3, stride=2, padding=1, output_padding=1),
+                       norm_layer(int(ngf * mult / 2)), activation]
+            # self.decoder += [   nn.Upsample(scale_factor = 2, mode='nearest'),
+            #                     nn.ReflectionPad2d(1),
+            #                     nn.Conv2d(ngf * mult, int(ngf * mult / 2),kernel_size=3, stride=1, padding=0),
+            #                     norm_layer(int(ngf * mult / 2)),
+            #                     activation]
         self.decoder += [nn.ReflectionPad2d(3), nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]        
         self.decoder = nn.Sequential(*self.decoder)
         self.limiter = nn.Tanh()
 
-    def forward(self, stream, last):
+    def forward(self, stream, previous):
         this_shortcut = stream[:,:,self.N]
         stream = self.encoder3d(stream)
         stream = stream.reshape(stream.size(0),stream.size(1),stream.size(3),stream.size(4))
         # print(stream.shape)
-        last = self.encoder2d(last)
-        x = stream + last
+        previous = self.encoder2d(previous)
+        x = stream + previous
         x = self.blocks(x)
         x = self.decoder(x)
         x = x+this_shortcut
         x = self.limiter(x)
         #print(x.shape)
 
-        # print(stream.shape,last.shape)
+        # print(stream.shape,previous.shape)
         return x
 
 class VGGLoss(nn.Module):

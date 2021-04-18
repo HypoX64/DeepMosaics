@@ -36,6 +36,7 @@ opt.parser.add_argument('--lambda_VGG',type=float,default=0.1, help='')
 opt.parser.add_argument('--load_thread',type=int,default=4, help='number of thread for loading data')
 
 opt.parser.add_argument('--dataset',type=str,default='./datasets/face/', help='')
+opt.parser.add_argument('--dataset_test',type=str,default='./datasets/face_test/', help='')
 opt.parser.add_argument('--n_epoch',type=int,default=200, help='')
 opt.parser.add_argument('--save_freq',type=int,default=100000, help='')
 opt.parser.add_argument('--continue_train', action='store_true', help='')
@@ -46,9 +47,11 @@ opt.parser.add_argument('--psnr_freq',type=int,default=100, help='')
 
 class TrainVideoLoader(object):
     """docstring for VideoLoader
+    Load a single video(Converted to images)
+    How to use:
     1.Init TrainVideoLoader as loader
     2.Get data by loader.ori_stream
-    3.loader.next()
+    3.loader.next()  to get next stream
     """
     def __init__(self, opt, video_dir, test_flag=False):
         super(TrainVideoLoader, self).__init__()
@@ -60,7 +63,7 @@ class TrainVideoLoader(object):
         self.transform_params = data.get_transform_params()
         self.ori_load_pool = []
         self.mosaic_load_pool = []
-        self.last_pred = None
+        self.previous_pred = None
         feg_ori =  impro.imread(os.path.join(video_dir,'origin_image','00001.jpg'),loadsize=self.opt.loadsize,rgb=True)
         feg_mask = impro.imread(os.path.join(video_dir,'mask','00001.png'),mod='gray',loadsize=self.opt.loadsize)
         self.mosaic_size,self.mod,self.rect_rat,self.feather = mosaic.get_random_parameter(feg_ori,feg_mask)
@@ -72,8 +75,6 @@ class TrainVideoLoader(object):
             _ori_img = impro.imread(os.path.join(video_dir,'origin_image','%05d' % (i+1)+'.jpg'),loadsize=self.opt.loadsize,rgb=True)
             _mask = impro.imread(os.path.join(video_dir,'mask','%05d' % (i+1)+'.png' ),mod='gray',loadsize=self.opt.loadsize)
             _mosaic_img = mosaic.addmosaic_base(_ori_img, _mask, self.mosaic_size,0, self.mod,self.rect_rat,self.feather,self.startpos)
-            # _ori_img = data.random_transform_single_image(_ori_img, opt.finesize,self.transform_params,self.test_flag)
-            # _mosaic_img = data.random_transform_single_image(_mosaic_img, opt.finesize,self.transform_params,self.test_flag)
             self.ori_load_pool.append(self.normalize(_ori_img))
             self.mosaic_load_pool.append(self.normalize(_mosaic_img))
         self.ori_load_pool = np.array(self.ori_load_pool)
@@ -87,39 +88,35 @@ class TrainVideoLoader(object):
         self.mosaic_stream = self.mosaic_stream.reshape(1,self.opt.T,opt.finesize,opt.finesize,3).transpose((0,4,1,2,3))
         
         #Init frist previous frame
-        self.last_pred = self.ori_load_pool[self.opt.S*self.opt.N-1].copy()
+        self.previous_pred = self.ori_load_pool[self.opt.S*self.opt.N-1].copy()
         # previous B,C,H,W
-        self.last_pred = self.last_pred.reshape(1,opt.finesize,opt.finesize,3).transpose((0,3,1,2))
+        self.previous_pred = self.previous_pred.reshape(1,opt.finesize,opt.finesize,3).transpose((0,3,1,2))
     
     def normalize(self,data):
+        '''
+        normalize to -1 ~ 1
+        '''
         return (data.astype(np.float32)/255.0-0.5)/0.5
+
+    def anti_normalize(self,data):
+        return np.clip((data*0.5+0.5)*255,0,255).astype(np.uint8)
     
     def next(self):
         if self.t != 0:
-            self.last_pred = None
+            self.previous_pred = None
             self.ori_load_pool   [:self.opt.S*self.opt.T-1] = self.ori_load_pool   [1:self.opt.S*self.opt.T]
             self.mosaic_load_pool[:self.opt.S*self.opt.T-1] = self.mosaic_load_pool[1:self.opt.S*self.opt.T]
             #print(os.path.join(self.video_dir,'origin_image','%05d' % (self.opt.S*self.opt.T+self.t)+'.jpg'))
             _ori_img = impro.imread(os.path.join(self.video_dir,'origin_image','%05d' % (self.opt.S*self.opt.T+self.t)+'.jpg'),loadsize=self.opt.loadsize,rgb=True)
             _mask = impro.imread(os.path.join(self.video_dir,'mask','%05d' % (self.opt.S*self.opt.T+self.t)+'.png' ),mod='gray',loadsize=self.opt.loadsize)
             _mosaic_img = mosaic.addmosaic_base(_ori_img, _mask, self.mosaic_size,0, self.mod,self.rect_rat,self.feather,self.startpos)
-            # if np.random.random() < 0.01:
-            #     print('1')
-            #     cv2.imwrite(util.randomstr(10)+'.jpg', _ori_img)
 
-            # _ori_img = data.random_transform_single_image(_ori_img, opt.finesize,self.transform_params,self.test_flag)
-            # _mosaic_img = data.random_transform_single_image(_mosaic_img, opt.finesize,self.transform_params,self.test_flag)
             _ori_img,_mosaic_img = self.normalize(_ori_img),self.normalize(_mosaic_img)
             self.ori_load_pool   [self.opt.S*self.opt.T-1] = _ori_img
             self.mosaic_load_pool[self.opt.S*self.opt.T-1] = _mosaic_img
 
             self.ori_stream    = self.ori_load_pool   [np.linspace(0, (self.opt.T-1)*self.opt.S,self.opt.T,dtype=np.int64)].copy()
             self.mosaic_stream = self.mosaic_load_pool[np.linspace(0, (self.opt.T-1)*self.opt.S,self.opt.T,dtype=np.int64)].copy()
-
-            if np.random.random() < 0.01:
-                # print(self.ori_stream[0,0].shape)
-                print('1')
-                cv2.imwrite(util.randomstr(10)+'.jpg', self.ori_stream[0])
 
             # stream B,T,H,W,C -> B,C,T,H,W
             self.ori_stream    = self.ori_stream.reshape   (1,self.opt.T,opt.finesize,opt.finesize,3).transpose((0,4,1,2,3))
@@ -141,8 +138,9 @@ class DataLoader(object):
         self.n_iter = len(self.videolist)//self.opt.load_thread//self.opt.batchsize*self.each_video_n_iter*self.opt.load_thread
         self.queue = Queue(self.opt.load_thread)
         self.ori_stream = np.zeros((self.opt.batchsize,3,self.opt.T,self.opt.finesize,self.opt.finesize),dtype=np.float32)# B,C,T,H,W
-        self.mosaic_stream = self.ori_stream.copy()
-        self.last_pred = np.zeros((self.opt.batchsize,3,self.opt.finesize,self.opt.finesize),dtype=np.float32)
+        self.mosaic_stream = np.zeros((self.opt.batchsize,3,self.opt.T,self.opt.finesize,self.opt.finesize),dtype=np.float32)# B,C,T,H,W
+        self.previous_pred = np.zeros((self.opt.batchsize,3,self.opt.finesize,self.opt.finesize),dtype=np.float32)
+        self.load_init()
 
     def load(self,videolist):
         for load_video_iter in range(len(videolist)//self.opt.batchsize):
@@ -153,12 +151,12 @@ class DataLoader(object):
                     self.ori_stream[i] = videoloaders[i].ori_stream
                     self.mosaic_stream[i] = videoloaders[i].mosaic_stream
                     if each_video_iter == 0:
-                        self.last_pred[i] = videoloaders[i].last_pred
+                        self.previous_pred[i] = videoloaders[i].previous_pred
                     videoloaders[i].next()
                 if each_video_iter == 0:
-                    self.queue.put([self.ori_stream,self.mosaic_stream,self.last_pred])
+                    self.queue.put([self.ori_stream.copy(),self.mosaic_stream.copy(),self.previous_pred])
                 else:
-                    self.queue.put([self.ori_stream,self.mosaic_stream,None])
+                    self.queue.put([self.ori_stream.copy(),self.mosaic_stream.copy(),None])
     
     def load_init(self):
         ptvn = len(self.videolist)//self.opt.load_thread #pre_thread_video_num
@@ -209,31 +207,28 @@ videolist_train = videolist[:int(len(videolist)*0.8)].copy()
 videolist_eval = videolist[int(len(videolist)*0.8):].copy()
 
 dataloader_train = DataLoader(opt, videolist_train)
-dataloader_train.load_init()
 dataloader_eval = DataLoader(opt, videolist_eval)
-dataloader_eval.load_init()
 
-previous_predframe_train = 0 
-previous_predframe_eval = 0 
+previous_predframe_tmp = 0
 for train_iter in range(dataloader_train.n_iter):
     t_start = time.time()
     # train
-    ori_stream,mosaic_stream,last_frame = dataloader_train.get_data()
+    ori_stream,mosaic_stream,previous_frame = dataloader_train.get_data()
     ori_stream = data.to_tensor(ori_stream, opt.use_gpu)
     mosaic_stream = data.to_tensor(mosaic_stream, opt.use_gpu)
-    if last_frame is None:
-        last_frame = data.to_tensor(previous_predframe_train, opt.use_gpu)
+    if previous_frame is None:
+        previous_frame = data.to_tensor(previous_predframe_tmp, opt.use_gpu)
     else:
-        last_frame = data.to_tensor(last_frame, opt.use_gpu)
+        previous_frame = data.to_tensor(previous_frame, opt.use_gpu)
     optimizer.zero_grad()
-    out = net(mosaic_stream,last_frame)
+    out = net(mosaic_stream,previous_frame)
     loss_L1 = lossf_L1(out,ori_stream[:,:,opt.N])
     loss_VGG = lossf_VGG(out,ori_stream[:,:,opt.N]) * opt.lambda_VGG
     TBGlobalWriter.add_scalars('loss/train', {'L1':loss_L1.item(),'VGG':loss_VGG.item()}, train_iter)
     loss = loss_L1+loss_VGG
     loss.backward()
     optimizer.step()
-    previous_predframe_train = out.detach().cpu().numpy()
+    previous_predframe_tmp = out.detach().cpu().numpy()
 
     # save network
     if train_iter%opt.save_freq == 0 and train_iter != 0:
@@ -257,19 +252,19 @@ for train_iter in range(dataloader_train.n_iter):
 
     # eval
     if (train_iter)%5 ==0:
-        ori_stream,mosaic_stream,last_frame = dataloader_eval.get_data()
+        ori_stream,mosaic_stream,previous_frame = dataloader_eval.get_data()
         ori_stream = data.to_tensor(ori_stream, opt.use_gpu)
         mosaic_stream = data.to_tensor(mosaic_stream, opt.use_gpu)
-        if last_frame is None:
-            last_frame = data.to_tensor(previous_predframe_eval, opt.use_gpu)
+        if previous_frame is None:
+            previous_frame = data.to_tensor(previous_predframe_tmp, opt.use_gpu)
         else:
-            last_frame = data.to_tensor(last_frame, opt.use_gpu)
+            previous_frame = data.to_tensor(previous_frame, opt.use_gpu)
         with torch.no_grad():
-            out = net(mosaic_stream,last_frame)
+            out = net(mosaic_stream,previous_frame)
             loss_L1 = lossf_L1(out,ori_stream[:,:,opt.N])
             loss_VGG = lossf_VGG(out,ori_stream[:,:,opt.N]) * opt.lambda_VGG
         TBGlobalWriter.add_scalars('loss/eval', {'L1':loss_L1.item(),'VGG':loss_VGG.item()}, train_iter)
-        previous_predframe_eval = out.detach().cpu().numpy()
+        previous_predframe_tmp = out.detach().cpu().numpy()
 
         #psnr
         if (train_iter)%opt.psnr_freq ==0:
@@ -292,19 +287,18 @@ for train_iter in range(dataloader_train.n_iter):
             t_strat = time.time()
 
     # test
-    test_dir = '../../datasets/video_test'
-    if train_iter % opt.showresult_freq == 0 and os.path.isdir(test_dir):
+    if train_iter % opt.showresult_freq == 0 and os.path.isdir(opt.dataset_test):
         show_imgs = []
-        videos = os.listdir(test_dir)
+        videos = os.listdir(opt.dataset_test)
         sorted(videos)
         for video in videos:
-            frames = os.listdir(os.path.join(test_dir,video,'image'))
+            frames = os.listdir(os.path.join(opt.dataset_test,video,'image'))
             sorted(frames)
             mosaic_stream = []
             for i in range(opt.T):
-                _mosaic = impro.imread(os.path.join(test_dir,video,'image',frames[i*opt.S]),loadsize=opt.finesize,rgb=True)
+                _mosaic = impro.imread(os.path.join(opt.dataset_test,video,'image',frames[i*opt.S]),loadsize=opt.finesize,rgb=True)
                 mosaic_stream.append(_mosaic)
-            previous = impro.imread(os.path.join(test_dir,video,'image',frames[opt.N*opt.S-1]),loadsize=opt.finesize,rgb=True)
+            previous = impro.imread(os.path.join(opt.dataset_test,video,'image',frames[opt.N*opt.S-1]),loadsize=opt.finesize,rgb=True)
             mosaic_stream = (np.array(mosaic_stream).astype(np.float32)/255.0-0.5)/0.5
             mosaic_stream = mosaic_stream.reshape(1,opt.T,opt.finesize,opt.finesize,3).transpose((0,4,1,2,3))
             mosaic_stream = data.to_tensor(mosaic_stream, opt.use_gpu)
