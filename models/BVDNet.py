@@ -4,17 +4,38 @@ import torch.nn.functional as F
 from .pix2pixHD_model import *
 from .model_util import *
 
+class UpBlock(nn.Module):
+    def __init__(self, in_channel, out_channel, kernel_size=3, padding=1):
+        super().__init__()
+
+        self.convup = nn.Sequential(
+                nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
+                nn.ReflectionPad2d(padding),
+                # EqualConv2d(out_channel, out_channel, kernel_size, padding=padding),
+                SpectralNorm(nn.Conv2d(in_channel, out_channel, kernel_size)),
+                nn.LeakyReLU(0.2),
+                # Blur(out_channel),
+            )
+
+       
+    def forward(self, input):
+
+        outup = self.convup(input)
+
+        return outup
+
 
 class Encoder2d(nn.Module):
-    def __init__(self, input_nc, ngf=64, n_downsampling=3, norm_layer=nn.BatchNorm2d, activation = nn.ReLU(True)):
+    def __init__(self, input_nc, ngf=64, n_downsampling=3, activation = nn.LeakyReLU(0.2)):
         super(Encoder2d, self).__init__()        
    
-        model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation]
+        model = [nn.ReflectionPad2d(3), SpectralNorm(nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0)), activation]
         ### downsample
         for i in range(n_downsampling):
             mult = 2**i
-            model += [nn.ReflectionPad2d(1),nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=0),
-                      norm_layer(ngf * mult * 2), activation]
+            model += [  nn.ReflectionPad2d(1),
+                        SpectralNorm(nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=0)), 
+                        activation]
 
         self.model = nn.Sequential(*model)
 
@@ -22,15 +43,15 @@ class Encoder2d(nn.Module):
         return self.model(input)
 
 class Encoder3d(nn.Module):
-    def __init__(self, input_nc, ngf=64, n_downsampling=3, norm_layer=nn.BatchNorm3d,activation = nn.ReLU(True)):
+    def __init__(self, input_nc, ngf=64, n_downsampling=3, activation = nn.LeakyReLU(0.2)):
         super(Encoder3d, self).__init__()        
                
-        model = [nn.Conv3d(input_nc, ngf, kernel_size=3, padding=1), norm_layer(ngf), activation]
+        model = [SpectralNorm(nn.Conv3d(input_nc, ngf, kernel_size=3, padding=1)), activation]
         ### downsample
         for i in range(n_downsampling):
             mult = 2**i
-            model += [nn.Conv3d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1),
-                      norm_layer(ngf * mult * 2), activation]
+            model += [  SpectralNorm(nn.Conv3d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1)),
+                         activation]
 
         self.model = nn.Sequential(*model)
 
@@ -38,32 +59,31 @@ class Encoder3d(nn.Module):
         return self.model(input)
 
 class BVDNet(nn.Module):
-    def __init__(self, N, n_downsampling=3, n_blocks=1, input_nc=3, output_nc=3,norm='batch',activation=nn.LeakyReLU(0.2)):
+    def __init__(self, N, n_downsampling=3, n_blocks=1, input_nc=3, output_nc=3,activation=nn.LeakyReLU(0.2)):
         super(BVDNet, self).__init__()
 
         ngf = 64
         padding_type = 'reflect'
-        norm_layer = get_norm_layer(norm,'2d')
-        norm_layer_3d = get_norm_layer(norm,'3d')
         self.N = N
 
         # encoder
-        self.encoder3d = Encoder3d(input_nc,64,n_downsampling,norm_layer_3d,activation)
-        self.encoder2d = Encoder2d(input_nc,64,n_downsampling,norm_layer,activation)
+        self.encoder3d = Encoder3d(input_nc,64,n_downsampling,activation)
+        self.encoder2d = Encoder2d(input_nc,64,n_downsampling,activation)
 
         ### resnet blocks
         self.blocks = []
         mult = 2**n_downsampling
         for i in range(n_blocks):
-            self.blocks += [ResnetBlock(ngf * mult, padding_type=padding_type, activation=nn.ReLU(True), norm_layer=norm_layer)]
+            self.blocks += [ResnetBlockSpectralNorm(ngf * mult, padding_type=padding_type, activation=activation)]
         self.blocks = nn.Sequential(*self.blocks)
 
         ### decoder
         self.decoder = []        
         for i in range(n_downsampling):
             mult = 2**(n_downsampling - i)
-            self.decoder += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2), kernel_size=3, stride=2, padding=1, output_padding=1),
-                       norm_layer(int(ngf * mult / 2)), activation]
+            self.decoder += [UpBlock(ngf * mult, int(ngf * mult / 2))]
+            # self.decoder += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2), kernel_size=3, stride=2, padding=1, output_padding=1),
+            #            norm_layer(int(ngf * mult / 2)), activation]
             # self.decoder += [   nn.Upsample(scale_factor = 2, mode='nearest'),
             #                     nn.ReflectionPad2d(1),
             #                     nn.Conv2d(ngf * mult, int(ngf * mult / 2),kernel_size=3, stride=1, padding=0),
