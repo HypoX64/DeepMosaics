@@ -42,7 +42,7 @@ def tensor2im(image_tensor, imtype=np.uint8, gray=False, rgb2bgr = True ,is0_1 =
     return image_numpy.astype(imtype)
 
 
-def im2tensor(image_numpy, imtype=np.uint8, gray=False,bgr2rgb = True, reshape = True, use_gpu = 0,  use_transform = True,is0_1 = True):
+def im2tensor(image_numpy, imtype=np.uint8, gray=False,bgr2rgb = True, reshape = True, gpu_id = 0,  use_transform = True,is0_1 = True):
     
     if gray:
         h, w = image_numpy.shape
@@ -65,7 +65,7 @@ def im2tensor(image_numpy, imtype=np.uint8, gray=False,bgr2rgb = True, reshape =
             image_tensor = torch.from_numpy(image_numpy).float()
         if reshape:
             image_tensor = image_tensor.reshape(1,ch,h,w)
-    if use_gpu != '-1':
+    if gpu_id != '-1':
         image_tensor = image_tensor.cuda()
     return image_tensor
 
@@ -281,8 +281,8 @@ def random_transform_pair_image(img,mask,finesize,test_flag = False):
 #         input_img[:,:,i*3:(i+1)*3] = img_mosaic
 #     # to tensor
 #     input_img,ground_true = random_transform_video(input_img,ground_true,opt.finesize,N)
-#     input_img = im2tensor(input_img,bgr2rgb=False,use_gpu=-1,use_transform = False,is0_1=False)
-#     ground_true = im2tensor(ground_true,bgr2rgb=False,use_gpu=-1,use_transform = False,is0_1=False)
+#     input_img = im2tensor(input_img,bgr2rgb=False,gpu_id=-1,use_transform = False,is0_1=False)
+#     ground_true = im2tensor(ground_true,bgr2rgb=False,gpu_id=-1,use_transform = False,is0_1=False)
     
 #     return input_img,ground_true
 

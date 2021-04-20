@@ -56,6 +56,7 @@ for videopath in videopaths:
                 ffmpeg.video2image(videopath, opt.temp_dir+'/video2image/%05d.'+opt.tempimage_type,fps=1,
                     start_time = util.second2stamp(cut_point*opt.interval),last_time = util.second2stamp(opt.time))
                 imagepaths = util.Traversal(opt.temp_dir+'/video2image')
+                imagepaths = sorted(imagepaths)
                 cnt = 0 
                 for i in range(opt.time):
                     img = impro.imread(imagepaths[i])
@@ -124,5 +125,5 @@ for videopath in videopaths:
         util.writelog(os.path.join(opt.savedir,'opt.txt'), 
               videopath+'\n'+str(result_cnt)+'\n'+str(e))
     video_cnt +=1
-    if opt.use_gpu != -1:
+    if opt.gpu_id != '-1':
         torch.cuda.empty_cache()

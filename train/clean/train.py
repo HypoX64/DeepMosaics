@@ -75,6 +75,9 @@ class TrainVideoLoader(object):
             _ori_img = impro.imread(os.path.join(video_dir,'origin_image','%05d' % (i+1)+'.jpg'),loadsize=self.opt.loadsize,rgb=True)
             _mask = impro.imread(os.path.join(video_dir,'mask','%05d' % (i+1)+'.png' ),mod='gray',loadsize=self.opt.loadsize)
             _mosaic_img = mosaic.addmosaic_base(_ori_img, _mask, self.mosaic_size,0, self.mod,self.rect_rat,self.feather,self.startpos)
+            _ori_img = data.random_transform_single_image(_ori_img,opt.finesize,self.transform_params)
+            _mosaic_img = data.random_transform_single_image(_mosaic_img,opt.finesize,self.transform_params)
+
             self.ori_load_pool.append(self.normalize(_ori_img))
             self.mosaic_load_pool.append(self.normalize(_mosaic_img))
         self.ori_load_pool = np.array(self.ori_load_pool)
@@ -110,7 +113,9 @@ class TrainVideoLoader(object):
             _ori_img = impro.imread(os.path.join(self.video_dir,'origin_image','%05d' % (self.opt.S*self.opt.T+self.t)+'.jpg'),loadsize=self.opt.loadsize,rgb=True)
             _mask = impro.imread(os.path.join(self.video_dir,'mask','%05d' % (self.opt.S*self.opt.T+self.t)+'.png' ),mod='gray',loadsize=self.opt.loadsize)
             _mosaic_img = mosaic.addmosaic_base(_ori_img, _mask, self.mosaic_size,0, self.mod,self.rect_rat,self.feather,self.startpos)
-
+            _ori_img = data.random_transform_single_image(_ori_img,opt.finesize,self.transform_params)
+            _mosaic_img = data.random_transform_single_image(_mosaic_img,opt.finesize,self.transform_params)
+            
             _ori_img,_mosaic_img = self.normalize(_ori_img),self.normalize(_mosaic_img)
             self.ori_load_pool   [self.opt.S*self.opt.T-1] = _ori_img
             self.mosaic_load_pool[self.opt.S*self.opt.T-1] = _mosaic_img
@@ -184,17 +189,17 @@ TBGlobalWriter = SummaryWriter(tensorboard_savedir)
 net = BVDNet.BVDNet(opt.N)
 
 
-if opt.use_gpu != '-1' and len(opt.use_gpu) == 1:
+if opt.gpu_id != '-1' and len(opt.gpu_id) == 1:
     torch.backends.cudnn.benchmark = True
     net.cuda()
-elif opt.use_gpu != '-1' and len(opt.use_gpu) > 1:
+elif opt.gpu_id != '-1' and len(opt.gpu_id) > 1:
     torch.backends.cudnn.benchmark = True
     net = nn.DataParallel(net)
     net.cuda()
 
 optimizer = torch.optim.Adam(net.parameters(), lr=opt.lr, betas=(opt.beta1, opt.beta2))
 lossf_L1 = nn.L1Loss()
-lossf_VGG = BVDNet.VGGLoss([opt.use_gpu])
+lossf_VGG = BVDNet.VGGLoss([opt.gpu_id])
 
 videolist_tmp = os.listdir(opt.dataset)
 videolist = []
@@ -214,12 +219,12 @@ for train_iter in range(dataloader_train.n_iter):
     t_start = time.time()
     # train
     ori_stream,mosaic_stream,previous_frame = dataloader_train.get_data()
-    ori_stream = data.to_tensor(ori_stream, opt.use_gpu)
-    mosaic_stream = data.to_tensor(mosaic_stream, opt.use_gpu)
+    ori_stream = data.to_tensor(ori_stream, opt.gpu_id)
+    mosaic_stream = data.to_tensor(mosaic_stream, opt.gpu_id)
     if previous_frame is None:
-        previous_frame = data.to_tensor(previous_predframe_tmp, opt.use_gpu)
+        previous_frame = data.to_tensor(previous_predframe_tmp, opt.gpu_id)
     else:
-        previous_frame = data.to_tensor(previous_frame, opt.use_gpu)
+        previous_frame = data.to_tensor(previous_frame, opt.gpu_id)
     optimizer.zero_grad()
     out = net(mosaic_stream,previous_frame)
     loss_L1 = lossf_L1(out,ori_stream[:,:,opt.N])
@@ -232,7 +237,7 @@ for train_iter in range(dataloader_train.n_iter):
 
     # save network
     if train_iter%opt.save_freq == 0 and train_iter != 0:
-        model_util.save(net, os.path.join('checkpoints',opt.savename,str(train_iter)+'.pth'), opt.use_gpu)
+        model_util.save(net, os.path.join('checkpoints',opt.savename,str(train_iter)+'.pth'), opt.gpu_id)
 
     # psnr
     if train_iter%opt.psnr_freq ==0:
@@ -253,12 +258,12 @@ for train_iter in range(dataloader_train.n_iter):
     # eval
     if (train_iter)%5 ==0:
         ori_stream,mosaic_stream,previous_frame = dataloader_eval.get_data()
-        ori_stream = data.to_tensor(ori_stream, opt.use_gpu)
-        mosaic_stream = data.to_tensor(mosaic_stream, opt.use_gpu)
+        ori_stream = data.to_tensor(ori_stream, opt.gpu_id)
+        mosaic_stream = data.to_tensor(mosaic_stream, opt.gpu_id)
         if previous_frame is None:
-            previous_frame = data.to_tensor(previous_predframe_tmp, opt.use_gpu)
+            previous_frame = data.to_tensor(previous_predframe_tmp, opt.gpu_id)
         else:
-            previous_frame = data.to_tensor(previous_frame, opt.use_gpu)
+            previous_frame = data.to_tensor(previous_frame, opt.gpu_id)
         with torch.no_grad():
             out = net(mosaic_stream,previous_frame)
             loss_L1 = lossf_L1(out,ori_stream[:,:,opt.N])
@@ -301,8 +306,8 @@ for train_iter in range(dataloader_train.n_iter):
             previous = impro.imread(os.path.join(opt.dataset_test,video,'image',frames[opt.N*opt.S-1]),loadsize=opt.finesize,rgb=True)
             mosaic_stream = (np.array(mosaic_stream).astype(np.float32)/255.0-0.5)/0.5
             mosaic_stream = mosaic_stream.reshape(1,opt.T,opt.finesize,opt.finesize,3).transpose((0,4,1,2,3))
-            mosaic_stream = data.to_tensor(mosaic_stream, opt.use_gpu)
-            previous = data.im2tensor(previous,bgr2rgb = False, use_gpu = opt.use_gpu,use_transform = False, is0_1 = False)
+            mosaic_stream = data.to_tensor(mosaic_stream, opt.gpu_id)
+            previous = data.im2tensor(previous,bgr2rgb = False, gpu_id = opt.gpu_id,use_transform = False, is0_1 = False)
             with torch.no_grad():
                 out = net(mosaic_stream,previous)
             show_imgs+= [data.tensor2im(mosaic_stream[:,:,opt.N],rgb2bgr = False),data.tensor2im(out,rgb2bgr = False)]

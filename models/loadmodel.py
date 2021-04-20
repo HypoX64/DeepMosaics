@@ -34,7 +34,7 @@ def pix2pix(opt):
     show_paramsnumber(netG,'netG')
     netG.load_state_dict(torch.load(opt.model_path))
     netG.eval()
-    if opt.use_gpu != -1:
+    if opt.gpu_id != -1:
         netG.cuda()
     return netG
 
@@ -60,7 +60,7 @@ def style(opt):
         __patch_instance_norm_state_dict(state_dict, netG, key.split('.'))
     netG.load_state_dict(state_dict)
 
-    if opt.use_gpu != -1:
+    if opt.gpu_id != -1:
         netG.cuda()
     return netG
 
@@ -72,7 +72,7 @@ def video(opt):
     show_paramsnumber(netG,'netG')
     netG.load_state_dict(torch.load(opt.model_path))
     netG.eval()
-    if opt.use_gpu != -1:
+    if opt.gpu_id != -1:
         netG.cuda()
     return netG
 
@@ -87,6 +87,6 @@ def bisenet(opt,type='roi'):
     elif type == 'mosaic':
         net.load_state_dict(torch.load(opt.mosaic_position_model_path))
     net.eval()
-    if opt.use_gpu != -1:
+    if opt.gpu_id != -1:
         net.cuda()
     return net

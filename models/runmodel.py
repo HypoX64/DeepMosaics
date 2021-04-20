@@ -7,9 +7,9 @@ from util import data
 import torch
 import numpy as np
 
-def run_segment(img,net,size = 360,use_gpu = 0):
+def run_segment(img,net,size = 360,gpu_id = 0):
     img = impro.resize(img,size)
-    img = data.im2tensor(img,use_gpu = use_gpu,  bgr2rgb = False,use_transform = False , is0_1 = True)
+    img = data.im2tensor(img,gpu_id = gpu_id,  bgr2rgb = False,use_transform = False , is0_1 = True)
     mask = net(img)
     mask = data.tensor2im(mask, gray=True,rgb2bgr = False, is0_1 = True)
     return mask
@@ -19,7 +19,7 @@ def run_pix2pix(img,net,opt):
         img = impro.resize(img,512)
     else:
         img = impro.resize(img,128)
-    img = data.im2tensor(img,use_gpu=opt.use_gpu)
+    img = data.im2tensor(img,gpu_id=opt.gpu_id)
     img_fake = net(img)
     img_fake = data.tensor2im(img_fake)
     return img_fake
@@ -53,15 +53,15 @@ def run_styletransfer(opt, net, img):
         img = cv2.Canny(img,opt.canny-50,opt.canny+50)
         if opt.only_edges:
             return img
-        img = data.im2tensor(img,use_gpu=opt.use_gpu,gray=True,use_transform = False,is0_1 = False)
+        img = data.im2tensor(img,gpu_id=opt.gpu_id,gray=True,use_transform = False,is0_1 = False)
     else:    
-        img = data.im2tensor(img,use_gpu=opt.use_gpu,gray=False,use_transform = True)
+        img = data.im2tensor(img,gpu_id=opt.gpu_id,gray=False,use_transform = True)
     img = net(img)
     img = data.tensor2im(img)
     return img
 
 def get_ROI_position(img,net,opt,keepsize=True):
-    mask = run_segment(img,net,size=360,use_gpu = opt.use_gpu)
+    mask = run_segment(img,net,size=360,gpu_id = opt.gpu_id)
     mask = impro.mask_threshold(mask,opt.mask_extend,opt.mask_threshold)
     if keepsize:
         mask = impro.resize_like(mask, img)
@@ -70,7 +70,7 @@ def get_ROI_position(img,net,opt,keepsize=True):
 
 def get_mosaic_position(img_origin,net_mosaic_pos,opt):
     h,w = img_origin.shape[:2]
-    mask = run_segment(img_origin,net_mosaic_pos,size=360,use_gpu = opt.use_gpu)
+    mask = run_segment(img_origin,net_mosaic_pos,size=360,gpu_id = opt.gpu_id)
     # mask_1 = mask.copy()
     mask = impro.mask_threshold(mask,ex_mun=int(min(h,w)/20),threshold=opt.mask_threshold)
     if not opt.all_mosaic_area:

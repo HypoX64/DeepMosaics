@@ -91,7 +91,7 @@ for fold in range(opt.fold):
                 mask = mask_irr
             if 'network' in opt.mod:
                 mask_net = runmodel.get_ROI_position(img,net,opt,keepsize=True)[0]
-                if opt.use_gpu != -1:
+                if opt.gpu_id != -1:
                     torch.cuda.empty_cache()
                 if not opt.all_mosaic_area:
                     mask_net = impro.find_mostlikely_ROI(mask_net)

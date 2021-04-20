@@ -1,5 +1,5 @@
 import os,json
-
+import subprocess
 # ffmpeg 3.4.6
 
 def args2cmd(args):
@@ -32,10 +32,11 @@ def run(args,mode = 0):
         return sout
 
 def video2image(videopath, imagepath, fps=0, start_time='00:00:00', last_time='00:00:00'):
-    args = ['ffmpeg', '-i', '"'+videopath+'"']
+    args = ['ffmpeg']
     if last_time != '00:00:00':
         args += ['-ss', start_time]
         args += ['-t', last_time]
+    args += ['-i', '"'+videopath+'"']
     if fps != 0:
         args += ['-r', str(fps)]
     args += ['-f', 'image2','-q:v','-0',imagepath]
