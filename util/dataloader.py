@@ -31,7 +31,12 @@ class VideoLoader(object):
 
         #Init load pool
         for i in range(self.opt.S*self.opt.T):
-            #print(os.path.join(video_dir,'origin_image','%05d' % (i+1)+'.jpg'))
+            # random
+            if np.random.random()<0.05:
+                self.startpos = [random.randint(0,self.mosaic_size),random.randint(0,self.mosaic_size)]
+            if np.random.random()<0.02:
+                self.transform_params['rate']['crop'] = [np.random.random(),np.random.random()]
+
             _ori_img = impro.imread(os.path.join(video_dir,'origin_image','%05d' % (i+1)+'.jpg'),loadsize=self.opt.loadsize,rgb=True)
             _mask = impro.imread(os.path.join(video_dir,'mask','%05d' % (i+1)+'.png' ),mod='gray',loadsize=self.opt.loadsize)
             _mosaic_img = mosaic.addmosaic_base(_ori_img, _mask, self.mosaic_size,0, self.mod,self.rect_rat,self.feather,self.startpos)

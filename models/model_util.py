@@ -114,7 +114,7 @@ class HingeLossG(nn.Module):
         super(HingeLossG, self).__init__()
 
     def forward(self, dis_fake):
-        loss_fake = -torch.mean(dis_fake)
+        loss_fake = F.relu(-torch.mean(dis_fake))
         return loss_fake
 
 class VGGLoss(nn.Module):
@@ -128,7 +128,7 @@ class VGGLoss(nn.Module):
             self.vgg = nn.DataParallel(self.vgg)
             self.vgg.cuda()
 
-        self.criterion = nn.L1Loss()
+        self.criterion = nn.MSELoss()
         self.weights = [1.0/32, 1.0/16, 1.0/8, 1.0/4, 1.0]        
 
     def forward(self, x, y):              

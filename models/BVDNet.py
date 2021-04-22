@@ -103,7 +103,7 @@ def define_G(N=2, n_blocks=1, gpu_id='-1'):
     return netG
 
 ################################Discriminator################################
-def define_D(input_nc, ndf, n_layers_D, use_sigmoid=False, num_D=1, gpu_id='-1'):          
+def define_D(input_nc=6, ndf=64, n_layers_D=3, use_sigmoid=False, num_D=4, gpu_id='-1'):          
     netD = MultiscaleDiscriminator(input_nc, ndf, n_layers_D, use_sigmoid, num_D)
     if gpu_id != '-1' and len(gpu_id) == 1:
         netD.cuda()
@@ -188,20 +188,19 @@ class GANLoss(nn.Module):
     
     def forward(self, dis_fake = None, dis_real = None):
         if isinstance(dis_fake, list):
-            weight = 2**len(dis_fake)
             if self.mode == 'D':
                 loss = 0
                 for i in range(len(dis_fake)):
-                    weight = weight/2
-                    loss += weight*self.lossf(dis_fake[i],dis_real[i])
+                    loss += self.lossf(dis_fake[i][0],dis_real[i][0])
             elif self.mode =='G':
                 loss = 0
+                weight = 2**len(dis_fake)
                 for i in range(len(dis_fake)):
                     weight = weight/2
-                    loss += weight*self.lossf(dis_fake[i])
+                    loss += weight*self.lossf(dis_fake[i][0])
             return loss
         else:
             if self.mode == 'D':
-                return self.lossf(dis_fake,dis_real)
+                return self.lossf(dis_fake[0],dis_real[0])
             elif self.mode =='G':
-                return self.lossf(dis_fake)
+                return self.lossf(dis_fake[0])
