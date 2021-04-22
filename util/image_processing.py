@@ -8,15 +8,6 @@ system_type = 'Linux'
 if 'Windows' in platform.platform():
     system_type = 'Windows'
 
-DCT_Q = np.array([[8,16,19,22,26,27,29,34],
-                [16,16,22,24,27,29,34,37],
-                [19,22,26,27,29,34,34,38],
-                [22,22,26,27,29,34,37,40],
-                [22,26,27,29,32,35,40,48],
-                [26,27,29,32,35,40,48,58],
-                [26,27,29,34,38,46,56,59],
-                [27,29,35,38,46,56,69,83]])
-
 def imread(file_path,mod = 'normal',loadsize = 0, rgb=False):
     '''
     mod:  'normal' | 'gray' | 'all'
@@ -121,34 +112,6 @@ def makedataset(target_image,orgin_image):
     img[0:256,0:256] = target_image[0:256,int(w/2-256/2):int(w/2+256/2)]
     img[0:256,256:512] = orgin_image[0:256,int(w/2-256/2):int(w/2+256/2)]
     return img
-
-def block_dct_and_idct(g,QQF,QQF_16):
-    return cv2.idct(np.round(16.0*cv2.dct(g)/QQF)*QQF_16)
-
-def image_dct_and_idct(I,QF):
-    h,w = I.shape
-    QQF = DCT_Q*QF
-    QQF_16 = QQF/16.0
-    for i in range(h//8):
-        for j in range(w//8):
-            I[i*8:(i+1)*8,j*8:(j+1)*8] = cv2.idct(np.round(16.0*cv2.dct(I[i*8:(i+1)*8,j*8:(j+1)*8])/QQF)*QQF_16)
-            #I[i*8:(i+1)*8,j*8:(j+1)*8] = block_dct_and_idct(I[i*8:(i+1)*8,j*8:(j+1)*8],QQF,QQF_16)
-    return I
-
-def dctblur(img,Q):
-    '''
-    Q: 1~20, 1->best
-    '''
-    h,w = img.shape[:2]
-    img = img[:8*(h//8),:8*(w//8)]
-    img = img.astype(np.float32)
-    if img.ndim == 2:
-        img = image_dct_and_idct(img, Q)
-    if img.ndim == 3:
-        h,w,ch = img.shape
-        for i in range(ch):
-            img[:,:,i] = image_dct_and_idct(img[:,:,i], Q)
-    return (np.clip(img,0,255)).astype(np.uint8)
     
 def find_mostlikely_ROI(mask):
     contours,hierarchy=cv2.findContours(mask, cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
@@ -215,19 +178,6 @@ def mask_area(mask):
         area = 0
     return area
 
-
-def Q_lapulase(resImg):
-    '''
-    Evaluate image quality
-    score > 20   normal
-    score > 50   clear
-    '''
-    img2gray = cv2.cvtColor(resImg, cv2.COLOR_BGR2GRAY)
-    img2gray = resize(img2gray,512)
-    res = cv2.Laplacian(img2gray, cv2.CV_64F)
-    score = res.var()
-    return score
-
 def replace_mosaic(img_origin,img_fake,mask,x,y,size,no_feather):
     img_fake = cv2.resize(img_fake,(size*2,size*2),interpolation=cv2.INTER_LANCZOS4)
     if no_feather:
@@ -256,6 +206,18 @@ def replace_mosaic(img_origin,img_fake,mask,x,y,size,no_feather):
         img_result = (img_origin*(1-mask)+img_tmp*mask).astype('uint8')
 
     return img_result
+
+def Q_lapulase(resImg):
+    '''
+    Evaluate image quality
+    score > 20   normal
+    score > 50   clear
+    '''
+    img2gray = cv2.cvtColor(resImg, cv2.COLOR_BGR2GRAY)
+    img2gray = resize(img2gray,512)
+    res = cv2.Laplacian(img2gray, cv2.CV_64F)
+    score = res.var()
+    return score
 
 def psnr(img1,img2):
     mse = np.mean((img1/255.0-img2/255.0)**2)

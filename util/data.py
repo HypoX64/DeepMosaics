@@ -5,7 +5,7 @@ import torch
 import torchvision.transforms as transforms
 import cv2
 from . import image_processing as impro
-from . import mosaic
+from . import degradater
 transform = transforms.Compose([  
     transforms.ToTensor(),  
     transforms.Normalize(mean = (0.5, 0.5, 0.5), std = (0.5, 0.5, 0.5))  
@@ -75,51 +75,6 @@ def shuffledata(data,target):
     np.random.set_state(state)
     np.random.shuffle(target)
 
-# def random_transform_video(src,target,finesize,N):
-#     #random blur
-#     if random.random()<0.2:
-#         h,w = src.shape[:2]
-#         src = src[:8*(h//8),:8*(w//8)]
-#         Q_ran = random.randint(1,15)
-#         src[:,:,:3*N] = impro.dctblur(src[:,:,:3*N],Q_ran)
-#         target = impro.dctblur(target,Q_ran)
-
-#     #random crop
-#     h,w = target.shape[:2]
-#     h_move = int((h-finesize)*random.random())
-#     w_move = int((w-finesize)*random.random())
-#     target = target[h_move:h_move+finesize,w_move:w_move+finesize,:]
-#     src = src[h_move:h_move+finesize,w_move:w_move+finesize,:]
-
-#     #random flip
-#     if random.random()<0.5:
-#         src = src[:,::-1,:]
-#         target = target[:,::-1,:]
-
-#     #random color
-#     alpha = random.uniform(-0.1,0.1)
-#     beta  = random.uniform(-0.1,0.1)
-#     b     = random.uniform(-0.05,0.05)
-#     g     = random.uniform(-0.05,0.05)
-#     r     = random.uniform(-0.05,0.05)
-#     for i in range(N):
-#         src[:,:,i*3:(i+1)*3] = impro.color_adjust(src[:,:,i*3:(i+1)*3],alpha,beta,b,g,r)
-#     target = impro.color_adjust(target,alpha,beta,b,g,r)
-
-#     #random resize blur
-#     if random.random()<0.5:
-#         interpolations = [cv2.INTER_LINEAR,cv2.INTER_CUBIC,cv2.INTER_LANCZOS4]
-#         size_ran = random.uniform(0.7,1.5)
-#         interpolation_up = interpolations[random.randint(0,2)]
-#         interpolation_down =interpolations[random.randint(0,2)]
-
-#         tmp = cv2.resize(src[:,:,:3*N], (int(finesize*size_ran),int(finesize*size_ran)),interpolation=interpolation_up)
-#         src[:,:,:3*N] = cv2.resize(tmp, (finesize,finesize),interpolation=interpolation_down)
-
-#         tmp = cv2.resize(target, (int(finesize*size_ran),int(finesize*size_ran)),interpolation=interpolation_up)
-#         target = cv2.resize(tmp, (finesize,finesize),interpolation=interpolation_down)
-
-#     return src,target
 
 def random_transform_single_mask(img,out_shape):
     out_h,out_w = out_shape
@@ -138,40 +93,27 @@ def random_transform_single_mask(img,out_shape):
     return img
 
 def get_transform_params():
-    scale_flag = np.random.random()<0.2
     crop_flag  = True
     rotat_flag = np.random.random()<0.2
     color_flag = True
     flip_flag  = np.random.random()<0.2
-    blur_flag  = np.random.random()<0.1
-    flag_dict = {'scale':scale_flag,'crop':crop_flag,'rotat':rotat_flag,'color':color_flag,
-        'flip':flip_flag,'blur':blur_flag}
+    degradate_flag  = np.random.random()<0.5
+    flag_dict = {'crop':crop_flag,'rotat':rotat_flag,'color':color_flag,'flip':flip_flag,'degradate':degradate_flag}
     
-    scale_rate = np.random.uniform(0.9,1.1)
     crop_rate = [np.random.random(),np.random.random()]
     rotat_rate = np.random.random()
     color_rate = [np.random.uniform(-0.05,0.05),np.random.uniform(-0.05,0.05),np.random.uniform(-0.05,0.05),
         np.random.uniform(-0.05,0.05),np.random.uniform(-0.05,0.05)]
     flip_rate = np.random.random()
-    blur_rate = np.random.randint(1,15)
-    rate_dict = {'scale':scale_rate,'crop':crop_rate,'rotat':rotat_rate,'color':color_rate,
-        'flip':flip_rate,'blur':blur_rate}
+    degradate_params = degradater.get_random_degenerate_params(mod='weaker_1')
+    rate_dict = {'crop':crop_rate,'rotat':rotat_rate,'color':color_rate,'flip':flip_rate,'degradate':degradate_params}
 
     return {'flag':flag_dict,'rate':rate_dict}
 
 def random_transform_single_image(img,finesize,params=None,test_flag = False):
     if params is None:
         params = get_transform_params()
-    if test_flag:
-        params['flag']['scale'] = False
-    if params['flag']['scale']:
-        h,w = img.shape[:2]
-        loadsize = min((h,w))
-        a = (float(h)/float(w))*params['rate']['scale']
-        if h<w:
-            img = cv2.resize(img, (int(loadsize/a),loadsize))
-        else:
-            img = cv2.resize(img, (loadsize,int(loadsize*a)))
+
     if params['flag']['crop']:
         h,w = img.shape[:2]
         h_move = int((h-finesize)*params['rate']['crop'][0])
@@ -193,8 +135,8 @@ def random_transform_single_image(img,finesize,params=None,test_flag = False):
     if params['flag']['flip']:
         img = img[:,::-1,:]
 
-    if params['flag']['blur']:
-        img = impro.dctblur(img,params['rate']['blur'])
+    if params['flag']['degradate']:
+        img = degradater.degradate(img,params['rate']['degradate'])
 
     #check shape
     if img.shape[0]!= finesize or img.shape[1]!= finesize:
@@ -250,42 +192,12 @@ def random_transform_pair_image(img,mask,finesize,test_flag = False):
     if random.random()<0.5:
         img = impro.dctblur(img,random.randint(1,15))
         
-        # interpolations = [cv2.INTER_LINEAR,cv2.INTER_CUBIC,cv2.INTER_LANCZOS4]
-        # size_ran = random.uniform(0.7,1.5)
-        # img = cv2.resize(img, (int(finesize*size_ran),int(finesize*size_ran)),interpolation=interpolations[random.randint(0,2)])
-        # img = cv2.resize(img, (finesize,finesize),interpolation=interpolations[random.randint(0,2)])
-    
     #check shape
     if img.shape[0]!= finesize or img.shape[1]!= finesize or mask.shape[0]!= finesize or mask.shape[1]!= finesize:
         img = cv2.resize(img,(finesize,finesize))
         mask = cv2.resize(mask,(finesize,finesize))
         print('warning! shape error.')
     return img,mask
-
-
-# def load_train_video(videoname,img_index,opt):
-#     N = opt.N    
-#     input_img = np.zeros((opt.loadsize,opt.loadsize,3*N+1), dtype='uint8')
-#     # this frame
-#     this_mask = impro.imread(os.path.join(opt.dataset,videoname,'mask','%05d'%(img_index)+'.png'),'gray',loadsize=opt.loadsize)
-#     input_img[:,:,-1] = this_mask
-#     #print(os.path.join(opt.dataset,videoname,'origin_image','%05d'%(img_index)+'.jpg'))
-#     ground_true =  impro.imread(os.path.join(opt.dataset,videoname,'origin_image','%05d'%(img_index)+'.jpg'),loadsize=opt.loadsize)
-#     mosaic_size,mod,rect_rat,feather = mosaic.get_random_parameter(ground_true,this_mask)
-#     start_pos = mosaic.get_random_startpos(num=N,bisa_p=0.3,bisa_max=mosaic_size,bisa_max_part=3)
-#     # merge other frame
-#     for i in range(0,N):
-#         img =  impro.imread(os.path.join(opt.dataset,videoname,'origin_image','%05d'%(img_index+i-int(N/2))+'.jpg'),loadsize=opt.loadsize)
-#         mask = impro.imread(os.path.join(opt.dataset,videoname,'mask','%05d'%(img_index+i-int(N/2))+'.png'),'gray',loadsize=opt.loadsize)
-#         img_mosaic = mosaic.addmosaic_base(img, mask, mosaic_size,model = mod,rect_rat=rect_rat,feather=feather,start_point=start_pos[i])
-#         input_img[:,:,i*3:(i+1)*3] = img_mosaic
-#     # to tensor
-#     input_img,ground_true = random_transform_video(input_img,ground_true,opt.finesize,N)
-#     input_img = im2tensor(input_img,bgr2rgb=False,gpu_id=-1,use_transform = False,is0_1=False)
-#     ground_true = im2tensor(ground_true,bgr2rgb=False,gpu_id=-1,use_transform = False,is0_1=False)
-    
-#     return input_img,ground_true
-
 
 def showresult(img1,img2,img3,name,is0_1 = False):
     size = img1.shape[3]
