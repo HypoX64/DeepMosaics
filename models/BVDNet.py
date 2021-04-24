@@ -94,22 +94,14 @@ class BVDNet(nn.Module):
 
 def define_G(N=2, n_blocks=1, gpu_id='-1'):
     netG = BVDNet(N = N, n_blocks=n_blocks)
-    if gpu_id != '-1' and len(gpu_id) == 1:
-        netG.cuda()
-    elif gpu_id != '-1' and len(gpu_id) > 1:
-        netG = nn.DataParallel(netG)
-        netG.cuda()
-    # netG.apply(model_util.init_weights)
+    netG = model_util.todevice(netG,gpu_id)
+    netG.apply(model_util.init_weights)
     return netG
 
 ################################Discriminator################################
-def define_D(input_nc=6, ndf=64, n_layers_D=3, use_sigmoid=False, num_D=4, gpu_id='-1'):          
+def define_D(input_nc=6, ndf=64, n_layers_D=1, use_sigmoid=False, num_D=3, gpu_id='-1'):          
     netD = MultiscaleDiscriminator(input_nc, ndf, n_layers_D, use_sigmoid, num_D)
-    if gpu_id != '-1' and len(gpu_id) == 1:
-        netD.cuda()
-    elif gpu_id != '-1' and len(gpu_id) > 1:
-        netD = nn.DataParallel(netD)
-        netD.cuda()
+    netD = model_util.todevice(netD,gpu_id)
     netD.apply(model_util.init_weights)
     return netD
 
@@ -191,16 +183,16 @@ class GANLoss(nn.Module):
             if self.mode == 'D':
                 loss = 0
                 for i in range(len(dis_fake)):
-                    loss += self.lossf(dis_fake[i][0],dis_real[i][0])
+                    loss += self.lossf(dis_fake[i][-1],dis_real[i][-1])
             elif self.mode =='G':
                 loss = 0
                 weight = 2**len(dis_fake)
                 for i in range(len(dis_fake)):
                     weight = weight/2
-                    loss += weight*self.lossf(dis_fake[i][0])
+                    loss += weight*self.lossf(dis_fake[i][-1])
             return loss
         else:
             if self.mode == 'D':
-                return self.lossf(dis_fake[0],dis_real[0])
+                return self.lossf(dis_fake[-1],dis_real[-1])
             elif self.mode =='G':
-                return self.lossf(dis_fake[0])
+                return self.lossf(dis_fake[-1])

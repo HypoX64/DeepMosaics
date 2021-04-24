@@ -98,7 +98,7 @@ def get_random_degenerate_params(mod='strong'):
 
     return params
 
-def degradate(img,params,jpeg_last = False):
+def degradate(img,params,jpeg_last = True):
     shape = img.shape
     if not params:
         params = get_random_degenerate_params('original')

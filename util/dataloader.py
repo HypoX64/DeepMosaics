@@ -28,17 +28,11 @@ class VideoLoader(object):
         feg_mask = impro.imread(os.path.join(video_dir,'mask','00001.png'),mod='gray',loadsize=self.opt.loadsize)
         self.mosaic_size,self.mod,self.rect_rat,self.feather = mosaic.get_random_parameter(feg_ori,feg_mask)
         self.startpos = [random.randint(0,self.mosaic_size),random.randint(0,self.mosaic_size)]
-
+        self.loadsize = self.opt.loadsize
         #Init load pool
         for i in range(self.opt.S*self.opt.T):
-            # random
-            if np.random.random()<0.05:
-                self.startpos = [random.randint(0,self.mosaic_size),random.randint(0,self.mosaic_size)]
-            if np.random.random()<0.02:
-                self.transform_params['rate']['crop'] = [np.random.random(),np.random.random()]
-
-            _ori_img = impro.imread(os.path.join(video_dir,'origin_image','%05d' % (i+1)+'.jpg'),loadsize=self.opt.loadsize,rgb=True)
-            _mask = impro.imread(os.path.join(video_dir,'mask','%05d' % (i+1)+'.png' ),mod='gray',loadsize=self.opt.loadsize)
+            _ori_img = impro.imread(os.path.join(video_dir,'origin_image','%05d' % (i+1)+'.jpg'),loadsize=self.loadsize,rgb=True)
+            _mask = impro.imread(os.path.join(video_dir,'mask','%05d' % (i+1)+'.png' ),mod='gray',loadsize=self.loadsize)
             _mosaic_img = mosaic.addmosaic_base(_ori_img, _mask, self.mosaic_size,0, self.mod,self.rect_rat,self.feather,self.startpos)
             _ori_img = data.random_transform_single_image(_ori_img,opt.finesize,self.transform_params)
             _mosaic_img = data.random_transform_single_image(_mosaic_img,opt.finesize,self.transform_params)
@@ -70,13 +64,21 @@ class VideoLoader(object):
         return np.clip((data*0.5+0.5)*255,0,255).astype(np.uint8)
     
     def next(self):
+        # random
+        if np.random.random()<0.05:
+            self.startpos = [random.randint(0,self.mosaic_size),random.randint(0,self.mosaic_size)]
+        if np.random.random()<0.02:
+            self.transform_params['rate']['crop'] = [np.random.random(),np.random.random()]
+        if np.random.random()<0.02:
+            self.loadsize = np.random.randint(self.opt.finesize,self.opt.loadsize)
+        
         if self.t != 0:
             self.previous_pred = None
             self.ori_load_pool   [:self.opt.S*self.opt.T-1] = self.ori_load_pool   [1:self.opt.S*self.opt.T]
             self.mosaic_load_pool[:self.opt.S*self.opt.T-1] = self.mosaic_load_pool[1:self.opt.S*self.opt.T]
             #print(os.path.join(self.video_dir,'origin_image','%05d' % (self.opt.S*self.opt.T+self.t)+'.jpg'))
-            _ori_img = impro.imread(os.path.join(self.video_dir,'origin_image','%05d' % (self.opt.S*self.opt.T+self.t)+'.jpg'),loadsize=self.opt.loadsize,rgb=True)
-            _mask = impro.imread(os.path.join(self.video_dir,'mask','%05d' % (self.opt.S*self.opt.T+self.t)+'.png' ),mod='gray',loadsize=self.opt.loadsize)
+            _ori_img = impro.imread(os.path.join(self.video_dir,'origin_image','%05d' % (self.opt.S*self.opt.T+self.t)+'.jpg'),loadsize=self.loadsize,rgb=True)
+            _mask = impro.imread(os.path.join(self.video_dir,'mask','%05d' % (self.opt.S*self.opt.T+self.t)+'.png' ),mod='gray',loadsize=self.loadsize)
             _mosaic_img = mosaic.addmosaic_base(_ori_img, _mask, self.mosaic_size,0, self.mod,self.rect_rat,self.feather,self.startpos)
             _ori_img = data.random_transform_single_image(_ori_img,self.opt.finesize,self.transform_params)
             _mosaic_img = data.random_transform_single_image(_mosaic_img,self.opt.finesize,self.transform_params)

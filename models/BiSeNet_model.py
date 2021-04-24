@@ -2,7 +2,7 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-from . import components
+from . import model_util
 import warnings
 warnings.filterwarnings(action='ignore')
 
@@ -43,7 +43,7 @@ class DiceLoss(nn.Module):
 class resnet18(torch.nn.Module):
     def __init__(self, pretrained=True):
         super().__init__()
-        self.features = components.resnet18(pretrained=pretrained)
+        self.features = model_util.resnet18(pretrained=pretrained)
         self.conv1 = self.features.conv1
         self.bn1 = self.features.bn1
         self.relu = self.features.relu
@@ -70,7 +70,7 @@ class resnet18(torch.nn.Module):
 class resnet101(torch.nn.Module):
     def __init__(self, pretrained=True):
         super().__init__()
-        self.features = components.resnet101(pretrained=pretrained)
+        self.features = model_util.resnet101(pretrained=pretrained)
         self.conv1 = self.features.conv1
         self.bn1 = self.features.bn1
         self.relu = self.features.relu

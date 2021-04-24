@@ -6,11 +6,6 @@ import torchvision.transforms as transforms
 import cv2
 from . import image_processing as impro
 from . import degradater
-transform = transforms.Compose([  
-    transforms.ToTensor(),  
-    transforms.Normalize(mean = (0.5, 0.5, 0.5), std = (0.5, 0.5, 0.5))  
-    ]  
-) 
 
 def to_tensor(data,gpu_id):
     data = torch.from_numpy(data)
@@ -18,8 +13,7 @@ def to_tensor(data,gpu_id):
         data = data.cuda()
     return data
 
-
-def tensor2im(image_tensor, imtype=np.uint8, gray=False, rgb2bgr = True ,is0_1 = False, batch_index=0):
+def tensor2im(image_tensor, gray=False, rgb2bgr = True ,is0_1 = False, batch_index=0):
     image_tensor =image_tensor.data
     image_numpy = image_tensor[batch_index].cpu().float().numpy()
     
@@ -31,7 +25,7 @@ def tensor2im(image_tensor, imtype=np.uint8, gray=False, rgb2bgr = True ,is0_1 =
     if gray:
         h, w = image_numpy.shape[1:]
         image_numpy = image_numpy.reshape(h,w)
-        return image_numpy.astype(imtype)
+        return image_numpy.astype(np.uint8)
 
     # output 3ch
     if image_numpy.shape[0] == 1:
@@ -39,11 +33,10 @@ def tensor2im(image_tensor, imtype=np.uint8, gray=False, rgb2bgr = True ,is0_1 =
     image_numpy = image_numpy.transpose((1, 2, 0))  
     if rgb2bgr and not gray:
         image_numpy = image_numpy[...,::-1]-np.zeros_like(image_numpy)
-    return image_numpy.astype(imtype)
+    return image_numpy.astype(np.uint8)
 
 
-def im2tensor(image_numpy, imtype=np.uint8, gray=False,bgr2rgb = True, reshape = True, gpu_id = 0,  use_transform = True,is0_1 = True):
-    
+def im2tensor(image_numpy, gray=False,bgr2rgb = True, reshape = True, gpu_id = '-1',is0_1 = False):
     if gray:
         h, w = image_numpy.shape
         image_numpy = (image_numpy/255.0-0.5)/0.5
@@ -54,15 +47,12 @@ def im2tensor(image_numpy, imtype=np.uint8, gray=False,bgr2rgb = True, reshape =
         h, w ,ch = image_numpy.shape
         if bgr2rgb:
             image_numpy = image_numpy[...,::-1]-np.zeros_like(image_numpy)
-        if use_transform:
-            image_tensor = transform(image_numpy)
+        if is0_1:
+            image_numpy = image_numpy/255.0
         else:
-            if is0_1:
-                image_numpy = image_numpy/255.0
-            else:
-                image_numpy = (image_numpy/255.0-0.5)/0.5
-            image_numpy = image_numpy.transpose((2, 0, 1))
-            image_tensor = torch.from_numpy(image_numpy).float()
+            image_numpy = (image_numpy/255.0-0.5)/0.5
+        image_numpy = image_numpy.transpose((2, 0, 1))
+        image_tensor = torch.from_numpy(image_numpy).float()
         if reshape:
             image_tensor = image_tensor.reshape(1,ch,h,w)
     if gpu_id != '-1':
@@ -74,7 +64,6 @@ def shuffledata(data,target):
     np.random.shuffle(data)
     np.random.set_state(state)
     np.random.shuffle(target)
-
 
 def random_transform_single_mask(img,out_shape):
     out_h,out_w = out_shape
@@ -105,7 +94,7 @@ def get_transform_params():
     color_rate = [np.random.uniform(-0.05,0.05),np.random.uniform(-0.05,0.05),np.random.uniform(-0.05,0.05),
         np.random.uniform(-0.05,0.05),np.random.uniform(-0.05,0.05)]
     flip_rate = np.random.random()
-    degradate_params = degradater.get_random_degenerate_params(mod='weaker_1')
+    degradate_params = degradater.get_random_degenerate_params(mod='weaker_2')
     rate_dict = {'crop':crop_rate,'rotat':rotat_rate,'color':color_rate,'flip':flip_rate,'degradate':degradate_params}
 
     return {'flag':flag_dict,'rate':rate_dict}
@@ -113,6 +102,9 @@ def get_transform_params():
 def random_transform_single_image(img,finesize,params=None,test_flag = False):
     if params is None:
         params = get_transform_params()
+    
+    if params['flag']['degradate']:
+        img = degradater.degradate(img,params['rate']['degradate'])
 
     if params['flag']['crop']:
         h,w = img.shape[:2]
@@ -134,9 +126,6 @@ def random_transform_single_image(img,finesize,params=None,test_flag = False):
 
     if params['flag']['flip']:
         img = img[:,::-1,:]
-
-    if params['flag']['degradate']:
-        img = degradater.degradate(img,params['rate']['degradate'])
 
     #check shape
     if img.shape[0]!= finesize or img.shape[1]!= finesize:

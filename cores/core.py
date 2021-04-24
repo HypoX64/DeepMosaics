@@ -283,9 +283,9 @@ def cleanmosaic_video_fusion(opt,netG,netM):
                     mosaic_input[:,:,k*3:(k+1)*3] = impro.resize(img_pool[k][y-size:y+size,x-size:x+size], INPUT_SIZE)
                 mask_input = impro.resize(mask,np.min(img_origin.shape[:2]))[y-size:y+size,x-size:x+size]
                 mosaic_input[:,:,-1] = impro.resize(mask_input, INPUT_SIZE)
-                mosaic_input_tensor = data.im2tensor(mosaic_input,bgr2rgb=False,gpu_id=opt.gpu_id,use_transform = False,is0_1 = False)
+                mosaic_input_tensor = data.im2tensor(mosaic_input,bgr2rgb=False,gpu_id=opt.gpu_id)
                 unmosaic_pred = netG(mosaic_input_tensor)              
-                img_fake = data.tensor2im(unmosaic_pred,rgb2bgr = False ,is0_1 = False)
+                img_fake = data.tensor2im(unmosaic_pred,rgb2bgr = False)
                 img_result = impro.replace_mosaic(img_origin,img_fake,mask,x,y,size,opt.no_feather)
             except Exception as e:
                 print('Warning:',e)

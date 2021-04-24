@@ -31,15 +31,19 @@ opt.parser.add_argument('--beta2',type=float,default=0.999, help='')
 opt.parser.add_argument('--finesize',type=int,default=256, help='')
 opt.parser.add_argument('--loadsize',type=int,default=286, help='')
 opt.parser.add_argument('--batchsize',type=int,default=1, help='')
+opt.parser.add_argument('--no_gan', action='store_true', help='if specified, do not use gan')
+opt.parser.add_argument('--n_layers_D',type=int,default=1, help='')
+opt.parser.add_argument('--num_D',type=int,default=3, help='')
 opt.parser.add_argument('--lambda_L2',type=float,default=100, help='')
 opt.parser.add_argument('--lambda_VGG',type=float,default=1, help='')
 opt.parser.add_argument('--lambda_GAN',type=float,default=1, help='')
+opt.parser.add_argument('--lambda_D',type=float,default=1, help='')
 opt.parser.add_argument('--load_thread',type=int,default=4, help='number of thread for loading data')
 
 opt.parser.add_argument('--dataset',type=str,default='./datasets/face/', help='')
 opt.parser.add_argument('--dataset_test',type=str,default='./datasets/face_test/', help='')
 opt.parser.add_argument('--n_epoch',type=int,default=200, help='')
-opt.parser.add_argument('--save_freq',type=int,default=100000, help='')
+opt.parser.add_argument('--save_freq',type=int,default=10000, help='')
 opt.parser.add_argument('--continue_train', action='store_true', help='')
 opt.parser.add_argument('--savename',type=str,default='face', help='')
 opt.parser.add_argument('--showresult_freq',type=int,default=1000, help='')
@@ -84,16 +88,16 @@ TBGlobalWriter = SummaryWriter(tensorboard_savedir)
 '''
 if opt.gpu_id != '-1' and len(opt.gpu_id) == 1:
     torch.backends.cudnn.benchmark = True
+
 netG = BVDNet.define_G(opt.N,gpu_id=opt.gpu_id)
-netD = BVDNet.define_D(gpu_id=opt.gpu_id)
-
 optimizer_G = torch.optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, opt.beta2))
-optimizer_D = torch.optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, opt.beta2))
-
 lossfun_L2 = nn.MSELoss()
 lossfun_VGG = model_util.VGGLoss(opt.gpu_id)
-lossfun_GAND = BVDNet.GANLoss('D')
-lossfun_GANG = BVDNet.GANLoss('G')
+if not opt.no_gan:
+    netD = BVDNet.define_D(n_layers_D=opt.n_layers_D,num_D=opt.num_D,gpu_id=opt.gpu_id)
+    optimizer_D = torch.optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, opt.beta2))
+    lossfun_GAND = BVDNet.GANLoss('D')
+    lossfun_GANG = BVDNet.GANLoss('G')
 
 '''
 --------------------------Init DataLoader--------------------------
@@ -130,33 +134,42 @@ for train_iter in range(Videodataloader_train.n_iter):
     # Fake Generator
     out = netG(mosaic_stream,previous_frame)
     # Discriminator
-    dis_real = netD(torch.cat((mosaic_stream[:,:,opt.N],ori_stream[:,:,opt.N].detach()),dim=1))
-    dis_fake_D = netD(torch.cat((mosaic_stream[:,:,opt.N],out.detach()),dim=1))
-    loss_D = lossfun_GAND(dis_fake_D,dis_real) * opt.lambda_GAN
+    if not opt.no_gan:
+        dis_real = netD(torch.cat((mosaic_stream[:,:,opt.N],ori_stream[:,:,opt.N].detach()),dim=1))
+        dis_fake_D = netD(torch.cat((mosaic_stream[:,:,opt.N],out.detach()),dim=1))
+        loss_D = lossfun_GAND(dis_fake_D,dis_real) * opt.lambda_GAN * opt.lambda_D
     # Generator
-    dis_fake_G = netD(torch.cat((mosaic_stream[:,:,opt.N],out),dim=1))
     loss_L2 = lossfun_L2(out,ori_stream[:,:,opt.N]) * opt.lambda_L2
     loss_VGG = lossfun_VGG(out,ori_stream[:,:,opt.N]) * opt.lambda_VGG
-    loss_GANG = lossfun_GANG(dis_fake_G) * opt.lambda_GAN
-    loss_G = loss_L2+loss_VGG+loss_GANG
+    loss_G = loss_L2+loss_VGG
+    if not opt.no_gan:
+        dis_fake_G = netD(torch.cat((mosaic_stream[:,:,opt.N],out),dim=1))
+        loss_GANG = lossfun_GANG(dis_fake_G) * opt.lambda_GAN
+        loss_G = loss_G + loss_GANG
 
     ############### Backward Pass ####################
     optimizer_G.zero_grad()
     loss_G.backward()
     optimizer_G.step()
 
-    optimizer_D.zero_grad()
-    loss_D.backward()        
-    optimizer_D.step()
-    previous_predframe_tmp = out.detach().cpu().numpy()
+    if not opt.no_gan:
+        optimizer_D.zero_grad()
+        loss_D.backward()        
+        optimizer_D.step()
 
-    TBGlobalWriter.add_scalars('loss/train', {'L2':loss_L2.item(),'VGG':loss_VGG.item(),
-        'loss_D':loss_D.item(),'loss_G':loss_G.item()}, train_iter)
+    previous_predframe_tmp = out.detach().cpu().numpy()
+    
+    if not opt.no_gan:
+        TBGlobalWriter.add_scalars('loss/train', {'L2':loss_L2.item(),'VGG':loss_VGG.item(),
+            'loss_D':loss_D.item(),'loss_G':loss_G.item()}, train_iter)
+    else:
+        TBGlobalWriter.add_scalars('loss/train', {'L2':loss_L2.item(),'VGG':loss_VGG.item()}, train_iter)
 
     # save network
     if train_iter%opt.save_freq == 0 and train_iter != 0:
         model_util.save(netG, os.path.join('checkpoints',opt.savename,str(train_iter)+'_G.pth'), opt.gpu_id)
-        model_util.save(netD, os.path.join('checkpoints',opt.savename,str(train_iter)+'_D.pth'), opt.gpu_id)
+        if not opt.no_gan:
+            model_util.save(netD, os.path.join('checkpoints',opt.savename,str(train_iter)+'_D.pth'), opt.gpu_id)
 
     # Image quality evaluation 
     if train_iter%(opt.showresult_freq//10) == 0:
@@ -213,7 +226,7 @@ for train_iter in range(Videodataloader_train.n_iter):
                     mosaic_stream.append(_mosaic)
                 if step == 0:
                     previous = impro.imread(os.path.join(opt.dataset_test,video,'image',frames[opt.N*opt.S-1]),loadsize=opt.finesize,rgb=True)
-                    previous = data.im2tensor(previous,bgr2rgb = False, gpu_id = opt.gpu_id,use_transform = False, is0_1 = False)
+                    previous = data.im2tensor(previous,bgr2rgb = False, gpu_id = opt.gpu_id, is0_1 = False)
                 mosaic_stream = (np.array(mosaic_stream).astype(np.float32)/255.0-0.5)/0.5
                 mosaic_stream = mosaic_stream.reshape(1,opt.T,opt.finesize,opt.finesize,3).transpose((0,4,1,2,3))
                 mosaic_stream = data.to_tensor(mosaic_stream, opt.gpu_id)
