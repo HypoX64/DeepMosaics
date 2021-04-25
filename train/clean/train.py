@@ -32,6 +32,7 @@ opt.parser.add_argument('--finesize',type=int,default=256, help='')
 opt.parser.add_argument('--loadsize',type=int,default=286, help='')
 opt.parser.add_argument('--batchsize',type=int,default=1, help='')
 opt.parser.add_argument('--no_gan', action='store_true', help='if specified, do not use gan')
+opt.parser.add_argument('--n_blocks',type=int,default=4, help='')
 opt.parser.add_argument('--n_layers_D',type=int,default=1, help='')
 opt.parser.add_argument('--num_D',type=int,default=3, help='')
 opt.parser.add_argument('--lambda_L2',type=float,default=100, help='')
@@ -89,7 +90,7 @@ TBGlobalWriter = SummaryWriter(tensorboard_savedir)
 if opt.gpu_id != '-1' and len(opt.gpu_id) == 1:
     torch.backends.cudnn.benchmark = True
 
-netG = BVDNet.define_G(opt.N,gpu_id=opt.gpu_id)
+netG = BVDNet.define_G(opt.N,opt.n_blocks,gpu_id=opt.gpu_id)
 optimizer_G = torch.optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, opt.beta2))
 lossfun_L2 = nn.MSELoss()
 lossfun_VGG = model_util.VGGLoss(opt.gpu_id)

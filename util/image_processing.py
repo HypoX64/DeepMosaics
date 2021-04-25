@@ -104,6 +104,12 @@ def color_adjust(img,alpha=0,beta=0,b=0,g=0,r=0,ran = False):
     
     return (np.clip(img,0,255)).astype('uint8')
 
+def CAdaIN(src,dst):
+    '''
+    make src has dst's style
+    '''
+    return np.std(dst)*((src-np.mean(src))/np.std(src))+np.mean(dst)
+
 def makedataset(target_image,orgin_image):
     target_image = resize(target_image,256)
     orgin_image = resize(orgin_image,256)
@@ -177,35 +183,31 @@ def mask_area(mask):
     except:
         area = 0
     return area
-
+import time
 def replace_mosaic(img_origin,img_fake,mask,x,y,size,no_feather):
-    img_fake = cv2.resize(img_fake,(size*2,size*2),interpolation=cv2.INTER_LANCZOS4)
+    img_fake = cv2.resize(img_fake,(size*2,size*2),interpolation=cv2.INTER_CUBIC)
     if no_feather:
         img_origin[y-size:y+size,x-size:x+size]=img_fake
-        img_result = img_origin
+        return img_origin
     else:
-        #color correction
-        RGB_origin = img_origin[y-size:y+size,x-size:x+size].mean(0).mean(0)
-        RGB_fake = img_fake.mean(0).mean(0)
-        for i in range(3):img_fake[:,:,i] = np.clip(img_fake[:,:,i]+RGB_origin[i]-RGB_fake[i],0,255)      
+        # #color correction
+        # RGB_origin = img_origin[y-size:y+size,x-size:x+size].mean(0).mean(0)
+        # RGB_fake = img_fake.mean(0).mean(0)
+        # for i in range(3):img_fake[:,:,i] = np.clip(img_fake[:,:,i]+RGB_origin[i]-RGB_fake[i],0,255)
         #eclosion
-        eclosion_num = int(size/5)
-        entad = int(eclosion_num/2+2)
+        eclosion_num = int(size/10)+2
 
-        mask = cv2.resize(mask,(img_origin.shape[1],img_origin.shape[0]))
-        mask = ch_one2three(mask)
+        mask_crop = cv2.resize(mask,(img_origin.shape[1],img_origin.shape[0]))[y-size:y+size,x-size:x+size]
+        mask_crop = ch_one2three(mask_crop)
+
+        mask_crop = (cv2.blur(mask_crop, (eclosion_num, eclosion_num)))
+        mask_crop = mask_crop/255.0
+
+        img_crop = img_origin[y-size:y+size,x-size:x+size]
+        img_origin[y-size:y+size,x-size:x+size] = np.clip((img_crop*(1-mask_crop)+img_fake*mask_crop),0,255).astype('uint8')
         
-        mask = (cv2.blur(mask, (eclosion_num, eclosion_num)))
-        mask_tmp = np.zeros_like(mask)
-        mask_tmp[y-size:y+size,x-size:x+size] = mask[y-size:y+size,x-size:x+size]# Fix edge overflow
-        mask = mask_tmp/255.0
+        return img_origin
 
-        img_tmp = np.zeros(img_origin.shape)
-        img_tmp[y-size:y+size,x-size:x+size]=img_fake
-        img_result = img_origin.copy()
-        img_result = (img_origin*(1-mask)+img_tmp*mask).astype('uint8')
-
-    return img_result
 
 def Q_lapulase(resImg):
     '''

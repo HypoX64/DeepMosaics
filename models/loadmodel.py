@@ -1,23 +1,23 @@
 import torch
 from . import model_util
-from .pix2pix_model import define_G
-from .pix2pixHD_model import define_G as define_G_HD
-from .video_model import MosaicNet
-from .videoHD_model import MosaicNet as MosaicNet_HD
+from .pix2pix_model import define_G as pix2pix_G
+from .pix2pixHD_model import define_G as pix2pixHD_G
+# from .video_model import MosaicNet
+# from .videoHD_model import MosaicNet as MosaicNet_HD
 from .BiSeNet_model import BiSeNet
+from .BVDNet import define_G as video_G
 
 def show_paramsnumber(net,netname='net'):
     parameters = sum(param.numel() for param in net.parameters())
     parameters = round(parameters/1e6,2)
     print(netname+' parameters: '+str(parameters)+'M')
 
-
 def pix2pix(opt):
     # print(opt.model_path,opt.netG)
     if opt.netG == 'HD':
-        netG = define_G_HD(3, 3, 64, 'global' ,4)
+        netG = pix2pixHD_G(3, 3, 64, 'global' ,4)
     else:
-        netG = define_G(3, 3, 64, opt.netG, norm='batch',use_dropout=True, init_type='normal', gpu_ids=[])
+        netG = pix2pix_G(3, 3, 64, opt.netG, norm='batch',use_dropout=True, init_type='normal', gpu_ids=[])
     show_paramsnumber(netG,'netG')
     netG.load_state_dict(torch.load(opt.model_path))
     netG = model_util.todevice(netG,opt.gpu_id)
@@ -27,9 +27,9 @@ def pix2pix(opt):
 
 def style(opt):
     if opt.edges:
-        netG = define_G(1, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
+        netG = pix2pix_G(1, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
     else:
-        netG = define_G(3, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=False, init_type='normal', gpu_ids=[])
+        netG = pix2pix_G(3, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=False, init_type='normal', gpu_ids=[])
 
     #in other to load old pretrain model
     #https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/models/base_model.py
@@ -51,10 +51,7 @@ def style(opt):
     return netG
 
 def video(opt):
-    if 'HD' in opt.model_path:
-        netG = MosaicNet_HD(3*25+1, 3, norm='instance')
-    else:
-        netG = MosaicNet(3*25+1, 3,norm = 'batch')
+    netG = video_G(N=2,n_blocks=1,gpu_id=opt.gpu_id)
     show_paramsnumber(netG,'netG')
     netG.load_state_dict(torch.load(opt.model_path))
     netG = model_util.todevice(netG,opt.gpu_id)

@@ -244,11 +244,15 @@ def cleanmosaic_video_byframe(opt,netG,netM):
 
 def cleanmosaic_video_fusion(opt,netG,netM):
     path = opt.media_path
-    N = 25
-    if 'HD' in os.path.basename(opt.model_path):
-        INPUT_SIZE = 256
-    else:
-        INPUT_SIZE = 128
+    N,T,S = 2,5,3
+    LEFT_FRAME = (N*S)
+    POOL_NUM = LEFT_FRAME*2+1
+    INPUT_SIZE = 256
+    FRAME_POS = np.linspace(0, (T-1)*S,T,dtype=np.int64)
+    img_pool = []
+    previous_frame = None
+    init_flag = True
+    
     fps,imagepaths,height,width = video_init(opt,path)
     positions = get_mosaic_positions(opt,netM,imagepaths,savemask=True)
     t1 = time.time()
@@ -258,37 +262,41 @@ def cleanmosaic_video_fusion(opt,netG,netM):
     # clean mosaic
     print('Clean Mosaic:')
     length = len(imagepaths)
-
-    img_pool = []
-    mosaic_input = np.zeros((INPUT_SIZE,INPUT_SIZE,3*N+1), dtype='uint8')
-
+    
     for i,imagepath in enumerate(imagepaths,0):
         x,y,size = positions[i][0],positions[i][1],positions[i][2]
-
+        input_stream = []
         # image read stream
-        mask = cv2.imread(os.path.join(opt.temp_dir+'/mosaic_mask',imagepath),0)
-        if i==0 :
-            for j in range(0,N):
-                img_pool.append(impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepaths[np.clip(i+j-12,0,len(imagepaths)-1)])))
-        else:
+        if i==0 :# init
+            for j in range(POOL_NUM):
+                img_pool.append(impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepaths[np.clip(i+j-LEFT_FRAME,0,len(imagepaths)-1)])))
+        else: # load next frame
             img_pool.pop(0)
-            img_pool.append(impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepaths[np.clip(i+12,0,len(imagepaths)-1)])))
-        img_origin = img_pool[12]
+            img_pool.append(impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepaths[np.clip(i+LEFT_FRAME,0,len(imagepaths)-1)])))
+        img_origin = img_pool[LEFT_FRAME]
         img_result = img_origin.copy()
 
         if size>100:
             try:#Avoid unknown errors
-                #reshape to network input shape
-                for k in range(N):
-                    mosaic_input[:,:,k*3:(k+1)*3] = impro.resize(img_pool[k][y-size:y+size,x-size:x+size], INPUT_SIZE)
-                mask_input = impro.resize(mask,np.min(img_origin.shape[:2]))[y-size:y+size,x-size:x+size]
-                mosaic_input[:,:,-1] = impro.resize(mask_input, INPUT_SIZE)
-                mosaic_input_tensor = data.im2tensor(mosaic_input,bgr2rgb=False,gpu_id=opt.gpu_id)
-                unmosaic_pred = netG(mosaic_input_tensor)              
-                img_fake = data.tensor2im(unmosaic_pred,rgb2bgr = False)
+                for pos in FRAME_POS:
+                    input_stream.append(impro.resize(img_pool[pos][y-size:y+size,x-size:x+size], INPUT_SIZE)[:,:,::-1])
+                if init_flag:
+                    init_flag = False
+                    previous_frame = input_stream[N]
+                    previous_frame = data.im2tensor(previous_frame,bgr2rgb=True,gpu_id=opt.gpu_id)
+                
+                input_stream = np.array(input_stream).reshape(1,T,INPUT_SIZE,INPUT_SIZE,3).transpose((0,4,1,2,3))
+                input_stream = data.to_tensor(data.normalize(input_stream),gpu_id=opt.gpu_id)
+                unmosaic_pred = netG(input_stream,previous_frame)
+                img_fake = data.tensor2im(unmosaic_pred,rgb2bgr = True)
+                previous_frame = unmosaic_pred
+                mask = cv2.imread(os.path.join(opt.temp_dir+'/mosaic_mask',imagepath),0)
                 img_result = impro.replace_mosaic(img_origin,img_fake,mask,x,y,size,opt.no_feather)
             except Exception as e:
-                print('Warning:',e)
+                init_flag = True
+                print('Error:',e)
+        else:
+            init_flag = True
         cv2.imwrite(os.path.join(opt.temp_dir+'/replace_mosaic',imagepath),img_result)
         os.remove(os.path.join(opt.temp_dir+'/video2image',imagepath))      
         

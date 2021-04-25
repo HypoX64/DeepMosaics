@@ -11,6 +11,7 @@ class Options():
     def initialize(self):
 
         #base
+        self.parser.add_argument('--debug', action='store_true', help='if specified, start debug mode')
         self.parser.add_argument('--gpu_id', type=str,default='0', help='if -1, use cpu')
         self.parser.add_argument('--media_path', type=str, default='./imgs/ruoruo.jpg',help='your videos or images path')
         self.parser.add_argument('-ss', '--start_time', type=str, default='00:00:00',help='start position of video, default is the beginning of video')
@@ -58,8 +59,7 @@ class Options():
         
         model_name = os.path.basename(self.opt.model_path)
         self.opt.temp_dir = os.path.join(self.opt.temp_dir, 'DeepMosaics_temp')
-           
-        
+
         if self.opt.gpu_id != '-1':
             os.environ["CUDA_VISIBLE_DEVICES"] = str(self.opt.gpu_id)
             import torch
@@ -70,53 +70,59 @@ class Options():
 
         if test_flag:
             if not os.path.exists(self.opt.media_path):
-                print('Error: Bad media path!')
+                print('Error: Media does not exist!')
+                input('Please press any key to exit.\n')
+                sys.exit(0)
+            if not os.path.exists(self.opt.model_path):
+                print('Error: Model does not exist!')
                 input('Please press any key to exit.\n')
                 sys.exit(0)
 
-        if self.opt.mode == 'auto':
-            if 'clean' in model_name or self.opt.traditional:
-                self.opt.mode = 'clean'
-            elif 'add' in model_name:
-                self.opt.mode = 'add'
-            elif 'style' in model_name or 'edges' in model_name:
-                self.opt.mode = 'style'
+            if self.opt.mode == 'auto':
+                if 'clean' in model_name or self.opt.traditional:
+                    self.opt.mode = 'clean'
+                elif 'add' in model_name:
+                    self.opt.mode = 'add'
+                elif 'style' in model_name or 'edges' in model_name:
+                    self.opt.mode = 'style'
+                else:
+                    print('Please check model_path!')
+                    input('Please press any key to exit.\n')
+                    sys.exit(0)
+
+            if self.opt.output_size == 0 and self.opt.mode == 'style':
+                self.opt.output_size = 512
+
+            if 'edges' in model_name or 'edges' in self.opt.preprocess:
+                self.opt.edges = True
+
+            if self.opt.netG == 'auto' and self.opt.mode =='clean':
+                if 'unet_128' in model_name:
+                    self.opt.netG = 'unet_128'
+                elif 'resnet_9blocks' in model_name:
+                    self.opt.netG = 'resnet_9blocks'
+                elif 'video' in model_name:
+                    self.opt.netG = 'video'
+                else:
+                    print('Type of Generator error!')
+                    input('Please press any key to exit.\n')
+                    sys.exit(0)
+
+            if self.opt.ex_mult == 'auto':
+                if 'face' in model_name:
+                    self.opt.ex_mult = 1.1
+                else:
+                    self.opt.ex_mult = 1.5
             else:
-                print('Please input running model!')
-                input('Please press any key to exit.\n')
-                sys.exit(0)
+                self.opt.ex_mult = float(self.opt.ex_mult)
 
-        if self.opt.output_size == 0 and self.opt.mode == 'style':
-            self.opt.output_size = 512
-
-        if 'edges' in model_name or 'edges' in self.opt.preprocess:
-            self.opt.edges = True
-
-        if self.opt.netG == 'auto' and self.opt.mode =='clean':
-            if 'unet_128' in model_name:
-                self.opt.netG = 'unet_128'
-            elif 'resnet_9blocks' in model_name:
-                self.opt.netG = 'resnet_9blocks'
-            elif 'HD' in model_name and 'video' not in model_name:
-                self.opt.netG = 'HD'
-            elif 'video' in model_name:
-                self.opt.netG = 'video'
-            else:
-                print('Type of Generator error!')
-                input('Please press any key to exit.\n')
-                sys.exit(0)
-
-        if self.opt.ex_mult == 'auto':
-            if 'face' in model_name:
-                self.opt.ex_mult = 1.1
-            else:
-                self.opt.ex_mult = 1.5
-        else:
-            self.opt.ex_mult = float(self.opt.ex_mult)
-
-        if self.opt.mosaic_position_model_path == 'auto':
-            _path = os.path.join(os.path.split(self.opt.model_path)[0],'mosaic_position.pth')
-            self.opt.mosaic_position_model_path = _path
-            # print(self.opt.mosaic_position_model_path)
+            if self.opt.mosaic_position_model_path == 'auto':
+                _path = os.path.join(os.path.split(self.opt.model_path)[0],'mosaic_position.pth')
+                if os.path.isfile(_path):
+                    self.opt.mosaic_position_model_path = _path
+                else:
+                    input('Please check mosaic_position_model_path!')
+                    input('Please press any key to exit.\n')
+                    sys.exit(0)
 
         return self.opt

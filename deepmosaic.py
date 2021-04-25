@@ -68,8 +68,11 @@ def main():
                 print('This type of file is not supported')
 
     util.clean_tempfiles(opt, tmp_init = False)
-        
+
 if __name__ == '__main__':
+    if opt.debug:
+        main()
+        sys.exit(0)
     try:
         main()
         print('Finished!')
