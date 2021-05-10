@@ -5,7 +5,7 @@ If you need more effects,  use '--option your-parameters' to enter what you need
 
 |    Option    |        Description         |                 Default                 |
 | :----------: | :------------------------: | :-------------------------------------: |
-|  --use_gpu   |   if -1, do not use gpu    |                    0                    |
+|  --gpu_id   |   if -1, do not use gpu    |                    0                    |
 | --media_path | your videos or images path |            ./imgs/ruoruo.jpg            |
 | --start_time | start position of video, default is the beginning of video | '00:00:00' |
 | --last_time | limit the duration of the video, default is the entire video | '00:00:00' |

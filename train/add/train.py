@@ -54,10 +54,10 @@ util.makedirs(dir_checkpoint)
 util.writelog(os.path.join(dir_checkpoint,'loss.txt'), 
               str(time.asctime(time.localtime(time.time())))+'\n'+util.opt2str(opt))
 
-def Totensor(img,use_gpu=True):
+def Totensor(img,gpu_id=True):
     size=img.shape[0]
     img = torch.from_numpy(img).float()
-    if opt.use_gpu != -1:
+    if opt.gpu_id != -1:
         img = img.cuda()
     return img
 
@@ -68,11 +68,11 @@ def loadimage(imagepaths,maskpaths,opt,test_flag = False):
     for i in range(len(imagepaths)):
         img = impro.resize(impro.imread(imagepaths[i]),opt.loadsize)
         mask = impro.resize(impro.imread(maskpaths[i],mod = 'gray'),opt.loadsize)      
-        img,mask = data.random_transform_image(img, mask, opt.finesize, test_flag)
+        img,mask = data.random_transform_pair_image(img, mask, opt.finesize, test_flag)
         images[i] = (img.transpose((2, 0, 1))/255.0)
         masks[i] = (mask.reshape(1,1,opt.finesize,opt.finesize)/255.0)
-    images = Totensor(images,opt.use_gpu)
-    masks = Totensor(masks,opt.use_gpu)
+    images = data.to_tensor(images,opt.gpu_id)
+    masks = data.to_tensor(masks,opt.gpu_id)
 
     return images,masks
 
@@ -111,7 +111,7 @@ if opt.continue_train:
     f = open(os.path.join(dir_checkpoint,'epoch_log.txt'),'r')
     opt.startepoch = int(f.read())
     f.close()
-if opt.use_gpu != -1:
+if opt.gpu_id != -1:
     net.cuda()
     cudnn.benchmark = True
 
@@ -135,7 +135,7 @@ for epoch in range(opt.startepoch,opt.maxepoch):
     starttime = datetime.datetime.now()
     util.writelog(os.path.join(dir_checkpoint,'loss.txt'),'Epoch {}/{}.'.format(epoch + 1, opt.maxepoch),True)
     net.train()
-    if opt.use_gpu != -1:
+    if opt.gpu_id != -1:
         net.cuda()
     epoch_loss = 0
     for i in range(int(img_num*0.8/opt.batchsize)):

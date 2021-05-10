@@ -143,6 +143,7 @@ video_tmp/
 result/
 nohup.out
 #./
+/.vscode
 /pix2pix
 /pix2pixHD
 /tmp
@@ -184,3 +185,4 @@ nohup.out
 *.JPEG
 *.exe
 *.npy
+*.psd

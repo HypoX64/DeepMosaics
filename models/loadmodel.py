@@ -1,49 +1,35 @@
 import torch
-from .pix2pix_model import define_G
-from .pix2pixHD_model import define_G as define_G_HD
-from .unet_model import UNet
-from .video_model import MosaicNet
-from .videoHD_model import MosaicNet as MosaicNet_HD
+from . import model_util
+from .pix2pix_model import define_G as pix2pix_G
+from .pix2pixHD_model import define_G as pix2pixHD_G
+# from .video_model import MosaicNet
+# from .videoHD_model import MosaicNet as MosaicNet_HD
 from .BiSeNet_model import BiSeNet
+from .BVDNet import define_G as video_G
 
 def show_paramsnumber(net,netname='net'):
     parameters = sum(param.numel() for param in net.parameters())
     parameters = round(parameters/1e6,2)
     print(netname+' parameters: '+str(parameters)+'M')
 
-def __patch_instance_norm_state_dict(state_dict, module, keys, i=0):
-    """Fix InstanceNorm checkpoints incompatibility (prior to 0.4)"""
-    key = keys[i]
-    if i + 1 == len(keys):  # at the end, pointing to a parameter/buffer
-        if module.__class__.__name__.startswith('InstanceNorm') and \
-                (key == 'running_mean' or key == 'running_var'):
-            if getattr(module, key) is None:
-                state_dict.pop('.'.join(keys))
-        if module.__class__.__name__.startswith('InstanceNorm') and \
-           (key == 'num_batches_tracked'):
-            state_dict.pop('.'.join(keys))
-    else:
-        __patch_instance_norm_state_dict(state_dict, getattr(module, key), keys, i + 1)
-
 def pix2pix(opt):
     # print(opt.model_path,opt.netG)
     if opt.netG == 'HD':
-        netG = define_G_HD(3, 3, 64, 'global' ,4)
+        netG = pix2pixHD_G(3, 3, 64, 'global' ,4)
     else:
-        netG = define_G(3, 3, 64, opt.netG, norm='batch',use_dropout=True, init_type='normal', gpu_ids=[])
+        netG = pix2pix_G(3, 3, 64, opt.netG, norm='batch',use_dropout=True, init_type='normal', gpu_ids=[])
     show_paramsnumber(netG,'netG')
     netG.load_state_dict(torch.load(opt.model_path))
+    netG = model_util.todevice(netG,opt.gpu_id)
     netG.eval()
-    if opt.use_gpu != -1:
-        netG.cuda()
     return netG
 
 
 def style(opt):
     if opt.edges:
-        netG = define_G(1, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
+        netG = pix2pix_G(1, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=True, init_type='normal', gpu_ids=[])
     else:
-        netG = define_G(3, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=False, init_type='normal', gpu_ids=[])
+        netG = pix2pix_G(3, 3, 64, 'resnet_9blocks', norm='instance',use_dropout=False, init_type='normal', gpu_ids=[])
 
     #in other to load old pretrain model
     #https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/models/base_model.py
@@ -57,23 +43,19 @@ def style(opt):
 
     # patch InstanceNorm checkpoints prior to 0.4
     for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
-        __patch_instance_norm_state_dict(state_dict, netG, key.split('.'))
+        model_util.patch_instance_norm_state_dict(state_dict, netG, key.split('.'))
     netG.load_state_dict(state_dict)
 
-    if opt.use_gpu != -1:
-        netG.cuda()
+    netG = model_util.todevice(netG,opt.gpu_id)
+    netG.eval()
     return netG
 
 def video(opt):
-    if 'HD' in opt.model_path:
-        netG = MosaicNet_HD(3*25+1, 3, norm='instance')
-    else:
-        netG = MosaicNet(3*25+1, 3,norm = 'batch')
+    netG = video_G(N=2,n_blocks=4,gpu_id=opt.gpu_id)
     show_paramsnumber(netG,'netG')
     netG.load_state_dict(torch.load(opt.model_path))
+    netG = model_util.todevice(netG,opt.gpu_id)
     netG.eval()
-    if opt.use_gpu != -1:
-        netG.cuda()
     return netG
 
 def bisenet(opt,type='roi'):
@@ -86,7 +68,6 @@ def bisenet(opt,type='roi'):
         net.load_state_dict(torch.load(opt.model_path))
     elif type == 'mosaic':
         net.load_state_dict(torch.load(opt.mosaic_position_model_path))
+    net = model_util.todevice(net,opt.gpu_id)
     net.eval()
-    if opt.use_gpu != -1:
-        net.cuda()
     return net

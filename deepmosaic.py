@@ -68,15 +68,18 @@ def main():
                 print('This type of file is not supported')
 
     util.clean_tempfiles(opt, tmp_init = False)
-        
+
 if __name__ == '__main__':
+    if opt.debug:
+        main()
+        sys.exit(0)
     try:
         main()
         print('Finished!')
     except Exception as ex:
         print('--------------------ERROR--------------------')
         print('--------------Environment--------------')
-        print('DeepMosaics: 0.4.0')
+        print('DeepMosaics: 0.5.0')
         print('Python:',sys.version)
         import torch
         print('Pytorch:',torch.__version__)

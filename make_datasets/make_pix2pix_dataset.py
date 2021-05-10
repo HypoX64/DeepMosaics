@@ -16,7 +16,7 @@ import torch
 
 from models import runmodel,loadmodel
 import util.image_processing as impro
-from util import util,mosaic,data
+from util import degradater, util,mosaic,data
 
 
 opt.parser.add_argument('--datadir',type=str,default='../datasets/draw/face', help='')
@@ -87,11 +87,11 @@ for fold in range(opt.fold):
                 mask = mask_drawn
             if 'irregular' in opt.mod:
                 mask_irr = impro.imread(irrpaths[random.randint(0,12000-1)],'gray')
-                mask_irr = data.random_transform_single(mask_irr, (img.shape[0],img.shape[1]))
+                mask_irr = data.random_transform_single_mask(mask_irr, (img.shape[0],img.shape[1]))
                 mask = mask_irr
             if 'network' in opt.mod:
                 mask_net = runmodel.get_ROI_position(img,net,opt,keepsize=True)[0]
-                if opt.use_gpu != -1:
+                if opt.gpu_id != -1:
                     torch.cuda.empty_cache()
                 if not opt.all_mosaic_area:
                     mask_net = impro.find_mostlikely_ROI(mask_net)
@@ -107,11 +107,11 @@ for fold in range(opt.fold):
 
                 saveflag = True
                 if opt.mod == ['drawn','irregular']:
-                    x,y,size,area = impro.boundingSquare(mask_drawn, random.uniform(1.2,1.6))
+                    x,y,size,area = impro.boundingSquare(mask_drawn, random.uniform(1.1,1.6))
                 elif opt.mod == ['network','irregular']:
-                    x,y,size,area = impro.boundingSquare(mask_net, random.uniform(1.2,1.6))
+                    x,y,size,area = impro.boundingSquare(mask_net, random.uniform(1.1,1.6))
                 else:
-                    x,y,size,area = impro.boundingSquare(mask, random.uniform(1.2,1.6))
+                    x,y,size,area = impro.boundingSquare(mask, random.uniform(1.1,1.6))
 
                 if area < 1000:
                     saveflag = False
@@ -130,11 +130,15 @@ for fold in range(opt.fold):
                 if saveflag:
                     # add mosaic
                     img_mosaic = mosaic.addmosaic_random(img, mask)
-                    # random blur
+                    # random degradater
                     if random.random()>0.5:
-                        Q = random.randint(1,15)
-                        img = impro.dctblur(img,Q)
-                        img_mosaic = impro.dctblur(img_mosaic,Q)
+                        degradate_params = degradater.get_random_degenerate_params(mod='weaker_2')
+                        img = degradater.degradate(img,degradate_params)
+                        img_mosaic = degradater.degradate(img_mosaic,degradate_params)
+                    # if random.random()>0.5:
+                    #     Q = random.randint(1,15)
+                    #     img = impro.dctblur(img,Q)
+                    #     img_mosaic = impro.dctblur(img_mosaic,Q)
 
                     savecnt += 1
 

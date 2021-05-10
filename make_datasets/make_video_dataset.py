@@ -14,7 +14,7 @@ import torch
 
 from models import runmodel,loadmodel
 import util.image_processing as impro
-from util import util,mosaic,data,ffmpeg
+from util import filt, util,mosaic,data,ffmpeg
 
 
 opt.parser.add_argument('--datadir',type=str,default='your video dir', help='')
@@ -56,6 +56,7 @@ for videopath in videopaths:
                 ffmpeg.video2image(videopath, opt.temp_dir+'/video2image/%05d.'+opt.tempimage_type,fps=1,
                     start_time = util.second2stamp(cut_point*opt.interval),last_time = util.second2stamp(opt.time))
                 imagepaths = util.Traversal(opt.temp_dir+'/video2image')
+                imagepaths = sorted(imagepaths)
                 cnt = 0 
                 for i in range(opt.time):
                     img = impro.imread(imagepaths[i])
@@ -92,30 +93,65 @@ for videopath in videopaths:
             imagepaths = util.Traversal(opt.temp_dir+'/video2image')
             imagepaths = sorted(imagepaths)
             imgs=[];masks=[]
-            mask_flag = False
+            # mask_flag = False
+            # for imagepath in imagepaths:
+            #     img = impro.imread(imagepath)
+            #     mask = runmodel.get_ROI_position(img,net,opt,keepsize=True)[0]
+            #     imgs.append(img)
+            #     masks.append(mask)
+            #     if not mask_flag:
+            #         mask_avg = mask.astype(np.float64)
+            #         mask_flag = True
+            #     else:
+            #         mask_avg += mask.astype(np.float64)
 
+            # mask_avg = np.clip(mask_avg/len(imagepaths),0,255).astype('uint8')
+            # mask_avg = impro.mask_threshold(mask_avg,20,64)
+            # if not opt.all_mosaic_area:
+            #     mask_avg = impro.find_mostlikely_ROI(mask_avg)
+            # x,y,size,area = impro.boundingSquare(mask_avg,Ex_mul=random.uniform(1.1,1.5))
+            
+            # for i in range(len(imagepaths)):
+            #     img = impro.resize(imgs[i][y-size:y+size,x-size:x+size],opt.outsize,interpolation=cv2.INTER_CUBIC) 
+            #     mask = impro.resize(masks[i][y-size:y+size,x-size:x+size],opt.outsize,interpolation=cv2.INTER_CUBIC)
+            #     impro.imwrite(os.path.join(origindir,'%05d'%(i+1)+'.jpg'), img)
+            #     impro.imwrite(os.path.join(maskdir,'%05d'%(i+1)+'.png'), mask)
+            ex_mul = random.uniform(1.2,1.7)
+            positions = []
             for imagepath in imagepaths:
                 img = impro.imread(imagepath)
                 mask = runmodel.get_ROI_position(img,net,opt,keepsize=True)[0]
                 imgs.append(img)
                 masks.append(mask)
-                if not mask_flag:
-                    mask_avg = mask.astype(np.float64)
-                    mask_flag = True
-                else:
-                    mask_avg += mask.astype(np.float64)
+                x,y,size,area = impro.boundingSquare(mask,Ex_mul=ex_mul)
+                positions.append([x,y,size])
+            positions =np.array(positions)
+            for i in range(3):positions[:,i] = filt.medfilt(positions[:,i],opt.medfilt_num)
 
-            mask_avg = np.clip(mask_avg/len(imagepaths),0,255).astype('uint8')
-            mask_avg = impro.mask_threshold(mask_avg,20,64)
-            if not opt.all_mosaic_area:
-                mask_avg = impro.find_mostlikely_ROI(mask_avg)
-            x,y,size,area = impro.boundingSquare(mask_avg,Ex_mul=random.uniform(1.1,1.5))
-            
-            for i in range(len(imagepaths)):
-                img = impro.resize(imgs[i][y-size:y+size,x-size:x+size],opt.outsize,interpolation=cv2.INTER_CUBIC) 
+            for i,imagepath in enumerate(imagepaths):
+                x,y,size = positions[i][0],positions[i][1],positions[i][2]
+                tmp_cnt = i
+                while size<opt.minsize//2:
+                    tmp_cnt = tmp_cnt-1
+                    x,y,size = positions[tmp_cnt][0],positions[tmp_cnt][1],positions[tmp_cnt][2]
+                img = impro.resize(imgs[i][y-size:y+size,x-size:x+size],opt.outsize,interpolation=cv2.INTER_CUBIC)
                 mask = impro.resize(masks[i][y-size:y+size,x-size:x+size],opt.outsize,interpolation=cv2.INTER_CUBIC)
                 impro.imwrite(os.path.join(origindir,'%05d'%(i+1)+'.jpg'), img)
                 impro.imwrite(os.path.join(maskdir,'%05d'%(i+1)+'.png'), mask)
+                # x_tmp,y_tmp,size_tmp
+
+            # for imagepath in imagepaths:
+            #     img = impro.imread(imagepath)
+            #     mask,x,y,halfsize,area = runmodel.get_ROI_position(img,net,opt,keepsize=True)
+            #     if halfsize>opt.minsize//4:
+            #         if not opt.all_mosaic_area:
+            #             mask_avg = impro.find_mostlikely_ROI(mask_avg)
+            #         x,y,size,area = impro.boundingSquare(mask_avg,Ex_mul=ex_mul)
+            #     img = impro.resize(imgs[i][y-size:y+size,x-size:x+size],opt.outsize,interpolation=cv2.INTER_CUBIC)
+            #     mask = impro.resize(masks[i][y-size:y+size,x-size:x+size],opt.outsize,interpolation=cv2.INTER_CUBIC)
+            #     impro.imwrite(os.path.join(origindir,'%05d'%(i+1)+'.jpg'), img)
+            #     impro.imwrite(os.path.join(maskdir,'%05d'%(i+1)+'.png'), mask)
+
 
             result_cnt+=1
 
@@ -124,5 +160,5 @@ for videopath in videopaths:
         util.writelog(os.path.join(opt.savedir,'opt.txt'), 
               videopath+'\n'+str(result_cnt)+'\n'+str(e))
     video_cnt +=1
-    if opt.use_gpu != -1:
+    if opt.gpu_id != '-1':
         torch.cuda.empty_cache()

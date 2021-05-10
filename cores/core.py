@@ -1,5 +1,6 @@
 import os
 import time
+import torch
 import numpy as np
 import cv2
 
@@ -30,6 +31,7 @@ def video_init(opt,path):
                     continue_flag = True
     
     if not continue_flag:
+        print('Step:1/4 -- Convert video to images')
         util.file_init(opt)
         ffmpeg.video2voice(path,opt.temp_dir+'/voice_tmp.mp3',opt.start_time,opt.last_time)
         ffmpeg.video2image(path,opt.temp_dir+'/video2image/output_%06d.'+opt.tempimage_type,fps,opt.start_time,opt.last_time)
@@ -59,7 +61,7 @@ def addmosaic_video(opt,netS):
     if not opt.no_preview:
         cv2.namedWindow('preview', cv2.WINDOW_NORMAL)
     
-    print('Find ROI location:')
+    print('Step:2/4 -- Find ROI location')
     for i,imagepath in enumerate(imagepaths,1):
         img = impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepath))
         mask,x,y,size,area = runmodel.get_ROI_position(img,netS,opt)
@@ -77,7 +79,7 @@ def addmosaic_video(opt,netS):
     mask_index = filt.position_medfilt(np.array(positions), 7)
 
     # add mosaic
-    print('Add Mosaic:')
+    print('Step:3/4 -- Add Mosaic:')
     t1 = time.time()
     for i,imagepath in enumerate(imagepaths,1):
         mask = impro.imread(os.path.join(opt.temp_dir+'/ROI_mask',imagepaths[mask_index[i-1]]),'gray')
@@ -100,6 +102,7 @@ def addmosaic_video(opt,netS):
     print()
     if not opt.no_preview:
         cv2.destroyAllWindows()
+    print('Step:4/4 -- Convert images to video')
     ffmpeg.image2video( fps,
                         opt.temp_dir+'/addmosaic_image/output_%06d.'+opt.tempimage_type,
                         opt.temp_dir+'/voice_tmp.mp3',
@@ -119,7 +122,7 @@ def styletransfer_video(opt,netG):
     path = opt.media_path
     positions = []
     fps,imagepaths = video_init(opt,path)[:2]
-    print('Transfer:')
+    print('Step:2/4 -- Transfer')
     t1 = time.time()
     if not opt.no_preview:
         cv2.namedWindow('preview', cv2.WINDOW_NORMAL)
@@ -142,6 +145,7 @@ def styletransfer_video(opt,netG):
     if not opt.no_preview:
         cv2.destroyAllWindows()
     suffix = os.path.basename(opt.model_path).replace('.pth','').replace('style_','')
+    print('Step:4/4 -- Convert images to video')
     ffmpeg.image2video( fps,
                 opt.temp_dir+'/style_transfer/output_%06d.'+opt.tempimage_type,
                 opt.temp_dir+'/voice_tmp.mp3',
@@ -156,8 +160,7 @@ def get_mosaic_positions(opt,netM,imagepaths,savemask=True):
     t1 = time.time()
     if not opt.no_preview:
         cv2.namedWindow('mosaic mask', cv2.WINDOW_NORMAL)
-
-    print('Find mosaic location:')
+    print('Step:2/4 -- Find mosaic location')
     for i,imagepath in enumerate(imagepaths,1):
         img_origin = impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepath))
         x,y,size,mask = runmodel.get_mosaic_position(img_origin,netM,opt)
@@ -186,7 +189,7 @@ def cleanmosaic_img(opt,netG,netM):
     print('Clean Mosaic:',path)
     img_origin = impro.imread(path)
     x,y,size,mask = runmodel.get_mosaic_position(img_origin,netM,opt)
-    cv2.imwrite('./mask/'+os.path.basename(path), mask)
+    #cv2.imwrite('./mask/'+os.path.basename(path), mask)
     img_result = img_origin.copy()
     if size > 100 :
         img_mosaic = img_origin[y-size:y+size,x-size:x+size]
@@ -199,6 +202,18 @@ def cleanmosaic_img(opt,netG,netM):
         print('Do not find mosaic')
     impro.imwrite(os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.jpg'),img_result)
 
+def cleanmosaic_img_server(opt,img_origin,netG,netM):
+    x,y,size,mask = runmodel.get_mosaic_position(img_origin,netM,opt)
+    img_result = img_origin.copy()
+    if size > 100 :
+        img_mosaic = img_origin[y-size:y+size,x-size:x+size]
+        if opt.traditional:
+            img_fake = runmodel.traditional_cleaner(img_mosaic,opt)
+        else:
+            img_fake = runmodel.run_pix2pix(img_mosaic,netG,opt)
+        img_result = impro.replace_mosaic(img_origin,img_fake,mask,x,y,size,opt.no_feather)
+    return img_result
+
 def cleanmosaic_video_byframe(opt,netG,netM):
     path = opt.media_path
     fps,imagepaths = video_init(opt,path)[:2]
@@ -208,7 +223,7 @@ def cleanmosaic_video_byframe(opt,netG,netM):
         cv2.namedWindow('clean', cv2.WINDOW_NORMAL)
 
     # clean mosaic
-    print('Clean Mosaic:')
+    print('Step:3/4 -- Clean Mosaic:')
     length = len(imagepaths)
     for i,imagepath in enumerate(imagepaths,0):
         x,y,size = positions[i][0],positions[i][1],positions[i][2]
@@ -237,6 +252,7 @@ def cleanmosaic_video_byframe(opt,netG,netM):
     print()
     if not opt.no_preview:
         cv2.destroyAllWindows()
+    print('Step:4/4 -- Convert images to video')
     ffmpeg.image2video( fps,
                 opt.temp_dir+'/replace_mosaic/output_%06d.'+opt.tempimage_type,
                 opt.temp_dir+'/voice_tmp.mp3',
@@ -244,11 +260,15 @@ def cleanmosaic_video_byframe(opt,netG,netM):
 
 def cleanmosaic_video_fusion(opt,netG,netM):
     path = opt.media_path
-    N = 25
-    if 'HD' in os.path.basename(opt.model_path):
-        INPUT_SIZE = 256
-    else:
-        INPUT_SIZE = 128
+    N,T,S = 2,5,3
+    LEFT_FRAME = (N*S)
+    POOL_NUM = LEFT_FRAME*2+1
+    INPUT_SIZE = 256
+    FRAME_POS = np.linspace(0, (T-1)*S,T,dtype=np.int64)
+    img_pool = []
+    previous_frame = None
+    init_flag = True
+    
     fps,imagepaths,height,width = video_init(opt,path)
     positions = get_mosaic_positions(opt,netM,imagepaths,savemask=True)
     t1 = time.time()
@@ -256,39 +276,45 @@ def cleanmosaic_video_fusion(opt,netG,netM):
         cv2.namedWindow('clean', cv2.WINDOW_NORMAL)
     
     # clean mosaic
-    print('Clean Mosaic:')
+    print('Step:3/4 -- Clean Mosaic:')
     length = len(imagepaths)
-
-    img_pool = []
-    mosaic_input = np.zeros((INPUT_SIZE,INPUT_SIZE,3*N+1), dtype='uint8')
-
+    
     for i,imagepath in enumerate(imagepaths,0):
         x,y,size = positions[i][0],positions[i][1],positions[i][2]
-
+        input_stream = []
         # image read stream
-        mask = cv2.imread(os.path.join(opt.temp_dir+'/mosaic_mask',imagepath),0)
-        if i==0 :
-            for j in range(0,N):
-                img_pool.append(impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepaths[np.clip(i+j-12,0,len(imagepaths)-1)])))
-        else:
+        if i==0 :# init
+            for j in range(POOL_NUM):
+                img_pool.append(impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepaths[np.clip(i+j-LEFT_FRAME,0,len(imagepaths)-1)])))
+        else: # load next frame
             img_pool.pop(0)
-            img_pool.append(impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepaths[np.clip(i+12,0,len(imagepaths)-1)])))
-        img_origin = img_pool[12]
+            img_pool.append(impro.imread(os.path.join(opt.temp_dir+'/video2image',imagepaths[np.clip(i+LEFT_FRAME,0,len(imagepaths)-1)])))
+        img_origin = img_pool[LEFT_FRAME]
         img_result = img_origin.copy()
 
-        if size>100:
+        if size>50:
             try:#Avoid unknown errors
-                #reshape to network input shape
-                for k in range(N):
-                    mosaic_input[:,:,k*3:(k+1)*3] = impro.resize(img_pool[k][y-size:y+size,x-size:x+size], INPUT_SIZE)
-                mask_input = impro.resize(mask,np.min(img_origin.shape[:2]))[y-size:y+size,x-size:x+size]
-                mosaic_input[:,:,-1] = impro.resize(mask_input, INPUT_SIZE)
-                mosaic_input_tensor = data.im2tensor(mosaic_input,bgr2rgb=False,use_gpu=opt.use_gpu,use_transform = False,is0_1 = False)
-                unmosaic_pred = netG(mosaic_input_tensor)              
-                img_fake = data.tensor2im(unmosaic_pred,rgb2bgr = False ,is0_1 = False)
+                for pos in FRAME_POS:
+                    input_stream.append(impro.resize(img_pool[pos][y-size:y+size,x-size:x+size], INPUT_SIZE)[:,:,::-1])
+                if init_flag:
+                    init_flag = False
+                    previous_frame = input_stream[N]
+                    previous_frame = data.im2tensor(previous_frame,bgr2rgb=True,gpu_id=opt.gpu_id)
+                
+                input_stream = np.array(input_stream).reshape(1,T,INPUT_SIZE,INPUT_SIZE,3).transpose((0,4,1,2,3))
+                input_stream = data.to_tensor(data.normalize(input_stream),gpu_id=opt.gpu_id)
+                with torch.no_grad():
+                    unmosaic_pred = netG(input_stream,previous_frame)
+                img_fake = data.tensor2im(unmosaic_pred,rgb2bgr = True)
+                previous_frame = unmosaic_pred
+                # previous_frame = data.tensor2im(unmosaic_pred,rgb2bgr = True)
+                mask = cv2.imread(os.path.join(opt.temp_dir+'/mosaic_mask',imagepath),0)
                 img_result = impro.replace_mosaic(img_origin,img_fake,mask,x,y,size,opt.no_feather)
             except Exception as e:
-                print('Warning:',e)
+                init_flag = True
+                print('Error:',e)
+        else:
+            init_flag = True
         cv2.imwrite(os.path.join(opt.temp_dir+'/replace_mosaic',imagepath),img_result)
         os.remove(os.path.join(opt.temp_dir+'/video2image',imagepath))      
         
@@ -301,6 +327,7 @@ def cleanmosaic_video_fusion(opt,netG,netM):
     print()
     if not opt.no_preview:
         cv2.destroyAllWindows()
+    print('Step:4/4 -- Convert images to video')
     ffmpeg.image2video( fps,
                 opt.temp_dir+'/replace_mosaic/output_%06d.'+opt.tempimage_type,
                 opt.temp_dir+'/voice_tmp.mp3',

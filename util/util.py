@@ -1,4 +1,6 @@
 import os
+import random
+import string
 import shutil
 
 def Traversal(filedir):
@@ -9,6 +11,9 @@ def Traversal(filedir):
         for dir in dirs:
             Traversal(dir)
     return file_list
+
+def randomstr(num):
+    return ''.join(random.sample(string.ascii_letters + string.digits, num))
 
 def is_img(path):
     ext = os.path.splitext(path)[1]

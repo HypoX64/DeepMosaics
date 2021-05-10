@@ -10,8 +10,8 @@
 |        clean_face_HD.pth         | 对图片或视频中的脸部去码<br>(要求内存 > 8GB). |
 |         add_youknow.pth          |          对图片或视频中的...内容打码          |
 | clean_youknow_resnet_9blocks.pth |          对图片或视频中的...内容去码          |
-|     clean_youknow_video.pth      |             对视频中的...内容去码             |
-|    clean_youknow_video_HD.pth    |   对视频中的...内容去码<br>(要求内存 > 8GB)   |
+|     clean_youknow_video.pth      |             对视频中的...内容去码,推荐使用带有'video'的模型去除视频中的马赛克               |
+
 
 ### 风格转换
 

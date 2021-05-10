@@ -1,12 +1,14 @@
+<div align="center">
+  <img src="./imgs/logo.png" width="250"><br><br>
+  <img src="https://badgen.net/github/stars/hypox64/deepmosaics?icon=github&color=4ab8a1">&emsp;<img src="https://badgen.net/github/forks/hypox64/deepmosaics?icon=github&color=4ab8a1">&emsp;<a href="https://github.com/HypoX64/DeepMosaics/releases"><img src=https://img.shields.io/github/downloads/hypox64/deepmosaics/total></a>&emsp;<a href="https://github.com/HypoX64/DeepMosaics/releases"><img src=https://img.shields.io/github/v/release/hypox64/DeepMosaics></a>&emsp;<img src=https://img.shields.io/github/license/hypox64/deepmosaics>
+</div>
+
+# DeepMosaics
+**English | [中文](./README_CN.md)**<br>
+You can use it to automatically remove the mosaics in images and videos, or add mosaics to them.<br>This project is based on "semantic segmentation" and "Image-to-Image Translation".<br>Try it at this [website](http://118.89.27.46:5000/)!<br>
+
+### Examples
 ![image](./imgs/hand.gif)
-# <img src="./imgs/icon.jpg" width="48">DeepMosaics
-You can use it to automatically remove the mosaics in images and videos, or add mosaics to them.<br>
-This project is based on "semantic segmentation" and "Image-to-Image Translation".<br>
-
-* [中文版README](./README_CN.md)<br>
-
-### More Examples
-
 origin | auto add mosaic |  auto clean mosaic  
 :-:|:-:|:-:
 ![image](./imgs/example/lena.jpg) | ![image](./imgs/example/lena_add.jpg) | ![image](./imgs/example/lena_clean.jpg) 
@@ -30,18 +32,21 @@ An interesting example:[Ricardo Milos to cat](https://www.bilibili.com/video/BV1
 ## Run DeepMosaics
 You can either run DeepMosaics via a pre-built binary package, or from source.<br>
 
+### Try it on web
+You can simply try to remove the mosaic on the face at this [website](http://118.89.27.46:5000/).<br>
 ### Pre-built binary package
 For Windows, we bulid a GUI version for easy testing.<br>
 Download this version, and a pre-trained model via [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ) <br>
 
-* [[How to use]](./docs/exe_help.md)<br>
+* [[Help document]](./docs/exe_help.md)<br>
+* Video tutorial => [[youtube]](https://www.youtube.com/watch?v=1kEmYawJ_vk) [[bilibili]](https://www.bilibili.com/video/BV1QK4y1a7Av)
 
 ![image](./imgs/GUI.png)<br>
 Attentions:<br>
 
   - Requires Windows_x86_64, Windows10 is better.<br>
   - Different pre-trained models are suitable for different effects.[[Introduction to pre-trained models]](./docs/pre-trained_models_introduction.md)<br>
-  - Run time depends on computers performance(The current version does not support gpu, if you need to use gpu please run source).<br>
+  - Run time depends on computers performance (GPU version has better performance but requires CUDA to be installed).<br>
   - If output video cannot be played, you can try with [potplayer](https://daumpotplayer.com/download/).<br>
   - GUI version updates slower than source.<br>
 
@@ -67,11 +72,11 @@ You can download pre_trained models and put them into './pretrained_models'.<br>
 #### Simple Example
 * Add Mosaic (output media will save in './result')<br>
 ```bash
-python deepmosaic.py --media_path ./imgs/ruoruo.jpg --model_path ./pretrained_models/mosaic/add_face.pth --use_gpu 0
+python deepmosaic.py --media_path ./imgs/ruoruo.jpg --model_path ./pretrained_models/mosaic/add_face.pth --gpu_id 0
 ```
 * Clean Mosaic (output media will save in './result')<br>
 ```bash
-python deepmosaic.py --media_path ./result/ruoruo_add.jpg --model_path ./pretrained_models/mosaic/clean_face_HD.pth --use_gpu 0
+python deepmosaic.py --media_path ./result/ruoruo_add.jpg --model_path ./pretrained_models/mosaic/clean_face_HD.pth --gpu_id 0
 ```
 #### More Parameters
 If you want to test other images or videos, please refer to this file.<br>
@@ -81,5 +86,4 @@ If you want to test other images or videos, please refer to this file.<br>
 If you want to train with your own dataset, please refer to [training_with_your_own_dataset.md](./docs/training_with_your_own_dataset.md)
 
 ## Acknowledgements
-This code borrows heavily from [[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet) [[pix2pixHD]](https://github.com/NVIDIA/pix2pixHD) [[BiSeNet]](https://github.com/ooooverflow/BiSeNet).
-
+This code borrows heavily from [[pytorch-CycleGAN-and-pix2pix]](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) [[Pytorch-UNet]](https://github.com/milesial/Pytorch-UNet) [[pix2pixHD]](https://github.com/NVIDIA/pix2pixHD) [[BiSeNet]](https://github.com/ooooverflow/BiSeNet) [[DFDNet]](https://github.com/csxmli2016/DFDNet) [[GFRNet_pytorch_new]](https://github.com/sonack/GFRNet_pytorch_new).
