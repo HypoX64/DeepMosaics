@@ -10,8 +10,8 @@ Download  pre-trained model via [[Google Drive]](https://drive.google.com/open?i
 |        clean_face_HD.pth         | Clean mosaic to  faces in images/video.<br>(RAM > 8GB). |
 |         add_youknow.pth          |          Add mosaic to  ... in images/videos.           |
 | clean_youknow_resnet_9blocks.pth |         Clean mosaic to  ... in images/videos.          |
-|     clean_youknow_video.pth      |             Clean mosaic to  ... in videos.             |
-|    clean_youknow_video_HD.pth    |     Clean mosaic to  ... in videos.<br>(RAM > 8GB)      |
+|     clean_youknow_video.pth      |             Clean mosaic to  ... in videos. It is better for processing video mosaics              |
+
 
 ### Style Transfer
 

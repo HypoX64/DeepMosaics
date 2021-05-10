@@ -71,8 +71,8 @@ def loadimage(imagepaths,maskpaths,opt,test_flag = False):
         img,mask = data.random_transform_pair_image(img, mask, opt.finesize, test_flag)
         images[i] = (img.transpose((2, 0, 1))/255.0)
         masks[i] = (mask.reshape(1,1,opt.finesize,opt.finesize)/255.0)
-    images = Totensor(images,opt.gpu_id)
-    masks = Totensor(masks,opt.gpu_id)
+    images = data.to_tensor(images,opt.gpu_id)
+    masks = data.to_tensor(masks,opt.gpu_id)
 
     return images,masks
 

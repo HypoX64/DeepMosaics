@@ -101,6 +101,8 @@ class Options():
                     self.opt.netG = 'unet_128'
                 elif 'resnet_9blocks' in model_name:
                     self.opt.netG = 'resnet_9blocks'
+                elif 'HD' in model_name and 'video' not in model_name:
+                    self.opt.netG = 'HD'
                 elif 'video' in model_name:
                     self.opt.netG = 'video'
                 else:
@@ -116,7 +118,7 @@ class Options():
             else:
                 self.opt.ex_mult = float(self.opt.ex_mult)
 
-            if self.opt.mosaic_position_model_path == 'auto':
+            if self.opt.mosaic_position_model_path == 'auto' and self.opt.mode == 'clean':
                 _path = os.path.join(os.path.split(self.opt.model_path)[0],'mosaic_position.pth')
                 if os.path.isfile(_path):
                     self.opt.mosaic_position_model_path = _path

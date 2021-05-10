@@ -104,7 +104,7 @@ class VideoDataLoader(object):
         self.opt = opt
         self.test_flag = test_flag
         for i in range(self.opt.n_epoch):
-            self.videolist += videolist
+            self.videolist += videolist.copy()
         random.shuffle(self.videolist)
         self.each_video_n_iter = self.opt.M -self.opt.S*(self.opt.T+1)
         self.n_iter = len(self.videolist)//self.opt.load_thread//self.opt.batchsize*self.each_video_n_iter*self.opt.load_thread

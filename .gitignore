@@ -185,3 +185,4 @@ nohup.out
 *.JPEG
 *.exe
 *.npy
+*.psd

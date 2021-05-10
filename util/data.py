@@ -1,5 +1,6 @@
 import random
 import os
+from util.mosaic import get_random_parameter
 import numpy as np
 import torch
 import torchvision.transforms as transforms
@@ -134,7 +135,7 @@ def random_transform_single_image(img,finesize,params=None,test_flag = False):
             params['rate']['color'][2],params['rate']['color'][3],params['rate']['color'][4])
 
     if params['flag']['flip']:
-        img = img[:,::-1,:]
+        img = img[:,::-1]
 
     #check shape
     if img.shape[0]!= finesize or img.shape[1]!= finesize:
@@ -143,58 +144,11 @@ def random_transform_single_image(img,finesize,params=None,test_flag = False):
     return img
 
 def random_transform_pair_image(img,mask,finesize,test_flag = False):
-    #random scale
-    if random.random()<0.5:
-        h,w = img.shape[:2]
-        loadsize = min((h,w))
-        a = (float(h)/float(w))*random.uniform(0.9, 1.1)
-        if h<w:
-            mask = cv2.resize(mask, (int(loadsize/a),loadsize))
-            img = cv2.resize(img, (int(loadsize/a),loadsize))
-        else:
-            mask = cv2.resize(mask, (loadsize,int(loadsize*a)))
-            img = cv2.resize(img, (loadsize,int(loadsize*a)))
-
-    #random crop
-    h,w = img.shape[:2]
-    h_move = int((h-finesize)*random.random())
-    w_move = int((w-finesize)*random.random())
-    img_crop = img[h_move:h_move+finesize,w_move:w_move+finesize]
-    mask_crop = mask[h_move:h_move+finesize,w_move:w_move+finesize]
-
-    if test_flag:
-        return img_crop,mask_crop
-    
-    #random rotation
-    if random.random()<0.2:
-        h,w = img_crop.shape[:2]
-        M = cv2.getRotationMatrix2D((w/2,h/2),90*int(4*random.random()),1)
-        img = cv2.warpAffine(img_crop,M,(w,h))
-        mask = cv2.warpAffine(mask_crop,M,(w,h))
-    else:
-        img,mask = img_crop,mask_crop
-
-    #random color
-    img = impro.color_adjust(img,ran=True)
-
-    #random flip
-    if random.random()<0.5:
-        if random.random()<0.5:
-            img = img[:,::-1,:]
-            mask = mask[:,::-1]
-        else:
-            img = img[::-1,:,:]
-            mask = mask[::-1,:]
-
-    #random blur
-    if random.random()<0.5:
-        img = impro.dctblur(img,random.randint(1,15))
-        
-    #check shape
-    if img.shape[0]!= finesize or img.shape[1]!= finesize or mask.shape[0]!= finesize or mask.shape[1]!= finesize:
-        img = cv2.resize(img,(finesize,finesize))
-        mask = cv2.resize(mask,(finesize,finesize))
-        print('warning! shape error.')
+    params = get_transform_params()
+    img = random_transform_single_image(img,finesize,params)
+    params['flag']['degradate'] = False
+    params['flag']['color'] = False
+    mask = random_transform_single_image(mask,finesize,params)
     return img,mask
 
 def showresult(img1,img2,img3,name,is0_1 = False):
