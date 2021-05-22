@@ -4,7 +4,7 @@ import traceback
 import cv2
 import numpy as np
 try:
-    from cores import Options,core
+    from cores import Options,clean
     from util import util
     from util import image_processing as impro
     from models import loadmodel
@@ -44,7 +44,7 @@ def handle():
     try:
         if max(img.shape)>1080:
             img = impro.resize(img,720,interpolation=cv2.INTER_CUBIC)
-        img = core.cleanmosaic_img_server(opt,img,netG,netM)
+        img = clean.cleanmosaic_img_server(opt,img,netG,netM)
     except Exception as e:
         result['img'] = imgRec
         result['info'] = 'procfailed'

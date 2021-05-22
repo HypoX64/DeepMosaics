@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import random
+from threading import Thread
 
 import platform
 
@@ -39,15 +40,22 @@ def imread(file_path,mod = 'normal',loadsize = 0, rgb=False):
 
     return img
 
-def imwrite(file_path,img):
+def imwrite(file_path,img,use_thread=False):
     '''
     in other to save chinese path images in windows,
     this fun just for save final output images
     '''
-    if system_type == 'Linux':
-        cv2.imwrite(file_path, img)
+    def subfun(file_path,img):
+        if system_type == 'Linux':
+            cv2.imwrite(file_path, img)
+        else:
+            cv2.imencode('.jpg', img)[1].tofile(file_path)
+    if use_thread:
+        t = Thread(target=subfun,args=(file_path, img,))
+        t.daemon()
+        t.start
     else:
-        cv2.imencode('.jpg', img)[1].tofile(file_path)
+        subfun(file_path,img)
 
 def resize(img,size,interpolation=cv2.INTER_LINEAR):
     '''
@@ -183,7 +191,7 @@ def mask_area(mask):
     except:
         area = 0
     return area
-import time
+
 def replace_mosaic(img_origin,img_fake,mask,x,y,size,no_feather):
     img_fake = cv2.resize(img_fake,(size*2,size*2),interpolation=cv2.INTER_CUBIC)
     if no_feather:

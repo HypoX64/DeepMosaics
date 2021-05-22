@@ -9,6 +9,7 @@ You can use it to automatically remove the mosaics in images and videos, or add 
 
 ### Examples
 ![image](./imgs/hand.gif)
+
 origin | auto add mosaic |  auto clean mosaic  
 :-:|:-:|:-:
 ![image](./imgs/example/lena.jpg) | ![image](./imgs/example/lena_add.jpg) | ![image](./imgs/example/lena_clean.jpg) 
@@ -33,7 +34,7 @@ An interesting example:[Ricardo Milos to cat](https://www.bilibili.com/video/BV1
 You can either run DeepMosaics via a pre-built binary package, or from source.<br>
 
 ### Try it on web
-You can simply try to remove the mosaic on the face at this [website](http://118.89.27.46:5000/).<br>
+You can simply try to remove the mosaic on the **face** at this [website](http://118.89.27.46:5000/).<br>
 ### Pre-built binary package
 For Windows, we bulid a GUI version for easy testing.<br>
 Download this version, and a pre-trained model via [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ) <br>
@@ -61,7 +62,7 @@ Attentions:<br>
 This code depends on opencv-python, torchvision available via pip install.
 #### Clone this repo
 ```bash
-git clone https://github.com/HypoX64/DeepMosaics
+git clone https://github.com/HypoX64/DeepMosaics.git
 cd DeepMosaics
 ```
 #### Get Pre-Trained Models

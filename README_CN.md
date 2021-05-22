@@ -10,6 +10,7 @@
 
 ### 例子
 ![image](./imgs/hand.gif)
+
 原始 | 自动打码 |  自动去码  
 :-:|:-:|:-:
 ![image](./imgs/example/lena.jpg) | ![image](./imgs/example/lena_add.jpg) | ![image](./imgs/example/lena_clean.jpg) 
@@ -33,7 +34,7 @@
 ## 如何运行
 可以通过我们预编译好的二进制包或源代码运行.<br>
 ### 在网页中运行
-打开[这个网站](http://118.89.27.46:5000/)上传照片，将获得去除马赛克后的结果，受限与当地法律，目前只支持人脸.<br>
+打开[这个网站](http://118.89.27.46:5000/)上传照片，将获得去除马赛克后的结果，受限于当地法律，**目前只支持人脸**.<br>
 ### 预编译的程序包
 对于Windows用户,我们提供了包含GUI界面的免安装软件包.<br>
 可以通过下面两种方式进行下载: [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs)  [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ) <br>
@@ -57,10 +58,10 @@
   - [Pytorch 1.0+](https://pytorch.org/) 
   - CPU or NVIDIA GPU + CUDA CuDNN<br>
 #### Python依赖项
-代码依赖于opencv-python以及 torchvision,可有通过pip install 进行安装.
+代码依赖于opencv-python以及 torchvision,可以通过pip install 进行安装.
 #### 克隆源代码
 ```bash
-git clone https://github.com/HypoX64/DeepMosaics
+git clone https://github.com/HypoX64/DeepMosaics.git
 cd DeepMosaics
 ```
 #### 下载预训练模型
