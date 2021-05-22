@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import string
@@ -52,12 +53,24 @@ def is_dirs(paths):
             tmp.append(path)
     return tmp  
 
-def  writelog(path,log,isprint=False):
+def writelog(path,log,isprint=False):
     f = open(path,'a+')
     f.write(log+'\n')
     f.close()
     if isprint:
         print(log)
+
+def savejson(path,data_dict):
+    json_str = json.dumps(data_dict)
+    f = open(path,'w+')
+    f.write(json_str)
+    f.close()
+
+def loadjson(path):
+    f = open(path, 'r')
+    txt_data = f.read()
+    f.close()
+    return json.loads(txt_data)
 
 def makedirs(path):
     if os.path.isdir(path):

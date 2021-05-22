@@ -1,23 +1,43 @@
-DeepMosaics V0.3.0
-Core program building with windows10_1703_x86_64 
- + python 3.68  
- + pyinstaller 3.5
+DeepMosaics: 0.5.1
+Core building with:
+    Python: 3.7.3 (default, Apr 24 2019, 15:29:51) [MSC v.1915 64 bit (AMD64)]
+    Pytorch: 1.7.1
+    OpenCV: 4.1.2
+    Platform: Windows-10-10.0.19041-SP0
+    Driver Version: 461.40
+    CUDA:11.0
 GUI building with C#
 For more detail, please view on github: https://github.com/HypoX64/DeepMosaics
 
 Releases History
- V0.3.0
-   1. Support BiSeNet(Better recognition of mosaics).
-   2. New videoHD model.
-   3. Better feathering method.
- V0.2.0
-   1. Add video model.
-   2. Now you can input chinese path
-   3. Support style transfer
-   4. Support fps limit
- V0.1.2
-   1. Support pix2pixHD model
- V0.1.1
-   1. Check path, can't input illegal path
- V0.1.0
-   1. Initial release.
+  V0.5.1
+    Fix:
+      1.Fix Some BUGs when restore unfinished tasks.
+      2.Fix that audio and video are not synchronized when the video is too long.
+    New:
+      1.Speed up video processing by Asynchronous.
+  V0.5.0
+    1.New video model (Perform better)
+  V0.4.1
+    1.Allow unfinished tasks to be restored.
+    2.Clean cache during processing.
+    3.Support CUDA 11.0.
+  V0.4.0
+    1.Support GPU.
+    2.Preview images when processing video.
+    3.Choose start position of video.
+  V0.3.0
+    1. Support BiSeNet(Better recognition of mosaics).
+    2. New videoHD model.
+    3. Better feathering method.
+  V0.2.0
+    1. Add video model.
+    2. Now you can input chinese path
+    3. Support style transfer
+    4. Support fps limit
+  V0.1.2
+    1. Support pix2pixHD model
+  V0.1.1
+    1. Check path, can't input illegal path
+  V0.1.0
+    1. Initial release.

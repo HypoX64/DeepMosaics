@@ -26,7 +26,7 @@ class Options():
         self.parser.add_argument('--fps', type=int, default=0,help='read and output fps, if 0-> origin')
         self.parser.add_argument('--no_preview', action='store_true', help='if specified,do not preview images when processing video. eg.(when run it on server)')
         self.parser.add_argument('--output_size', type=int, default=0,help='size of output media, if 0 -> origin')
-        self.parser.add_argument('--mask_threshold', type=int, default=64,help='threshold of recognize clean or add mosaic position 0~255')
+        self.parser.add_argument('--mask_threshold', type=int, default=64,help='Mosaic detection threshold (0~255). The smaller is it, the more likely judged as a mosaic area.')
 
         #AddMosaic
         self.parser.add_argument('--mosaic_mod', type=str, default='squa_avg',help='type of mosaic -> squa_avg | squa_random | squa_avg_circle_edge | rect_avg | random')

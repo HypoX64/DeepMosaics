@@ -2,7 +2,7 @@ import os
 import sys
 import traceback
 try:
-    from cores import Options,core
+    from cores import Options,add,clean,style
     from util import util
     from models import loadmodel
 except Exception as e:
@@ -25,9 +25,9 @@ def main():
         for file in files:
             opt.media_path = file
             if util.is_img(file):
-                core.addmosaic_img(opt,netS)
+                add.addmosaic_img(opt,netS)
             elif util.is_video(file):
-                core.addmosaic_video(opt,netS)
+                add.addmosaic_video(opt,netS)
                 util.clean_tempfiles(opt, tmp_init = False)
             else:
                 print('This type of file is not supported')
@@ -45,12 +45,12 @@ def main():
         for file in files:
             opt.media_path = file
             if util.is_img(file):
-                core.cleanmosaic_img(opt,netG,netM)
+                clean.cleanmosaic_img(opt,netG,netM)
             elif util.is_video(file):
                 if opt.netG == 'video' and not opt.traditional:            
-                    core.cleanmosaic_video_fusion(opt,netG,netM)
+                    clean.cleanmosaic_video_fusion(opt,netG,netM)
                 else:
-                    core.cleanmosaic_video_byframe(opt,netG,netM)
+                    clean.cleanmosaic_video_byframe(opt,netG,netM)
                 util.clean_tempfiles(opt, tmp_init = False)
             else:
                 print('This type of file is not supported')
@@ -60,9 +60,9 @@ def main():
         for file in files:
             opt.media_path = file
             if util.is_img(file):
-                core.styletransfer_img(opt,netG)
+                style.styletransfer_img(opt,netG)
             elif util.is_video(file):
-                core.styletransfer_video(opt,netG)
+                style.styletransfer_video(opt,netG)
                 util.clean_tempfiles(opt, tmp_init = False)
             else:
                 print('This type of file is not supported')
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     except Exception as ex:
         print('--------------------ERROR--------------------')
         print('--------------Environment--------------')
-        print('DeepMosaics: 0.5.0')
+        print('DeepMosaics: 0.5.1')
         print('Python:',sys.version)
         import torch
         print('Pytorch:',torch.__version__)
