@@ -92,7 +92,7 @@ In order to add/remove mosaic, there must be a model file at `./pretrained_model
 
 ```bash
 virtualenv mosaic
-source mosaic/bin.activate
+source mosaic/bin/activate
 ```
 
 Then install the dependencies
