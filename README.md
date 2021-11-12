@@ -84,7 +84,7 @@ You can download pre_trained models and put them into './pretrained_models'.<br>
 [[Google Drive]](https://drive.google.com/open?id=1LTERcN33McoiztYEwBxMuRjjgxh4DEPs) [[百度云,提取码1x0a]](https://pan.baidu.com/s/10rN3U3zd5TmfGpO_PEShqQ)<br>
 [[Introduction to pre-trained models]](./docs/pre-trained_models_introduction.md)<br>
 
-In order to add/remove mosaic, there must be a model file at `./pretrained_models/mosaic/mosaic_position.pth`
+In order to add/remove mosaic, there must be a model file `mosaic_position.pth` at `./pretrained_models/mosaic/mosaic_position.pth`
 
 #### Install dependencies
 
@@ -105,7 +105,7 @@ If you can not build `scikit-image`, running `export CFLAGS='-Wno-implicit-funct
 
 #### Simple Example
 
-- Add Mosaic (output media will save in './result')<br>
+- Add Mosaic (output media will be saved in './result')<br>
 
 ```bash
 python deepmosaic.py --media_path ./imgs/ruoruo.jpg --model_path ./pretrained_models/mosaic/add_face.pth --gpu_id 0
@@ -117,7 +117,7 @@ python deepmosaic.py --media_path ./imgs/ruoruo.jpg --model_path ./pretrained_mo
 python deepmosaic.py --media_path ./result/ruoruo_add.jpg --model_path ./pretrained_models/mosaic/clean_face_HD.pth --gpu_id 0
 ```
 
-If seeing the error `Please check mosaic_position_model_path!`, make sure the there is a model file at `./pretrained_models/mosaic/mosaic_position.pth`
+If you see the error `Please check mosaic_position_model_path!`, check if there is a model file named `mosaic_position.pth` at `./pretrained_models/mosaic/mosaic_position.pth`
 
 #### More Parameters
 
