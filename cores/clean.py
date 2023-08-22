@@ -153,7 +153,7 @@ def cleanmosaic_video_byframe(opt,netG,netM):
     ffmpeg.image2video( fps,
                 opt.temp_dir+'/replace_mosaic/output_%06d.'+opt.tempimage_type,
                 opt.temp_dir+'/voice_tmp.mkv',
-                 os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.mp4'))  
+                 os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.mkv'))
 
 def cleanmosaic_video_fusion(opt,netG,netM):
     path = opt.media_path
@@ -246,4 +246,4 @@ def cleanmosaic_video_fusion(opt,netG,netM):
     ffmpeg.image2video( fps,
                 opt.temp_dir+'/replace_mosaic/output_%06d.'+opt.tempimage_type,
                 opt.temp_dir+'/voice_tmp.mkv',
-                 os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.mp4')) 
+                 os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.mkv'))

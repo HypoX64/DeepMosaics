@@ -127,4 +127,4 @@ def addmosaic_video(opt,netS):
     ffmpeg.image2video( fps,
                         opt.temp_dir+'/addmosaic_image/output_%06d.'+opt.tempimage_type,
                         opt.temp_dir+'/voice_tmp.mkv',
-                         os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_add.mp4'))
+                         os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_add.mkv'))

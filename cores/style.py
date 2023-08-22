@@ -47,4 +47,4 @@ def styletransfer_video(opt,netG):
     ffmpeg.image2video( fps,
                 opt.temp_dir+'/style_transfer/output_%06d.'+opt.tempimage_type,
                 opt.temp_dir+'/voice_tmp.mkv',
-                 os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_'+suffix+'.mp4')) 
+                 os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_'+suffix+'.mkv'))
