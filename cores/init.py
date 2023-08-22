@@ -21,7 +21,7 @@ def video_init(opt,path):
     
     print('Step:1/4 -- Convert video to images')
     util.file_init(opt)
-    ffmpeg.video2voice(path,opt.temp_dir+'/voice_tmp.mp3',opt.start_time,opt.last_time)
+    ffmpeg.video2voice(path,opt.temp_dir+'/voice_tmp.mkv',opt.start_time,opt.last_time)
     ffmpeg.video2image(path,opt.temp_dir+'/video2image/output_%06d.'+opt.tempimage_type,fps,opt.start_time,opt.last_time)
     imagepaths = os.listdir(opt.temp_dir+'/video2image')
     imagepaths.sort()
