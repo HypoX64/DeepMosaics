@@ -43,7 +43,7 @@ def video2image(videopath, imagepath, fps=0, start_time='00:00:00', last_time='0
     run(args)
 
 def video2voice(videopath, voicepath, start_time='00:00:00', last_time='00:00:00'):
-    args = ['ffmpeg', '-i', '"'+videopath+'"','-async 1 -f mp3','-b:a 320k']
+    args = ['ffmpeg', '-i', '"'+videopath+'"','-async 1','-vn','-c:a copy']
     if last_time != '00:00:00':
         args += ['-ss', start_time]
         args += ['-t', last_time]

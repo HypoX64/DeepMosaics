@@ -126,5 +126,5 @@ def addmosaic_video(opt,netS):
     print('Step:4/4 -- Convert images to video')
     ffmpeg.image2video( fps,
                         opt.temp_dir+'/addmosaic_image/output_%06d.'+opt.tempimage_type,
-                        opt.temp_dir+'/voice_tmp.mp3',
+                        opt.temp_dir+'/voice_tmp.mkv',
                          os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_add.mp4'))

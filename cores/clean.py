@@ -152,7 +152,7 @@ def cleanmosaic_video_byframe(opt,netG,netM):
     print('Step:4/4 -- Convert images to video')
     ffmpeg.image2video( fps,
                 opt.temp_dir+'/replace_mosaic/output_%06d.'+opt.tempimage_type,
-                opt.temp_dir+'/voice_tmp.mp3',
+                opt.temp_dir+'/voice_tmp.mkv',
                  os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.mp4'))  
 
 def cleanmosaic_video_fusion(opt,netG,netM):
@@ -245,5 +245,5 @@ def cleanmosaic_video_fusion(opt,netG,netM):
     print('Step:4/4 -- Convert images to video')
     ffmpeg.image2video( fps,
                 opt.temp_dir+'/replace_mosaic/output_%06d.'+opt.tempimage_type,
-                opt.temp_dir+'/voice_tmp.mp3',
+                opt.temp_dir+'/voice_tmp.mkv',
                  os.path.join(opt.result_dir,os.path.splitext(os.path.basename(path))[0]+'_clean.mp4')) 
