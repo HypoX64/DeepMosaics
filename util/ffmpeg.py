@@ -53,7 +53,7 @@ def video2voice(videopath, voicepath, start_time='00:00:00', last_time='00:00:00
 def image2video(fps,imagepath,voicepath,videopath):
     os.system('ffmpeg -y -r '+str(fps)+' -i '+imagepath+' -vcodec libx264 '+os.path.split(voicepath)[0]+'/video_tmp.mp4')
     if os.path.exists(voicepath):
-        os.system('ffmpeg -i '+os.path.split(voicepath)[0]+'/video_tmp.mp4'+' -i "'+voicepath+'" -vcodec copy -acodec aac '+videopath)
+        os.system('ffmpeg -i '+os.path.split(voicepath)[0]+'/video_tmp.mp4'+' -i "'+voicepath+'" -c:v copy -c:a copy '+videopath)
     else:
         os.system('ffmpeg -i '+os.path.split(voicepath)[0]+'/video_tmp.mp4 '+videopath)
 
