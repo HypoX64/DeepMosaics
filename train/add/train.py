@@ -107,7 +107,7 @@ if opt.continue_train:
         opt.continue_train = False
         print('can not load last.pth, training on init weight.')
 if opt.continue_train:
-    net.load_state_dict(torch.load(os.path.join(dir_checkpoint,'last.pth')))
+    net.load_state_dict(torch.load(os.path.join(dir_checkpoint,'last.pth'), weights_only=False))
     f = open(os.path.join(dir_checkpoint,'epoch_log.txt'),'r')
     opt.startepoch = int(f.read())
     f.close()

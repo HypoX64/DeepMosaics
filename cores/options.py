@@ -33,7 +33,8 @@ class Options():
         self.parser.add_argument('--mosaic_size', type=int, default=0,help='mosaic size,if 0 auto size')
         self.parser.add_argument('--mask_extend', type=int, default=10,help='extend mosaic area')
         
-        #CleanMosaic     
+        #CleanMosaic
+        self.parser.add_argument('--enhance', action='store_true', help='if specified, apply Real-ESRGAN to enhance cleaned mosaic patches')
         self.parser.add_argument('--mosaic_position_model_path', type=str, default='auto',help='name of model use to find mosaic position')
         self.parser.add_argument('--traditional', action='store_true', help='if specified, use traditional image processing methods to clean mosaic')
         self.parser.add_argument('--tr_blur', type=int, default=10, help='ksize of blur when using traditional method, it will affect final quality')
@@ -61,9 +62,12 @@ class Options():
         self.opt.temp_dir = os.path.join(self.opt.temp_dir, 'DeepMosaics_temp')
 
         if self.opt.gpu_id != '-1':
-            os.environ["CUDA_VISIBLE_DEVICES"] = str(self.opt.gpu_id)
             import torch
-            if not torch.cuda.is_available():
+            if torch.cuda.is_available():
+                os.environ["CUDA_VISIBLE_DEVICES"] = str(self.opt.gpu_id)
+            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+                self.opt.gpu_id = 'mps'
+            else:
                 self.opt.gpu_id = '-1'
         # else:
         #     self.opt.gpu_id = '-1'
@@ -71,11 +75,13 @@ class Options():
         if test_flag:
             if not os.path.exists(self.opt.media_path):
                 print('Error: Media does not exist!')
-                input('Please press any key to exit.\n')
+                if sys.stdin.isatty():
+                    input('Please press any key to exit.\n')
                 sys.exit(0)
             if not os.path.exists(self.opt.model_path):
                 print('Error: Model does not exist!')
-                input('Please press any key to exit.\n')
+                if sys.stdin.isatty():
+                    input('Please press any key to exit.\n')
                 sys.exit(0)
 
             if self.opt.mode == 'auto':
@@ -87,7 +93,8 @@ class Options():
                     self.opt.mode = 'style'
                 else:
                     print('Please check model_path!')
-                    input('Please press any key to exit.\n')
+                    if sys.stdin.isatty():
+                        input('Please press any key to exit.\n')
                     sys.exit(0)
 
             if self.opt.output_size == 0 and self.opt.mode == 'style':
@@ -107,7 +114,8 @@ class Options():
                     self.opt.netG = 'video'
                 else:
                     print('Type of Generator error!')
-                    input('Please press any key to exit.\n')
+                    if sys.stdin.isatty():
+                        input('Please press any key to exit.\n')
                     sys.exit(0)
 
             if self.opt.ex_mult == 'auto':
@@ -123,8 +131,9 @@ class Options():
                 if os.path.isfile(_path):
                     self.opt.mosaic_position_model_path = _path
                 else:
-                    input('Please check mosaic_position_model_path!')
-                    input('Please press any key to exit.\n')
+                    print('Please check mosaic_position_model_path!')
+                    if sys.stdin.isatty():
+                        input('Please press any key to exit.\n')
                     sys.exit(0)
 
         return self.opt

@@ -7,7 +7,8 @@ try:
     from models import loadmodel
 except Exception as e:
     print(e)
-    input('Please press any key to exit.\n')
+    if sys.stdin.isatty():
+        input('Please press any key to exit.\n')
     sys.exit(0)
 
 opt = Options().getparse(test_flag = True)
@@ -94,6 +95,6 @@ if __name__ == '__main__':
         print(ex_val)
         for stack in traceback.extract_tb(ex_stack):
             print(stack)
-        input('Please press any key to exit.\n')
-        #util.clean_tempfiles(tmp_init = False)
+        if sys.stdin.isatty():
+            input('Please press any key to exit.\n')
         sys.exit(0)

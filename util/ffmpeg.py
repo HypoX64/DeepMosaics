@@ -50,12 +50,26 @@ def video2voice(videopath, voicepath, start_time='00:00:00', last_time='00:00:00
     args += [voicepath]
     run(args)
 
+def _get_encoder():
+    """Try hardware-accelerated encoder, fall back to libx264."""
+    import platform, subprocess
+    if platform.system() == 'Darwin':
+        try:
+            r = subprocess.run(['ffmpeg','-hide_banner','-encoders'], capture_output=True, text=True)
+            if 'h264_videotoolbox' in r.stdout:
+                return 'h264_videotoolbox -b:v 10M'
+        except Exception:
+            pass
+    return 'libx264'
+
 def image2video(fps,imagepath,voicepath,videopath):
-    os.system('ffmpeg -y -r '+str(fps)+' -i '+imagepath+' -vcodec libx264 '+os.path.split(voicepath)[0]+'/video_tmp.mp4')
+    encoder = _get_encoder()
+    tmp_dir = os.path.split(voicepath)[0]
+    os.system('ffmpeg -y -r '+str(fps)+' -i '+imagepath+' -vcodec '+encoder+' '+tmp_dir+'/video_tmp.mp4')
     if os.path.exists(voicepath):
-        os.system('ffmpeg -i '+os.path.split(voicepath)[0]+'/video_tmp.mp4'+' -i "'+voicepath+'" -vcodec copy -acodec aac '+videopath)
+        os.system('ffmpeg -i '+tmp_dir+'/video_tmp.mp4'+' -i "'+voicepath+'" -vcodec copy -acodec aac '+videopath)
     else:
-        os.system('ffmpeg -i '+os.path.split(voicepath)[0]+'/video_tmp.mp4 '+videopath)
+        os.system('ffmpeg -i '+tmp_dir+'/video_tmp.mp4 '+videopath)
 
 def get_video_infos(videopath):
     args =  ['ffprobe -v quiet -print_format json -show_format -show_streams', '-i', '"'+videopath+'"']

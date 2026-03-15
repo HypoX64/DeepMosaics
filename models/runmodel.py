@@ -7,12 +7,46 @@ from util import data
 import torch
 import numpy as np
 
+def _get_autocast_device(gpu_id):
+    """Only enable autocast on CUDA — MPS float16 has stride/op issues."""
+    if gpu_id != '-1' and gpu_id != 'mps':
+        return 'cuda'
+    return None
+
 def run_segment(img,net,size = 360,gpu_id = '-1'):
     img = impro.resize(img,size)
     img = data.im2tensor(img,gpu_id = gpu_id, bgr2rgb = False, is0_1 = True)
-    mask = net(img)
+    ac_dev = _get_autocast_device(gpu_id)
+    with torch.no_grad():
+        if ac_dev:
+            with torch.autocast(ac_dev, dtype=torch.float16):
+                mask = net(img)
+        else:
+            mask = net(img)
     mask = data.tensor2im(mask, gray=True, is0_1 = True)
     return mask
+
+def run_segment_batch(imgs, net, size=360, gpu_id='-1'):
+    """Process multiple images through segmentation in one batch."""
+    resized = [impro.resize(img, size) for img in imgs]
+    batch = np.stack([img.astype(np.float32) / 255.0 for img in resized])
+    batch = batch.transpose((0, 3, 1, 2))
+    batch_tensor = torch.from_numpy(batch).float()
+    device = data._get_device(gpu_id)
+    if device.type != 'cpu':
+        batch_tensor = batch_tensor.to(device)
+    ac_dev = _get_autocast_device(gpu_id)
+    with torch.no_grad():
+        if ac_dev:
+            with torch.autocast(ac_dev, dtype=torch.float16):
+                masks_tensor = net(batch_tensor)
+        else:
+            masks_tensor = net(batch_tensor)
+    masks = []
+    for i in range(masks_tensor.shape[0]):
+        mask = data.tensor2im(masks_tensor, gray=True, is0_1=True, batch_index=i)
+        masks.append(mask)
+    return masks
 
 def run_pix2pix(img,net,opt):
     if opt.netG == 'HD':
@@ -20,7 +54,13 @@ def run_pix2pix(img,net,opt):
     else:
         img = impro.resize(img,128)
     img = data.im2tensor(img,gpu_id=opt.gpu_id)
-    img_fake = net(img)
+    ac_dev = _get_autocast_device(opt.gpu_id)
+    with torch.no_grad():
+        if ac_dev:
+            with torch.autocast(ac_dev, dtype=torch.float16):
+                img_fake = net(img)
+        else:
+            img_fake = net(img)
     img_fake = data.tensor2im(img_fake)
     return img_fake
 
@@ -56,7 +96,13 @@ def run_styletransfer(opt, net, img):
         img = data.im2tensor(img,gpu_id=opt.gpu_id,gray=True)
     else:    
         img = data.im2tensor(img,gpu_id=opt.gpu_id)
-    img = net(img)
+    ac_dev = _get_autocast_device(opt.gpu_id)
+    with torch.no_grad():
+        if ac_dev:
+            with torch.autocast(ac_dev, dtype=torch.float16):
+                img = net(img)
+        else:
+            img = net(img)
     img = data.tensor2im(img)
     return img
 

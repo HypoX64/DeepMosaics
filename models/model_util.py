@@ -11,20 +11,29 @@ from torchvision import models
 import torch.utils.model_zoo as model_zoo
 
 ################################## IO ##################################
+def get_device(gpu_id):
+    """Return a torch.device based on gpu_id string."""
+    if gpu_id == 'mps':
+        return torch.device('mps')
+    elif gpu_id != '-1':
+        return torch.device('cuda')
+    return torch.device('cpu')
+
 def save(net,path,gpu_id):
     if isinstance(net, nn.DataParallel):
         torch.save(net.module.cpu().state_dict(),path)
     else:
-        torch.save(net.cpu().state_dict(),path) 
-    if gpu_id != '-1':
-        net.cuda()
+        torch.save(net.cpu().state_dict(),path)
+    device = get_device(gpu_id)
+    if device.type != 'cpu':
+        net.to(device)
 
 def todevice(net,gpu_id):
-    if gpu_id != '-1' and len(gpu_id) == 1:
-        net.cuda()
-    elif gpu_id != '-1' and len(gpu_id) > 1:
+    device = get_device(gpu_id)
+    if device.type == 'cuda' and len(gpu_id) > 1 and gpu_id != 'mps':
         net = nn.DataParallel(net)
-        net.cuda()
+    if device.type != 'cpu':
+        net.to(device)
     return net
 
 # patch InstanceNorm checkpoints prior to 0.4
